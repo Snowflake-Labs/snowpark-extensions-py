@@ -5,6 +5,7 @@ Snowpark by itself is a powerful library, but still some utility functions can a
 ## Currently provided extensions:
 
 | Name                         | Description                                                                         |
+|------------------------------|-------------------------------------------------------------------------------------|
 | functions.unix_timestamp     | returns the UNIX timestamp of current time.                                         |
 | functions.from_unixtimestamp | can be used to convert UNIX time to Snowflake timestamp                             |
 | functions.format_number      | formats numbers using the specified number of decimal places                        |
