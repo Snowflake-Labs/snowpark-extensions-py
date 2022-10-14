@@ -13,6 +13,11 @@ def format_number(col,d):
 def reverse(col):
     return F.call_builtin('reverse',col)
 
+def date_add(col,num_of_days):
+	return dateadd(lit('day'),col,num_of_days)
+
+def date_sub(col,num_of_days):
+	return dateadd(lit('day'),col,-1 * num_of_days)
 
 # EXPLODE HELPERS
 class Explode:
@@ -37,3 +42,5 @@ F.unix_timestamp = unix_timestamp
 F.from_unixtime = from_unixtime
 F.format_number = format_number
 F.reverse = reverse
+F.date_data = date_add
+F.date_sub = date_sub
