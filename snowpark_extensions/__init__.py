@@ -7,8 +7,8 @@ def unix_timestamp(col):
 def from_unixtime(col):
     return F.to_timestamp(col).alias('ts')
 
-def format_number(col,format):
-    return F.to_varchar(col,format)
+def format_number(col,d):
+    return F.to_varchar(col,'999,999,999,999,999.' + '0'*d)
 
 def reverse(col):
     return F.call_builtin('reverse',col)
