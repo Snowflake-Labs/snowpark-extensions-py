@@ -11,6 +11,8 @@ Snowpark by itself is a powerful library, but still some utility functions can a
 | functions.format_number      | formats numbers using the specified number of decimal places                        |
 | functions.reverse            | returns a reversed string                                                           |
 | functions.explode            | returns a new row for each element in the given array                               |
+| functions.date_add           | returns the date that is n days days after                                          |
+| functions.date_sub           | returns the date that is n days before                                              |
 
 ## Usage:
 
