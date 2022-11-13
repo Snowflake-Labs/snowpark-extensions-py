@@ -44,3 +44,5 @@ F.format_number = format_number
 F.reverse = reverse
 F.date_data = date_add
 F.date_sub = date_sub
+
+import snowpark_extensions.session_builder_extensions

@@ -4,6 +4,32 @@ Snowpark by itself is a powerful library, but still some utility functions can a
 
 ## Currently provided extensions:
 
+## SessionBuilder extensions
+
+| Name                          | Description |
+| ----------------------------- | ----------- |
+| SessionBuilder.from_snowsql   | can read the information from the snowsql config file by default at ~/snowsql/config or at a given location |
+| SessionBuilder.env            | reads settings from SNOW_xxx or SNOWSQL_xxx variables |
+| SessionBuilder.appName        | Sets a query tag with the given appName               |
+| SessionBuilder.append_tag     | Appends a new tag to the existing query tag           | 
+
+
+You can the create your session like:
+
+``` python
+from snowflake.snowpark import Session
+import snowpark_extensions
+new_session = Session.builder.from_snowsql().appName("app1").create()
+```
+
+``` python
+from snowflake.snowpark import Session
+import snowpark_extensions
+new_session = Session.builder.env().appName("app1").create()
+```
+
+## Functions Extensions
+
 | Name                         | Description                                                                         |
 |------------------------------|-------------------------------------------------------------------------------------|
 | functions.unix_timestamp     | returns the UNIX timestamp of current time.                                         |
