@@ -11,7 +11,7 @@ if not hasattr(Session.SessionBuilder,"___extended"):
     Session.SessionBuilder.__old_create = Session.SessionBuilder.create
     def SessionBuilder_updated_create(self):
         session = self.__old_create()
-        if self.__appname__:
+        if hasattr(self,"__appname__"):
             setattr(session, "__appname__", self.__appname__)
             session.query_tag = f"APPNAME={session.__appname__}"
         return session
@@ -27,7 +27,11 @@ if not hasattr(Session.SessionBuilder,"___extended"):
 
     def SessionBuilder_getOrCreate(self):
         from snowflake.snowpark import context
-        return context.get_active_session() or self.create()
+        from snowflake.snowpark.session import _session_management_lock, _active_sessions
+        with _session_management_lock:
+            if len(_active_sessions) == 1:
+                return next(iter(context._active_sessions))
+        return self.create()
 
 
     Session.SessionBuilder.getOrCreate = SessionBuilder_getOrCreate
