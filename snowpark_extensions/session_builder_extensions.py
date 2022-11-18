@@ -3,7 +3,7 @@ import configparser
 from pathlib import Path
 from snowflake.snowpark import Session
 import os
-
+import shortuuid
 
 if not hasattr(Session.SessionBuilder,"___extended"):
 
@@ -13,7 +13,8 @@ if not hasattr(Session.SessionBuilder,"___extended"):
         session = self.__old_create()
         if hasattr(self,"__appname__"):
             setattr(session, "__appname__", self.__appname__)
-            session.query_tag = f"APPNAME={session.__appname__}"
+            uuid = shortuuid.uuid()
+            session.query_tag = f"APPNAME={session.__appname__};execution_id={uuid}"
         return session
     Session.SessionBuilder.create = SessionBuilder_updated_create
     def SessionBuilder_appName(self,name):
