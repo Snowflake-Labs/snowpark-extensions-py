@@ -3,6 +3,7 @@
 
 from snowflake.snowpark import functions as F
 from snowflake.snowpark import DataFrame
+from snowflake.snowpark.types import ArrayType, BooleanType
 
 if not hasattr(F,"___extended"):
     F.___extended = True
@@ -41,26 +42,28 @@ if not hasattr(F,"___extended"):
             col_list.append(c)
         return object_construct(*col_list)
 
-    def array_sort(array:list)->list:
-        def compare(item1, item2=None):
-            if item1 is None:
-                return 1
-            elif item2 is None:
-                return -1
-            elif item1 < item2:
-                return -1
-            elif item1 > item2:
-                return 1
-            else:
-                return 0
-        array.sort(key=compare)
-        return array
+
 
     array_sort_udf=None
-    def array_sort(array):
+    def array_sort(array, asc: bool=True):
+        global array_sort_udf
         if not array_sort_udf:
-            array_sort_udf = udf(array_sort,return_type=ArrayType(),input_types=[ArrayType()],name="array_sort",is_permanent=False,replace=True)
-        array_sort_udf(array)
+            def _array_sort(array:list, asc: bool)->list:
+                def compare(item1, item2=None):
+                    if item1 is None:
+                        return 1
+                    elif item2 is None:
+                        return -1
+                    elif item1 < item2:
+                        return -1
+                    elif item1 > item2:
+                        return 1
+                    else:
+                        return 0
+                array.sort(key=compare,reverse=not asc)
+                return array
+            array_sort_udf = F.udf(_array_sort,return_type=ArrayType(),input_types=[ArrayType(),BooleanType()],name="array_sort",is_permanent=False,replace=True)
+        return array_sort_udf(array, F.lit(asc))
 
     F.array_sort = array_sort
     F.create_map = create_map
