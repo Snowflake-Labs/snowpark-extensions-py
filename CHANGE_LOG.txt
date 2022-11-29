@@ -1,0 +1,10 @@
+Version 0.0.1
+-------------
+
+Initial Version
+
+Version 0.0.2
+-------------
+
+Adding some logging and robustess for from_snowql function
+Adding asc parameter for array_sort function

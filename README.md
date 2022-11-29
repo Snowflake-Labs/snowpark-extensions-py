@@ -63,13 +63,74 @@ order by start_time desc;
 | DataFrame.simple_map           | if a simple lambda like `lambda x: x.col1 + x.col2` is used this functions can be used like `df.simple_map(lambda x: x.col1 + x.col2)`
 | DataFrame.groupby.applyInPandas| Maps each group of the current DataFrame using a pandas udf and returns the result as a DataFrame. |
 
+### Examples
 
+#### map and simple_map
+
+```python
+from snowflake.snowpark import Session
+from snowflake.snowpark.types import *
+import snowpark_extensions
+
+session = Session.builder.from_snowsql().appName("app1").getOrCreate()
+  
+data = [('James','Smith','M',30),('Anna','Rose','F',41),('Robert','Williams','M',62)]
+columns = ["firstname","lastname","gender","salary"]
+df = session.createDataFrame(data=data, schema = columns)
+df.show()
+
+
+#
+#--------------------------------------------------
+#|"FIRSTNAME"  |"LASTNAME"  |"GENDER"  |"SALARY"  |
+#--------------------------------------------------
+#|James        |Smith       |M         |30        |
+#|Anna         |Rose        |F         |41        |
+#|Robert       |Williams    |M         |62        |
+#--------------------------------------------------
+
+
+
+
+# using map with a lamda, the to_row indicates that the code will pass a row as x to the lambda
+# if you have a lambda like lambda x,y,z you can use to_row=False
+df2=df.map(lambda x: 
+        (x[0]+","+x[1],x[2],x[3]*2),
+        output_types=[StringType(),StringType(),IntegerType()],to_row=True)
+df2.show()
+
+#
+#-----------------------------------
+#|"C_1"            |"C_2"  |"C_3"  |
+#-----------------------------------
+#|James,Smith      |M      |60     |
+#|Anna,Rose        |F      |82     |
+#|Robert,Williams  |M      |124    |
+#-----------------------------------
+#
+
+# for simple lambda
+# simple map will just pass the same dataframe to the function
+# this approach is faster
+df2 = df.simple_map(lambda x: (x[0]+","+x[1],x[2],x[3]*2))
+df2.toDF(["name","gender","new_salary"]).show()
+
+#---------------------------------------------
+#|"NAME"           |"GENDER"  |"NEW_SALARY"  |
+#---------------------------------------------
+#|James,Smith      |M         |60            |
+#|Anna,Rose        |F         |82            |
+#|Robert,Williams  |M         |124           |
+#---------------------------------------------
+#
+
+```
 
 ## Functions Extensions
 
 | Name                         | Description                                                                         |
 |------------------------------|-------------------------------------------------------------------------------------|
-| functions.array_sort         | sorts the input array in ascending order. The elements of the input array must be orderable. Null elements will be placed at the end of the returned array. |
+| functions.array_sort         | sorts the input array in ascending order or descending order. The elements of the input array must be orderable. Null elements will be placed at the end of the returned array. |
 | functions.unix_timestamp     | returns the UNIX timestamp of current time.                                         |
 | functions.from_unixtimestamp | can be used to convert UNIX time to Snowflake timestamp                             |
 | functions.format_number      | formats numbers using the specified number of decimal places                        |
@@ -78,6 +139,62 @@ order by start_time desc;
 | functions.date_add           | returns the date that is n days days after                                          |
 | functions.date_sub           | returns the date that is n days before                                              |
 
+
+### Examples:
+
+#### array_sort
+
+```python
+from snowflake.snowpark import Session, DataFrame
+from snowflake.snowpark.functions import col, lit
+from snowflake.snowpark import functions as F
+import snowpark_extensions
+
+session = Session.builder.from_snowsql().getOrCreate()
+df = session.createDataFrame([([2, 1, None, 3],),([1],),([],)], ['data'])
+df.select(F.array_sort(df.data)).show()
+```
+
+```
+-------------------------------------------
+|"ARRAY_SORT(""DATA"", TRUE :: BOOLEAN)"  |
+-------------------------------------------
+|[                                        |
+|  2,                                     |
+|  1,                                     |
+|  3,                                     |
+|  null                                   |
+|]                                        |
+|[]                                       |
+|[                                        |
+|  1                                      |
+|]                                        |
+-------------------------------------------
+```
+df.select(F.array_sort(df.data, asc=False)).show()
+
+```
+--------------------------------------------
+|"ARRAY_SORT(""DATA"", FALSE :: BOOLEAN)"  |
+--------------------------------------------
+|[                                         |
+|  1                                       |
+|]                                         |
+|[]                                        |
+|[                                         |
+|  null,                                   |
+|  2,                                      |
+|  1,                                      |
+|  3                                       |
+|]                                         |
+--------------------------------------------
+```
+
+
+
+
 ## Usage:
 
 just import it at the top of your file and it will automatically extend your snowpark package
+
+
