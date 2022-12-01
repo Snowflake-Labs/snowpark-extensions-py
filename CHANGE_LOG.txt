@@ -8,3 +8,12 @@ Version 0.0.2
 
 Adding some logging and robustess for from_snowql function
 Adding asc parameter for array_sort function
+
+Version 0.0.3
+-------------
+No changes, just update github actions
+
+Version 0.0.4
+-------------
+Adding support for regexp_extract
+Adding support for replace with regexp=True
