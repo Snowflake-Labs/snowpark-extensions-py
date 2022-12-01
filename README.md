@@ -62,6 +62,7 @@ order by start_time desc;
 | DataFrame.map                  | provides an equivalent for the map function for example `df.map(func,input_types=[StringType(),StringType()],output_types=[StringType(),IntegerType()],to_row=True)` 
 | DataFrame.simple_map           | if a simple lambda like `lambda x: x.col1 + x.col2` is used this functions can be used like `df.simple_map(lambda x: x.col1 + x.col2)`
 | DataFrame.groupby.applyInPandas| Maps each group of the current DataFrame using a pandas udf and returns the result as a DataFrame. |
+| DataFrame.replace        | extends replace to allow using a regex
 
 ### Examples
 
@@ -126,6 +127,16 @@ df2.toDF(["name","gender","new_salary"]).show()
 
 ```
 
+### replace with support for regex
+
+```python
+df = session.createDataFrame([('bat',1,'abc'),('foo',2,'bar'),('bait',3,'xyz')],['A','C','B'])
+# already supported replace
+df.replace(to_replace=1, value=100).show()
+# replace with regex
+df.replace(to_replace=r'^ba.$', value='new',regex=True).show()
+```
+
 ## Functions Extensions
 
 | Name                         | Description                                                                         |
@@ -138,6 +149,7 @@ df2.toDF(["name","gender","new_salary"]).show()
 | functions.explode            | returns a new row for each element in the given array                               |
 | functions.date_add           | returns the date that is n days days after                                          |
 | functions.date_sub           | returns the date that is n days before                                              |
+| functions.regexp_extract     | Extract a specific group matched by a regex, from the specified string column.      |
 
 
 ### Examples:
@@ -190,8 +202,49 @@ df.select(F.array_sort(df.data, asc=False)).show()
 --------------------------------------------
 ```
 
+### regexp_extract
+
+session = Session.builder.from_snowsql().create()
 
 
+df = session.createDataFrame([('100-200',)], ['str'])
+res = df.select(F.regexp_extract('str',r'(\d+)-(\d+)',1).alias('d')).collect()
+print(str(res))
+# [Row(D='1')]
+
+df = session.createDataFrame([['id_20_30', 10], ['id_40_50', 30]], ['id', 'age'])
+df.show()
+# --------------------
+# |"ID"      |"AGE"  |
+# --------------------
+# |id_20_30  |10     |
+# |id_40_50  |30     |
+# --------------------
+
+
+df.select(F.regexp_extract('id', r'(\d+)', 1)).show()
+# ------------------------------------------------------
+# |"COALESCE(REGEXP_SUBSTR(""ID"", '(\\D+)', 1, 1,...  |
+# ------------------------------------------------------
+# |20                                                  |
+# |40                                                  |
+# ------------------------------------------------------
+
+
+df.select(F.regexp_extract('id', r'(\d+)_(\d+)', 2)).show()
+# ------------------------------------------------------
+# |"COALESCE(REGEXP_SUBSTR(""ID"", '(\\D+)_(\\D+)'...  |
+# ------------------------------------------------------
+# |30                                                  |
+# |50                                                  |
+# ------------------------------------------------------
+
+# utilities
+
+| Name | Description         |
+|------|---------------------|
+| utils.map_to_python_type | maps from DataType to python type |
+| 
 
 ## Usage:
 

@@ -1,11 +1,28 @@
-from snowflake.snowpark import DataFrame, Row
-from snowflake.snowpark.functions import col, lit, udtf
+from snowflake.snowpark import DataFrame, Row, DataFrameNaFunctions
+from snowflake.snowpark.functions import col, lit, udtf, regexp_replace
 from snowflake.snowpark import functions as F
 import pandas as pd
 import numpy as np
 from snowpark_extensions.utils import map_to_python_type
 import shortuuid
 from snowflake.snowpark.types import StructType,StructField
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    Iterable,
+    Iterator,
+    List,
+    Optional,
+    Tuple,
+    Union,
+    overload,
+)
+from snowflake.snowpark._internal.type_utils import (
+    ColumnOrName,
+    ColumnOrSqlExpr,
+    LiteralType,
+)
 
 if not hasattr(DataFrame,"___extended"):
     DataFrame.___extended = True
@@ -48,7 +65,27 @@ if not hasattr(DataFrame,"___extended"):
     def simple_map(self,func):
         return self.select(*func(self))
 
-    DataFrame.simple_map = simple_map    
+    DataFrame.simple_map = simple_map
+
+    DataFrameNaFunctions.__oldreplace = DataFrameNaFunctions.replace 
+    
+    def extended_replace(
+        self,
+        to_replace: Union[
+            LiteralType,
+            Iterable[LiteralType],
+            Dict[LiteralType, LiteralType],
+        ],
+        value: Optional[Iterable[LiteralType]] = None,
+        subset: Optional[Iterable[str]] = None,
+        regex=False
+    ) -> "snowflake.snowpark.dataframe.DataFrame":
+        if regex:
+            return self._df.select([regexp_replace(col(x.name), to_replace,value).alias(x.name) if isinstance(x.datatype,StringType) else col(x.name) for x in self._df.schema])
+        else:
+            return self.__oldreplace(to_replace,value,subset)
+    
+    DataFrameNaFunctions.replace = extended_replace    
 
     # EXPLODE HELPERS
     class Explode:

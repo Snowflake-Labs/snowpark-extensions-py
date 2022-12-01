@@ -2,11 +2,34 @@
 
 
 from snowflake.snowpark import functions as F
-from snowflake.snowpark import DataFrame
+from snowflake.snowpark.functions import call_builtin, lit, concat, coalesce
+from snowflake.snowpark import DataFrame, Column
 from snowflake.snowpark.types import ArrayType, BooleanType
+from snowflake.snowpark._internal.type_utils import (
+    ColumnOrLiteral,
+    ColumnOrLiteralStr,
+    ColumnOrName,
+    ColumnOrSqlExpr,
+    LiteralType,
+)
+from snowflake.snowpark.column import _to_col_if_str, _to_col_if_lit
+
 
 if not hasattr(F,"___extended"):
     F.___extended = True
+
+    def regexp_extract(value:ColumnOrLiteralStr,regexp:ColumnOrLiteralStr,idx:int) -> Column:
+        """
+        Extract a specific group matched by a regex, from the specified string column. 
+        If the regex did not match, or the specified group did not match, 
+        an empty string is returned.        
+        """
+        value = _to_col_if_str(value,"regexp_extract")
+        regexp = _to_col_if_lit(regexp,"regexp_extract")
+        idx = _to_col_if_lit(idx,"regexp_extract")
+        # we add .* to the expression if needed
+        return coalesce(call_builtin('regexp_substr',value,regexp,lit(1),lit(1),lit('e'),idx),lit(''))
+
     def unix_timestamp(col):
         return call_builtin("DATE_PART","epoch_second",col)
 
@@ -65,6 +88,7 @@ if not hasattr(F,"___extended"):
             array_sort_udf = F.udf(_array_sort,return_type=ArrayType(),input_types=[ArrayType(),BooleanType()],name="array_sort",is_permanent=False,replace=True)
         return array_sort_udf(array, F.lit(asc))
 
+    F.regexp_extract = regexp_extract
     F.array_sort = array_sort
     F.create_map = create_map
     F.unix_timestamp = unix_timestamp
