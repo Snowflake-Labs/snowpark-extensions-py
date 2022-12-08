@@ -3,7 +3,7 @@ from snowflake.snowpark.functions import col, lit, udtf, regexp_replace
 from snowflake.snowpark import functions as F
 import pandas as pd
 import numpy as np
-from snowpark_extensions.utils import map_to_python_type
+from snowpark_extensions.utils import map_to_python_type, schema_str_to_schema
 import shortuuid
 from snowflake.snowpark.types import StructType,StructField
 from typing import (
@@ -102,7 +102,7 @@ if not hasattr(DataFrame,"___extended"):
         if isinstance(expr, Explode):
             return self.join_table_function('flatten',date_range_udf(col("epoch_min"), col("epoch_max"))).drop(["SEQ","KEY","PATH","INDEX","THIS"]).rename("VALUE",colname)
         else:
-            self.oldwithColumn(colname,expr)
+            return self.oldwithColumn(colname,expr)
     DataFrame.withColumn = withColumnExtended
 
 
@@ -113,7 +113,10 @@ from snowflake.snowpark.functions import udtf, col
 from snowflake.snowpark.relational_grouped_dataframe import RelationalGroupedDataFrame
 
 if not hasattr(RelationalGroupedDataFrame, "applyInPandas"):
-  def applyInPandas(self,func,output_schema):
+  def applyInPandas(self,func,schema):
+      output_schema = schema
+      if isinstance(output_schema, str):
+        output_schema = schema_str_to_schema(output_schema)
       from snowflake.snowpark.functions import col
       input_types = [x.datatype for x in self._df.schema.fields]
       input_cols  = [x.name for x in self._df.schema.fields]

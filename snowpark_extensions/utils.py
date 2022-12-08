@@ -11,6 +11,7 @@ from snowflake.snowpark.types import (
     MapType,
     StringType,
     StructType,
+    StructField,
     TimestampType,
     TimeType,
     VariantType,
@@ -80,3 +81,40 @@ def map_python_type_to_datatype(type):
     else:
         return VariantType
 
+def map_string_type_to_datatype(type):
+    type = type.lower()
+    if type == "list":
+        return ArrayType()
+    elif type=="bytes":
+        return BinaryType()
+    elif type == "bool" or type == "boolean":
+        return BooleanType()
+    elif type == "date":
+        return DateType()
+    elif type == "int" or type == "long":
+        return LongType()
+    elif type == "float":
+        return FloatType()
+    elif type == "double":
+        return DoubleType()
+    elif type == "decimal":
+        return DecimalType()
+    elif type == "dict" or type == "struct":
+        return MapType()
+    elif type == "str" or type == "string" or type == "text":
+        return StringType()
+    elif type == "timestamp":
+        return TimestampType()
+    elif type == "time":
+        return TimeType()
+    else:
+        return VariantType()
+
+def schema_str_to_schema(schema_as_str):
+    columns = schema_as_str.split(",")
+    schema_fields = []
+    for c in columns:
+        name, type = c.strip().split(" ")
+        datatype = map_string_type_to_datatype(type)
+        schema_fields.append(StructField(name,datatype))
+    return StructType(schema_fields)
