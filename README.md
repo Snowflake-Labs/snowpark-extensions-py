@@ -163,6 +163,37 @@ df.replace(to_replace=1, value=100).show()
 df.replace(to_replace=r'^ba.$', value='new',regex=True).show()
 ```
 
+### applyInPandas
+```python
+from snowflake.snowpark import Session
+import snowpark_extensions
+session = Session.builder.from_snowsql().getOrCreate()
+import pandas as pd  
+df = session.createDataFrame(
+    [(1, 1.0), (1, 2.0), (2, 3.0), (2, 5.0), (2, 10.0)],
+    schema=["ID", "V"])
+df1 = df.to_pandas()
+def normalize(pdf):
+    V = pdf.V
+    return pdf.assign(V=(V - V.mean()) / V.std())
+df2 = normalize(df1)
+# schema can be an string or an StructType
+df.group_by("ID").applyInPandas(
+    normalize, schema="id long, v double").show()  
+```
+
+```
+------------------------------
+|"ID"  |"V"                  |
+------------------------------
+|2     |-0.8320502943378437  |
+|2     |-0.2773500981126146  |
+|2     |1.1094003924504583   |
+|1     |-0.7071067811865475  |
+|1     |0.7071067811865475   |
+------------------------------
+```
+
 ## Functions Extensions
 
 | Name                         | Description                                                                         |
@@ -272,7 +303,8 @@ df.select(F.regexp_extract('id', r'(\d+)_(\d+)', 2)).show()
 | Name | Description         |
 |------|---------------------|
 | utils.map_to_python_type | maps from DataType to python type |
-| 
+| utils.map_string_type_to_datatype | maps a type by name to a snowpark `DataType` |
+| utils.schema_str_to_schema | maps an schema specified as an string to a `StructType()`
 
 
 

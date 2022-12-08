@@ -17,3 +17,11 @@ Version 0.0.4
 -------------
 Adding support for regexp_extract
 Adding support for replace with regexp=True
+
+Version 0.0.5
+-------------
+Fix bug withColumn
+Add support in applyInPandas for schema as an string
+Add example for applyInPandas
+Add utils for string to DataType
+Add utils for schema from string
