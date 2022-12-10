@@ -2,6 +2,32 @@
 
 Snowpark by itself is a powerful library, but still some utility functions can always help.
 
+
+
+
+# Installation
+
+We recommended installing using [PYPI](https://pypi.org/)
+
+```bash
+
+    $ pip install snowconvert-deploy-tool --upgrade
+```    
+> note:: If you run this command on MacOS change `pip` by `pip3`
+
+
+# Usage
+
+
+just import it at the top of your file and it will automatically extend your snowpark package.
+For example:
+``` python
+from snowflake.snowpark import Session
+import snowpark_extensions
+new_session = Session.builder.from_snowsql().appName("app1").getOrCreate()
+```
+```
+
 ## Currently provided extensions:
 
 ## SessionBuilder extensions
@@ -235,6 +261,7 @@ df.select(F.array_sort(df.data, asc=False)).show()
 
 ### regexp_extract
 
+```python
 session = Session.builder.from_snowsql().create()
 
 
@@ -269,6 +296,7 @@ df.select(F.regexp_extract('id', r'(\d+)_(\d+)', 2)).show()
 # |30                                                  |
 # |50                                                  |
 # ------------------------------------------------------
+```
 
 # utilities
 
@@ -278,8 +306,6 @@ df.select(F.regexp_extract('id', r'(\d+)_(\d+)', 2)).show()
 | utils.map_string_type_to_datatype | maps a type by name to a snowpark `DataType` |
 | utils.schema_str_to_schema | maps an schema specified as an string to a `StructType()`
 
-## Usage:
 
-just import it at the top of your file and it will automatically extend your snowpark package
 
 
