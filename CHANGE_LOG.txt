@@ -25,3 +25,7 @@ Add support in applyInPandas for schema as an string
 Add example for applyInPandas
 Add utils for string to DataType
 Add utils for schema from string
+
+Version 0.0.6
+-------------
+Change aggregation in applyInPandas based on performance analysis at https://perfpy.com/177

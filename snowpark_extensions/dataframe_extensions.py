@@ -124,15 +124,29 @@ if not hasattr(RelationalGroupedDataFrame, "applyInPandas"):
       grouping_exprs = [Column(x) for x in self._grouping_exprs]
       clazz="applyInPandas"+shortuuid.uuid()[:8]
       def __init__(self):
-          self.vals = []
-      def process(self, *val):
-          self.vals.append(val)
+          self.rows = []
+          self.dfs  = []
+      def process(self, *row):
+          self.rows.append(row)
+          # Merge rows into a dataframe
+          if len(self.rows) >= 16000:
+             df = pd.DataFrame(self.rows)
+             self.dfs.append(df)
+             self.rows = []
+          # Merge dataframes into a single dataframe
+          if len(self.dfs) >= 100:
+             merged_df = pd.concat(self.dfs)
+             self.dfs = [merged_df]
           yield None
       def end_partition(self):
-          import pandas as pd
-          pandas_input = pd.DataFrame(self.vals, columns=input_cols)
-          pandas_output = func(pandas_input)
-          for row in pandas_output.itertuples(index=False):
+        # Merge any remaining rows
+        if len(self.rows) > 0:
+          df = pd.DataFrame(self.rows,columns=input_cols)
+          self.dfs.append(df)
+          self.rows = []
+        pandas_input = pd.concat(self.dfs)        
+        pandas_output = func(pandas_input)
+        for row in pandas_output.itertuples(index=False):
              yield tuple(row)
       non_ambigous_output_schema = StructType([StructField(f"pd_{i}",output_schema.fields[i].datatype) for i in range(len(output_schema.fields))])
       renamed_back = [col(f"pd_{i}").alias(output_schema.fields[i].name) for i in range(len(non_ambigous_output_schema.fields))]
