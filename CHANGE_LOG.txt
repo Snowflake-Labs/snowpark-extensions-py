@@ -29,3 +29,8 @@ Add utils for schema from string
 Version 0.0.6
 -------------
 Change aggregation in applyInPandas based on performance analysis at https://perfpy.com/177
+
+Version 0.0.7
+-------------
+Fix typo in date_add function
+Adding Jupyter Notebook extension

@@ -307,5 +307,20 @@ df.select(F.regexp_extract('id', r'(\d+)_(\d+)', 2)).show()
 | utils.schema_str_to_schema | maps an schema specified as an string to a `StructType()`
 
 
+# Experimental
 
+## Jupyter Notebook support
 
+```
+%load_ext snowpark_extensions
+```
+
+This extension provides simple integration with Jupyter notebooks
+It will preload the snowpark libraries and adds a simple magic.
+
+A `%%sql` magic can be used to run queries. 
+Queries can use `Jinja2` syntax. For example:
+
+```sql
+select * from tables where col={{COL1}}
+```

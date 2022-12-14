@@ -95,5 +95,5 @@ if not hasattr(F,"___extended"):
     F.from_unixtime = from_unixtime
     F.format_number = format_number
     F.reverse = reverse
-    F.date_data = date_add
+    F.date_add = date_add
     F.date_sub = date_sub
