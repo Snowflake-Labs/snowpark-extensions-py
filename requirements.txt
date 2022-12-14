@@ -1,4 +1,4 @@
-pyhton
+snowflake-snowpark-python
 pandas
 shortuuid
 rich
