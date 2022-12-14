@@ -34,3 +34,8 @@ Version 0.0.7
 -------------
 Fix typo in date_add function
 Adding Jupyter Notebook extension
+
+Version 0.0.8
+-------------
+Adding from_env
+Fixing issue with requirements.txt
