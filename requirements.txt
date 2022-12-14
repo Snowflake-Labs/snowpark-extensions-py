@@ -1,3 +1,7 @@
-snowflake-snowpark-python
+pyhton
 pandas
 shortuuid
+rich
+nest_asyncio
+jinja2
+rich
