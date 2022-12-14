@@ -39,3 +39,7 @@ Version 0.0.8
 -------------
 Adding from_env
 Fixing issue with requirements.txt
+
+Version 0.0.9
+-------------
+Fixing bug in create_map

@@ -95,5 +95,5 @@ if not hasattr(Session.SessionBuilder,"___extended"):
         return self
 
     Session.SessionBuilder.from_snowsql = SessionBuilder_snowsql_config
-
+    Session.SessionBuilder.from_env = SessionBuilder_env
     Session.SessionBuilder.env = SessionBuilder_env

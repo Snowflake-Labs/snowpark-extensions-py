@@ -18,6 +18,15 @@ from snowflake.snowpark.column import _to_col_if_str, _to_col_if_lit
 if not hasattr(F,"___extended"):
     F.___extended = True
 
+    def pairwise(iterable):
+        while len(iterable):
+            a = iterable.pop(0)
+            if len(iterable):
+                b = iterable.pop(0)
+            else:
+                b = None
+            yield (a,b)
+
     def regexp_extract(value:ColumnOrLiteralStr,regexp:ColumnOrLiteralStr,idx:int) -> Column:
         """
         Extract a specific group matched by a regex, from the specified string column. 
@@ -55,14 +64,12 @@ if not hasattr(F,"___extended"):
         """
         from snowflake.snowpark.functions import col,lit, object_construct
         col_list = []
-        if isinstance(col_names, tuple):
-            col_names = list(col_names[0])
-        if isinstance(c, str):
-            col_list.append(lit(c))
-            col_list.append(col(c))
-        else:
-            col_list.append(lit(str(c._expression).replace("\"",'')))
-            col_list.append(c)
+        for name, value in pairwise(list(col_names)):
+            if isinstance(name, str):
+                col_list.append(lit(name))
+            else:
+                col_list.append(name)
+            col_list.append(value)
         return object_construct(*col_list)
 
 
