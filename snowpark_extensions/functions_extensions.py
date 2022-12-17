@@ -26,6 +26,16 @@ if not hasattr(F,"___extended"):
             else:
                 b = None
             yield (a,b)
+    
+    def flatten_col_list(obj):
+        if isinstance(obj, str) or isinstance(obj, Column):
+            return [obj]
+        elif hasattr(obj, '__iter__'):
+            acc = []
+            for innerObj in obj:
+                acc = acc + flatten_col_list(innerObj)
+            return acc
+
 
     def regexp_extract(value:ColumnOrLiteralStr,regexp:ColumnOrLiteralStr,idx:int) -> Column:
         """
@@ -64,7 +74,9 @@ if not hasattr(F,"___extended"):
         """
         from snowflake.snowpark.functions import col,lit, object_construct
         col_list = []
-        for name, value in pairwise(list(col_names)):
+        # flatten any iterables, to process them in pairs
+        col_names = flatten_col_list(col_names)
+        for name, value in pairwise(col_names):
             if isinstance(name, str):
                 col_list.append(lit(name))
             else:

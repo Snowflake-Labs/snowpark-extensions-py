@@ -1,6 +1,9 @@
 from snowflake.snowpark import DataFrame, Row, DataFrameNaFunctions
 from snowflake.snowpark.functions import col, lit, udtf, regexp_replace
 from snowflake.snowpark import functions as F
+from snowflake.snowpark.dataframe import _generate_prefix
+from snowflake.snowpark.functions import table_function
+
 import pandas as pd
 import numpy as np
 from snowpark_extensions.utils import map_to_python_type, schema_str_to_schema
@@ -89,21 +92,74 @@ if not hasattr(DataFrame,"___extended"):
 
     # EXPLODE HELPERS
     class Explode:
-        def __init__(self,expr):
+        def __init__(self,expr,map=False,outer=False):
+            """ Right not it must be explictly stated if the value is a map. By default it is assumed it is not"""
             self.expr = expr
+            self.map = map
+            self.outer = outer
+        def gen_unique_name(self):
+            return _generate_prefix("col")
+        def gen_unique_value_name(self,idx):
+            base_name = "value" if self.map else "col"
+            if idx == 0:
+                # first column will be just "col" we will add a suffix for the rest
+                return base_name
+            else:
+                return f"{base_name}_{idx}"
+        def gen_unique_key_name(self,idx):
+            if idx == 0:
+                # first column will be just "col" we will add a suffix for the rest
+                return "key"
+            else:
+                return f"key_{idx}"
 
-    def explode(expr):
-        return Explode(expr)
+    def explode(expr,outer=False,map=False):
+        return Explode(expr,map,outer)
+
+    def explode_outer(expr,map=False):
+        return Explode(expr,map,True)
 
     F.explode = explode
+    F.explode_outer = explode_outer
 
+    flatten = table_function("flatten")
     DataFrame.oldwithColumn = DataFrame.withColumn
     def withColumnExtended(self,colname,expr):
         if isinstance(expr, Explode):
-            return self.join_table_function('flatten',date_range_udf(col("epoch_min"), col("epoch_max"))).drop(["SEQ","KEY","PATH","INDEX","THIS"]).rename("VALUE",colname)
+            return self.join_table_function(flatten(input=expr.expr,outer=lit(expr.outer)).alias("SEQ","KEY","PATH","INDEX",colname,"THIS")).drop(["SEQ","KEY","PATH","INDEX","THIS"])
         else:
             return self.oldwithColumn(colname,expr)
     DataFrame.withColumn = withColumnExtended
+
+    oldSelect = DataFrame.select
+
+    def selectExtended(self,*cols):
+        if any(isinstance(x, Explode) for x in cols):
+          new_cols = []
+          exploded_cols = []
+          for x in cols:
+            if isinstance(x, Explode):
+                value_col_name = x.gen_unique_value_name(len(exploded_cols))
+                key_col_name = None
+                if x.map:
+                    key_col_name = x.gen_unique_key_name(len(exploded_cols))
+                    new_cols.append(col(key_col_name))
+                new_cols.append(col(value_col_name))
+                exploded_cols.append((key_col_name, value_col_name, x))
+            else:
+                new_cols.append(x)
+          df = self
+          for key_col_name,value_col_name, explode_data in exploded_cols:
+             if key_col_name:
+
+                df = df.join_table_function(flatten(input=explode_data.expr,outer=lit(explode_data.outer)).alias("SEQ",key_col_name,"PATH","INDEX",value_col_name,"THIS")).drop(["SEQ","PATH","INDEX","THIS"])
+             else:
+                df = df.join_table_function(flatten(input=explode_data.expr,outer=lit(explode_data.outer)).alias("SEQ","KEY","PATH","INDEX",value_col_name,"THIS")).drop(["SEQ","KEY","PATH","INDEX","THIS"])
+          return df.select(*new_cols)
+        else:
+            return oldSelect(self,*cols)
+    
+    DataFrame.select = selectExtended
 
 
 import shortuuid
