@@ -17,9 +17,15 @@ def test_applyinpandas():
         return pdf.assign(V=(V - V.mean()) / V.std())
     df2 = normalize(df1)
     # schema can be an string or an StructType
-    df.group_by("ID").applyInPandas(
-        normalize, schema="id long, v double").show()
-    print("done")
+    res = df.group_by("ID").applyInPandas(
+        normalize, schema="id long, v double").orderBy("V").collect()
+    assert len(res)==5
+    assert str(res[0].V) == '-0.8320502943378437'
+    assert str(res[1].V) == '-0.7071067811865475'
+    assert str(res[2].V) == '-0.2773500981126146'
+    assert str(res[3].V) == '0.7071067811865475'
+    assert str(res[4].V) == '1.1094003924504583'
+
 
 def test_explode_with_map():
     from snowflake.snowpark import Session
@@ -111,8 +117,7 @@ def test_explode_with_array():
 
 
 def test_explode_outer_with_array():
-    from snowflake.snowpark import Session
-    import snowpark_extensions
+
     from snowflake.snowpark.functions import explode_outer
     session = Session.builder.appName('snowpark_extensions_unittest').from_snowsql().getOrCreate()
     schema = StructType([StructField("id", IntegerType()), StructField("an_array", ArrayType()), StructField("a_map", MapType()) ])
@@ -141,3 +146,7 @@ def test_explode_outer_with_array():
     assert results[1].ID == 1 and results[1].COL == '"bar"'
     assert results[2].ID == 2 and results[2].COL == None
     assert results[3].ID == 3 and results[3].COL == None
+
+def test_array_zip():
+    session = Session.builder.from_snowsql().getOrCreate()
+    df = session.createDataFrame([(([1, 2, 3], [2, 3, 4])),([5, 5, 7], [6])], ['vals1', 'vals2'])

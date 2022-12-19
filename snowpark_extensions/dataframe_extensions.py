@@ -3,7 +3,7 @@ from snowflake.snowpark.functions import col, lit, udtf, regexp_replace
 from snowflake.snowpark import functions as F
 from snowflake.snowpark.dataframe import _generate_prefix
 from snowflake.snowpark.functions import table_function
-
+from snowflake.snowpark.column import _to_col_if_str, _to_col_if_lit
 import pandas as pd
 import numpy as np
 from snowpark_extensions.utils import map_to_python_type, schema_str_to_schema
@@ -88,30 +88,109 @@ if not hasattr(DataFrame,"___extended"):
         else:
             return self.__oldreplace(to_replace,value,subset)
     
-    DataFrameNaFunctions.replace = extended_replace    
+    DataFrameNaFunctions.replace = extended_replace
 
-    # EXPLODE HELPERS
-    class Explode:
+    def has_null(col):
+        return F.array_contains(F.sql_expr("parse_json('null')"),col) | F.coalesce(F.array_contains(lit(None) ,col),lit(False))
+
+    # SPECIAL COLUMN HELPERS
+    class SpecialColumn():
+        def _is_special_column():
+            return True
+        def gen_unique_value_name(self,idx,base_name):
+            return base_name if idx == 0 else f"{base_name}_{idx}"
+        def add_columns(self,new_cols, idx):
+           pass 
+        def expand(self,df):
+            pass
+    
+    class ArraySort(SpecialColumn):
+        def __init__(self,array_col):
+            self.array_col = array_col
+        def add_columns(self, new_cols, idx):
+            self.value_col_name = self.gen_unique_value_name(idx,"sorted")
+            new_cols.append(self.value_col_name)
+        def expand(self,df):
+            array_col = _to_col_if_str(self.array_col, "array_sort")
+            df = df.with_column("__IDX",F.seq8())
+            flatten = table_function("flatten")
+            df_array_sorted=df.join_table_function(flatten(input=array_col,outer=lit(True))).group_by("__IDX").agg(F.sql_expr("array_agg(value) within group(order by value)").alias("sorted"))
+            df = df.join(df_array_sorted,on="__IDX").drop("__IDX")
+            return df
+     
+    class ArrayFlatten(SpecialColumn):
+        def __init__(self,flatten_col,remove_arrays_when_there_is_a_null):
+            self.flatten_col = flatten_col
+            self.remove_arrays_when_there_is_a_null = remove_arrays_when_there_is_a_null
+        def add_columns(self, new_cols, idx):
+            self.value_col_name = self.gen_unique_value_name(idx,"flatten")
+            new_cols.append(self.value_col_name)
+        def expand(self,df):
+            array_col = _to_col_if_str(self.flatten_col, "flatten")
+            flatten = table_function("flatten")
+            df=df.join_table_function(flatten(array_col).alias("__SEQ_FLATTEN","KEY","PATH","__INDEX_FLATTEN","__FLATTEN_VALUE","THIS"))
+            df = df.drop("KEY","PATH","THIS")
+            if self.remove_arrays_when_there_is_a_null:
+                df_with_has_null=df.withColumn("__HAS_NULL",has_null(array_col))
+                df_flattened= df_with_has_null.group_by(col("__SEQ_FLATTEN")).agg(F.call_builtin("BOOLOR_AGG",col("__HAS_NULL")).alias("__HAS_NULL"),F.call_builtin("ARRAY_UNION_AGG",col("__FLATTEN_VALUE")).alias("__FLATTEN_VALUE"))
+                df_flattened=df_flattened.with_column("__FLATTEN_VALUE",F.iff("__HAS_NULL", lit(None), col("__FLATTEN_VALUE"))).drop("__HAS_NULL")
+                df=df.drop("__FLATTEN_VALUE").where(col("__INDEX_FLATTEN")==0).join(df_flattened,on="__SEQ_FLATTEN").drop("__SEQ_FLATTEN","__INDEX_FLATTEN").rename("__FLATTEN_VALUE",self.value_col_name)
+                return df
+            else:
+                df_flattened= df.group_by(col("__SEQ_FLATTEN")).agg(F.call_builtin("ARRAY_UNION_AGG",col("__FLATTEN_VALUE")).alias("__FLATTEN_VALUE"))
+                df=df.drop("__FLATTEN_VALUE").where(col("__INDEX_FLATTEN")==0).join(df_flattened,on="__SEQ_FLATTEN").drop("__SEQ_FLATTEN","__INDEX_FLATTEN").rename("__FLATTEN_VALUE",self.value_col_name)
+                return df
+
+    class ArrayZip(SpecialColumn):
+        def __init__(self,left,*right):
+            self.left_col  = left
+            self.right_cols = right
+            #self.right_col = right
+        def add_columns(self,new_cols,idx):
+            self.value_col_name = self.gen_unique_value_name(idx,"zipped")
+            new_cols.append(self.value_col_name)
+        def expand(self,df):
+            flatten = table_function("flatten")
+            left = df.join_table_function(flatten(self.left_col)\
+            .alias("SEQ","KEY","PATH","INDEX","__VALUE_0","THIS")) \
+            .orderBy("SEQ","INDEX") \
+            .with_column("__IDX",F.seq8()) \
+            .drop("SEQ","KEY","PATH","INDEX","THIS")
+            vals=["__VALUE_0"]
+            for right_col in self.right_cols:
+                prior=len(vals)-1
+                next=len(vals)
+                left_col_name=f"__VALUE_{prior}"
+                right_col_name=f"__VALUE_{next}"
+                vals.append(right_col_name)
+                right=df.select(right_col).join_table_function(flatten(right_col)\
+                    .alias("SEQ","KEY","PATH","INDEX",right_col_name,"THIS")) \
+                    .orderBy("SEQ","INDEX") \
+                    .select(F.seq8().alias("__IDX"),col(right_col_name))
+                left=left.join(right,on="__IDX",how="left",lsuffix="___LEFT")
+            zipped = left.with_column("ZIPPED",F.array_construct(*vals))\
+                    .drop(*vals,"__IDX")
+            return zipped
+        
+    class Explode(SpecialColumn):
         def __init__(self,expr,map=False,outer=False):
             """ Right not it must be explictly stated if the value is a map. By default it is assumed it is not"""
             self.expr = expr
             self.map = map
             self.outer = outer
-        def gen_unique_name(self):
-            return _generate_prefix("col")
-        def gen_unique_value_name(self,idx):
-            base_name = "value" if self.map else "col"
-            if idx == 0:
-                # first column will be just "col" we will add a suffix for the rest
-                return base_name
+        def add_columns(self,new_cols,idx):
+            self.value_col_name = self.gen_unique_value_name(idx,"value" if self.map else "col")
+            self.key_col_name = None
+            if self.map:
+                self.key_col_name = self.gen_unique_value_name(idx,"key")
+                new_cols.append(self.key_col_name)
+            new_cols.append(self.value_col_name)
+        def expand(self,df):
+            if self.key_col_name:
+                df = df.join_table_function(flatten(input=self.expr,outer=lit(self.outer)).alias("SEQ",self.key_col_name,"PATH","INDEX",self.value_col_name,"THIS")).drop(["SEQ","PATH","INDEX","THIS"])
             else:
-                return f"{base_name}_{idx}"
-        def gen_unique_key_name(self,idx):
-            if idx == 0:
-                # first column will be just "col" we will add a suffix for the rest
-                return "key"
-            else:
-                return f"key_{idx}"
+                df = df.join_table_function(flatten(input=self.expr,outer=lit(self.outer)).alias("SEQ","KEY","PATH","INDEX",self.value_col_name,"THIS")).drop(["SEQ","KEY","PATH","INDEX","THIS"])
+            return df
 
     def explode(expr,outer=False,map=False):
         return Explode(expr,map,outer)
@@ -121,41 +200,46 @@ if not hasattr(DataFrame,"___extended"):
 
     F.explode = explode
     F.explode_outer = explode_outer
+    def _arrays_zip(left,*right):
+        return ArrayZip(left,*right)
+    def _arrays_flatten(array_col,remove_arrays_when_there_is_a_null=True):
+        return ArrayFlatten(array_col,remove_arrays_when_there_is_a_null)
+    def _array_sort(array_col):
+        return ArraySort(array_col)
 
+    F.arrays_zip = _arrays_zip
+    F.flatten    = _arrays_flatten
+    F.array_sort = _array_sort
     flatten = table_function("flatten")
-    DataFrame.oldwithColumn = DataFrame.withColumn
+    _oldwithColumn = DataFrame.withColumn
     def withColumnExtended(self,colname,expr):
-        if isinstance(expr, Explode):
-            return self.join_table_function(flatten(input=expr.expr,outer=lit(expr.outer)).alias("SEQ","KEY","PATH","INDEX",colname,"THIS")).drop(["SEQ","KEY","PATH","INDEX","THIS"])
+        if isinstance(expr, SpecialColumn):
+            new_cols = []
+            expr.add_columns(new_cols, 0)
+            df=expr.expand(self)
+            return self.withColumns(df,new_cols,[col(x) for x in new_cols])
         else:
-            return self.oldwithColumn(colname,expr)
+            return _oldwithColumn(self,colname,expr)
+        
     DataFrame.withColumn = withColumnExtended
 
     oldSelect = DataFrame.select
 
     def selectExtended(self,*cols):
-        if any(isinstance(x, Explode) for x in cols):
+        ## EXPLODE
+        if any(isinstance(x, SpecialColumn) for x in cols):
           new_cols = []
-          exploded_cols = []
+          extended_cols = []
           for x in cols:
-            if isinstance(x, Explode):
-                value_col_name = x.gen_unique_value_name(len(exploded_cols))
-                key_col_name = None
-                if x.map:
-                    key_col_name = x.gen_unique_key_name(len(exploded_cols))
-                    new_cols.append(col(key_col_name))
-                new_cols.append(col(value_col_name))
-                exploded_cols.append((key_col_name, value_col_name, x))
+            if isinstance(x, SpecialColumn):
+                x.add_columns(new_cols,len(extended_cols))
+                extended_cols.append(x)
             else:
                 new_cols.append(x)
           df = self
-          for key_col_name,value_col_name, explode_data in exploded_cols:
-             if key_col_name:
-
-                df = df.join_table_function(flatten(input=explode_data.expr,outer=lit(explode_data.outer)).alias("SEQ",key_col_name,"PATH","INDEX",value_col_name,"THIS")).drop(["SEQ","PATH","INDEX","THIS"])
-             else:
-                df = df.join_table_function(flatten(input=explode_data.expr,outer=lit(explode_data.outer)).alias("SEQ","KEY","PATH","INDEX",value_col_name,"THIS")).drop(["SEQ","KEY","PATH","INDEX","THIS"])
-          return df.select(*new_cols)
+          for extended_col in extended_cols:
+            df = extended_col.expand(df)
+          return oldSelect(df,*[_to_col_if_str(x,"extended") for x in new_cols])
         else:
             return oldSelect(self,*cols)
     
