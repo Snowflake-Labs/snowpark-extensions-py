@@ -43,3 +43,17 @@ Fixing issue with requirements.txt
 Version 0.0.9
 -------------
 Fixing bug in create_map
+
+Version 0.0.10
+-------------
+Adding test_cases
+Adding support for:
+* arrays_zip
+* applyInPandas
+* explode for arrays and dicts
+* explode_outer for arrays and dicts
+* adding array alias for array_construct
+* F.arrays_sort
+* F.array_distinct
+* F.flatten for arrays
+* F.asc, F.desc, F.asc_nulls_first, F.desc_nulls_first

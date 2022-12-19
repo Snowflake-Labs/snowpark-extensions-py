@@ -2,9 +2,6 @@
 
 Snowpark by itself is a powerful library, but still some utility functions can always help.
 
-
-
-
 # Installation
 
 We recommended installing using [PYPI](https://pypi.org/)
@@ -203,10 +200,17 @@ df.group_by("ID").applyInPandas(
 | functions.from_unixtimestamp | can be used to convert UNIX time to Snowflake timestamp                             |
 | functions.format_number      | formats numbers using the specified number of decimal places                        |
 | functions.reverse            | returns a reversed string                                                           |
-| functions.explode            | returns a new row for each element in the given array                               |
+| functions.explode            | returns a new row for each element in the given array
+| functions.explode_outer      | returns a new row for each element in the given array or map. Unlike explode, if the array/map is null or empty then null is produced    |
+| functions.arrays_zip         | returns a merged array of arrays |
+| functions.array_sort         | sorts the input array in ascending order. The elements of the input array must be orderable. Null elements will be placed at the end of the returned array.
+| functions.array_distinct     | removes duplicate values from the array.
 | functions.date_add           | returns the date that is n days days after                                          |
 | functions.date_sub           | returns the date that is n days before                                              |
-| functions.regexp_extract     | Extract a specific group matched by a regex, from the specified string column.      |
+| functions.regexp_extract     | extract a specific group matched by a regex, from the specified string column.      |
+| functions.asc                | returns a sort expression based on the ascending order of the given column name.    |
+| functions.desc               | returns a sort expression based on the descending order of the given column name.    |
+| functions.flatten            | creates a single array from an array of arrays
 
 
 ### Examples:
@@ -225,39 +229,82 @@ df.select(F.array_sort(df.data)).show()
 ```
 
 ```
--------------------------------------------
-|"ARRAY_SORT(""DATA"", TRUE :: BOOLEAN)"  |
--------------------------------------------
-|[                                        |
-|  2,                                     |
-|  1,                                     |
-|  3,                                     |
-|  null                                   |
-|]                                        |
-|[]                                       |
-|[                                        |
-|  1                                      |
-|]                                        |
--------------------------------------------
+------------
+|"SORTED"  |
+------------
+|[         |
+|  1,      |
+|  2,      |
+|  3,      |
+|  null    |
+|]         |
+|[         |
+|  1       |
+|]         |
+|[]        |
+------------
 ```
-df.select(F.array_sort(df.data, asc=False)).show()
 
+### explode and explode_outer
+
+Snowflake builtin [FLATTEN](https://docs.snowflake.com/en/sql-reference/functions/flatten.html) provide the same functionality, but the explode syntax can be somethings easier. This helper provide the same syntax. 
+> NOTE: explode can be used with arrays and maps/structs. In this helper at least for now you need to specify if you want to process this as array or map. We provide explode and explode outer our you can just use explode with the outer=True flag.
+
+```python
+from snowflake.snowpark import Session
+import snowpark_extensions
+from snowflake.snowpark.functions import explode
+session = Session.builder.appName('snowpark_extensions_unittest').from_snowsql().getOrCreate()
+schema = StructType([StructField("id", IntegerType()), StructField("an_array", ArrayType()), StructField("a_map", MapType()) ])
+sf_df = session.createDataFrame([(1, ["foo", "bar"], {"x": 1.0}), (2, [], {}), (3, None, None)],schema)
 ```
---------------------------------------------
-|"ARRAY_SORT(""DATA"", FALSE :: BOOLEAN)"  |
---------------------------------------------
-|[                                         |
-|  1                                       |
-|]                                         |
-|[]                                        |
-|[                                         |
-|  null,                                   |
-|  2,                                      |
-|  1,                                      |
-|  3                                       |
-|]                                         |
---------------------------------------------
 ```
+#  +---+----------+----------+                                                     
+# | id|  an_array|     a_map|
+# +---+----------+----------+
+# |  1|[foo, bar]|{x -> 1.0}|
+# |  2|        []|        {}|
+# |  3|      null|      null|
+# +---+----------+----------+
+```
+```python
+sf_df.select("id", "an_array", explode("an_array")).show()
+```
+```
+# +---+----------+---+
+# | id|  an_array|col|
+# +---+----------+---+
+# |  1|[foo, bar]|foo|
+# |  1|[foo, bar]|bar|
+# +---+----------+---+
+```
+```python
+sf_df.select("id", "an_array", explode_outer("an_array")).show()
+```
+```
+# +---+----------+----+
+# | id|  an_array| COL|
+# +---+----------+----+
+# |  1|[foo, bar]| foo|
+# |  1|[foo, bar]| bar|
+# |  2|        []|    |
+# |  3|          |    |
+# +---+----------+----+
+```
+
+For a map use
+```
+results = sf_df.select("id", "an_array", explode_outer("an_array",map=True))
+```
+# +---+----------+----+-----+
+# | id|  an_array| KEY| VALUE|
+# +---+----------+----+-----+
+# |  1|[foo, bar]|   x|   1 |
+# |  2|        []|    |     |
+# |  3|          |    |     |
+# +---+----------+----+-----+
+```
+
 
 ### regexp_extract
 

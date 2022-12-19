@@ -26,6 +26,16 @@ if not hasattr(F,"___extended"):
             else:
                 b = None
             yield (a,b)
+    
+    def flatten_col_list(obj):
+        if isinstance(obj, str) or isinstance(obj, Column):
+            return [obj]
+        elif hasattr(obj, '__iter__'):
+            acc = []
+            for innerObj in obj:
+                acc = acc + flatten_col_list(innerObj)
+            return acc
+
 
     def regexp_extract(value:ColumnOrLiteralStr,regexp:ColumnOrLiteralStr,idx:int) -> Column:
         """
@@ -43,18 +53,25 @@ if not hasattr(F,"___extended"):
         return call_builtin("DATE_PART","epoch_second",col)
 
     def from_unixtime(col):
+        col = _to_col_if_str(col,"from_unixtime")
         return F.to_timestamp(col).alias('ts')
 
     def format_number(col,d):
+        col = _to_col_if_str(col,"format_number")
         return F.to_varchar(col,'999,999,999,999,999.' + '0'*d)
 
     def reverse(col):
+        col = _to_col_if_str(col,"reverse")
         return F.call_builtin('reverse',col)
 
     def date_add(col,num_of_days):
+        col = _to_col_if_str(col,"date_add")
+        num_of_days=_to_col_if_str_or_int(num_of_days)
         return dateadd(lit('day'),col,num_of_days)
 
     def date_sub(col,num_of_days):
+        col = _to_col_if_str(col,"date_sub")
+        num_of_days=_to_col_if_str_or_int(num_of_days)
         return dateadd(lit('day'),col,-1 * num_of_days)
 
     def create_map(*col_names):
@@ -64,7 +81,9 @@ if not hasattr(F,"___extended"):
         """
         from snowflake.snowpark.functions import col,lit, object_construct
         col_list = []
-        for name, value in pairwise(list(col_names)):
+        # flatten any iterables, to process them in pairs
+        col_names = flatten_col_list(col_names)
+        for name, value in pairwise(col_names):
             if isinstance(name, str):
                 col_list.append(lit(name))
             else:
@@ -72,31 +91,17 @@ if not hasattr(F,"___extended"):
             col_list.append(value)
         return object_construct(*col_list)
 
+    def array_distinct(col):
+        col = _to_col_if_str(col,"array_distinct")
+        return F.call_builtin('array_distinct',col)
 
 
-    array_sort_udf=None
-    def array_sort(array, asc: bool=True):
-        global array_sort_udf
-        if not array_sort_udf:
-            def _array_sort(array:list, asc: bool)->list:
-                def compare(item1, item2=None):
-                    if item1 is None:
-                        return 1
-                    elif item2 is None:
-                        return -1
-                    elif item1 < item2:
-                        return -1
-                    elif item1 > item2:
-                        return 1
-                    else:
-                        return 0
-                array.sort(key=compare,reverse=not asc)
-                return array
-            array_sort_udf = F.udf(_array_sort,return_type=ArrayType(),input_types=[ArrayType(),BooleanType()],name="array_sort",is_permanent=False,replace=True)
-        return array_sort_udf(array, F.lit(asc))
+    def _array(*cols):
+        return F.array_construct(*cols)
 
+    F.array = _array
+    F.array_distinct = array_distinct
     F.regexp_extract = regexp_extract
-    F.array_sort = array_sort
     F.create_map = create_map
     F.unix_timestamp = unix_timestamp
     F.from_unixtime = from_unixtime
@@ -104,3 +109,7 @@ if not hasattr(F,"___extended"):
     F.reverse = reverse
     F.date_add = date_add
     F.date_sub = date_sub
+    F.asc  = lambda col: _to_col_if_str(col, "asc").asc()
+    F.desc = lambda col: _to_col_if_str(col, "desc").desc()
+    F.asc_nulls_first = lambda col: _to_col_if_str(col, "asc_nulls_first").asc()
+    F.desc_nulls_first = lambda col: _to_col_if_str(col, "desc_nulls_first").asc()
