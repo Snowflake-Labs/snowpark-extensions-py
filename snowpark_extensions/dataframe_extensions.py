@@ -1,4 +1,4 @@
-from snowflake.snowpark import DataFrame, Row, DataFrameNaFunctions
+from snowflake.snowpark import DataFrame, Row, DataFrameNaFunctions, Column
 from snowflake.snowpark.functions import col, lit, udtf, regexp_replace
 from snowflake.snowpark import functions as F
 from snowflake.snowpark.dataframe import _generate_prefix
@@ -9,6 +9,7 @@ import numpy as np
 from snowpark_extensions.utils import map_to_python_type, schema_str_to_schema
 import shortuuid
 from snowflake.snowpark.types import StructType,StructField
+from snowflake.snowpark._internal.analyzer.expression import Expression
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -94,37 +95,95 @@ if not hasattr(DataFrame,"___extended"):
         return F.array_contains(F.sql_expr("parse_json('null')"),col) | F.coalesce(F.array_contains(lit(None) ,col),lit(False))
 
     # SPECIAL COLUMN HELPERS
-    class SpecialColumn():
-        def _is_special_column():
-            return True
+
+    
+    class SpecialColumn(Column):
+        def __init__(self,special_column_base_name="special_column"):
+            self.special_col_name = _generate_prefix(special_column_base_name)
+            super().__init__(self.special_col_name)
+            self._is_special_column = True
+            self._expression._is_special_column = True
+            sc = self 
+            def _expand(df):
+                nonlocal sc
+                return sc.expand(df)
+            self._expression.expand = _expand
+            self._special_column_dependencies=[]
+            import uuid
+            self._hash = hash(str(uuid.uuid4()))
+        def __hash__(self):
+            return self._hash
+        def __eq__(self, other):
+            return self._hash == other._hash
         def gen_unique_value_name(self,idx,base_name):
             return base_name if idx == 0 else f"{base_name}_{idx}"
-        def add_columns(self,new_cols, idx):
+        def add_columns(self,new_cols, alias:str=None):
            pass 
         def expand(self,df):
             pass
+        @classmethod
+        def extract_specials(cls,c):
+            if isinstance(c, Expression):
+                if c.children:
+                    for child in c.children:
+                        is_child_special = cls.has_special_column(child)
+                        if is_child_special:
+                           return True
+            if hasattr(c,"_is_special_column"):
+                return True
+            if hasattr(c,"_expression") and c._expression and c._expression.children:
+                  for child in c._expression.children:
+                        is_child_special = cls.has_special_column(child)
+                        if is_child_special:
+                           return True
+        @classmethod
+        def any_specials(cls,*cols):
+            for c in cols:
+                for special in cls.specials(c):
+                    return True
+        @classmethod
+        def specials(cls,c):
+            if isinstance(c, Expression):
+                if c.children:
+                    for child in c.children:
+                        for special in cls.specials(child):
+                            yield special
+            elif hasattr(c,"_expression") and c._expression.children:
+                for child in c._expression.children:
+                        for special in cls.specials(child):
+                            yield special
+            if hasattr(c,"_special_column_dependencies") and c._special_column_dependencies:
+                     for dependency in c._special_column_dependencies:
+                        for special in cls.specials(dependency):
+                            yield special
+            if hasattr(c,"_is_special_column"):
+                yield c
+
     
     class ArraySort(SpecialColumn):
         def __init__(self,array_col):
+            super().__init__("sorted")
             self.array_col = array_col
-        def add_columns(self, new_cols, idx):
-            self.value_col_name = self.gen_unique_value_name(idx,"sorted")
-            new_cols.append(self.value_col_name)
+            self._special_column_dependencies = [array_col]
+        def add_columns(self, new_cols, alias:str = None):
+            # add itself as column
+            new_cols.append(self.alias(alias) if alias else self)
         def expand(self,df):
             array_col = _to_col_if_str(self.array_col, "array_sort")
             df = df.with_column("__IDX",F.seq8())
             flatten = table_function("flatten")
-            df_array_sorted=df.join_table_function(flatten(input=array_col,outer=lit(True))).group_by("__IDX").agg(F.sql_expr("array_agg(value) within group(order by value)").alias("sorted"))
+            df_array_sorted=df.join_table_function(flatten(input=array_col,outer=lit(True))).group_by("__IDX").agg(F.sql_expr("array_agg(value) within group(order by value)").alias(self.special_col_name))
             df = df.join(df_array_sorted,on="__IDX").drop("__IDX")
             return df
      
     class ArrayFlatten(SpecialColumn):
         def __init__(self,flatten_col,remove_arrays_when_there_is_a_null):
+            super().__init__("flatten")
             self.flatten_col = flatten_col
             self.remove_arrays_when_there_is_a_null = remove_arrays_when_there_is_a_null
-        def add_columns(self, new_cols, idx):
-            self.value_col_name = self.gen_unique_value_name(idx,"flatten")
-            new_cols.append(self.value_col_name)
+            self._special_column_dependencies = [flatten_col]
+        def add_columns(self, new_cols, alias:str = None):
+            new_cols.append(self.alias(alias) if alias else self)
         def expand(self,df):
             array_col = _to_col_if_str(self.flatten_col, "flatten")
             flatten = table_function("flatten")
@@ -134,28 +193,29 @@ if not hasattr(DataFrame,"___extended"):
                 df_with_has_null=df.withColumn("__HAS_NULL",has_null(array_col))
                 df_flattened= df_with_has_null.group_by(col("__SEQ_FLATTEN")).agg(F.call_builtin("BOOLOR_AGG",col("__HAS_NULL")).alias("__HAS_NULL"),F.call_builtin("ARRAY_UNION_AGG",col("__FLATTEN_VALUE")).alias("__FLATTEN_VALUE"))
                 df_flattened=df_flattened.with_column("__FLATTEN_VALUE",F.iff("__HAS_NULL", lit(None), col("__FLATTEN_VALUE"))).drop("__HAS_NULL")
-                df=df.drop("__FLATTEN_VALUE").where(col("__INDEX_FLATTEN")==0).join(df_flattened,on="__SEQ_FLATTEN").drop("__SEQ_FLATTEN","__INDEX_FLATTEN").rename("__FLATTEN_VALUE",self.value_col_name)
+                df=df.drop("__FLATTEN_VALUE").where(col("__INDEX_FLATTEN")==0).join(df_flattened,on="__SEQ_FLATTEN").drop("__SEQ_FLATTEN","__INDEX_FLATTEN").rename("__FLATTEN_VALUE",self.special_col_name)
                 return df
             else:
                 df_flattened= df.group_by(col("__SEQ_FLATTEN")).agg(F.call_builtin("ARRAY_UNION_AGG",col("__FLATTEN_VALUE")).alias("__FLATTEN_VALUE"))
-                df=df.drop("__FLATTEN_VALUE").where(col("__INDEX_FLATTEN")==0).join(df_flattened,on="__SEQ_FLATTEN").drop("__SEQ_FLATTEN","__INDEX_FLATTEN").rename("__FLATTEN_VALUE",self.value_col_name)
+                df=df.drop("__FLATTEN_VALUE").where(col("__INDEX_FLATTEN")==0).join(df_flattened,on="__SEQ_FLATTEN").drop("__SEQ_FLATTEN","__INDEX_FLATTEN").rename("__FLATTEN_VALUE",self.special_col_name)
                 return df
 
     class ArrayZip(SpecialColumn):
         def __init__(self,left,*right):
+            super().__init__("zipped")
             self.left_col  = left
             self.right_cols = right
-            #self.right_col = right
-        def add_columns(self,new_cols,idx):
-            self.value_col_name = self.gen_unique_value_name(idx,"zipped")
-            new_cols.append(self.value_col_name)
+            self._special_column_dependencies = [left,*right]
+        def add_columns(self,new_cols,alias:str = None):
+            new_cols.append(self.alias(alias) if alias else self)
         def expand(self,df):
+            df_with_idx = df.with_column("_IDX",F.seq8())
             flatten = table_function("flatten")
-            left = df.join_table_function(flatten(self.left_col)\
-            .alias("SEQ","KEY","PATH","INDEX","__VALUE_0","THIS")) \
-            .orderBy("SEQ","INDEX") \
-            .with_column("__IDX",F.seq8()) \
-            .drop("SEQ","KEY","PATH","INDEX","THIS")
+            right = df_with_idx.select("_IDX",self.left_col)\
+                .join_table_function(flatten(input=self.left_col,outer=lit(True))\
+                .alias("SEQ","KEY","PATH","INDEX","__VALUE_0","THIS")) \
+                .with_column("INDEX",F.coalesce(col("INDEX"),lit(0))) \
+                .drop(self.left_col,"SEQ","KEY","PATH","THIS")
             vals=["__VALUE_0"]
             for right_col in self.right_cols:
                 prior=len(vals)-1
@@ -163,28 +223,42 @@ if not hasattr(DataFrame,"___extended"):
                 left_col_name=f"__VALUE_{prior}"
                 right_col_name=f"__VALUE_{next}"
                 vals.append(right_col_name)
-                right=df.select(right_col).join_table_function(flatten(right_col)\
+                new_right=df_with_idx.select("_IDX",right_col).join_table_function(flatten(input=right_col,outer=lit(True))\
                     .alias("SEQ","KEY","PATH","INDEX",right_col_name,"THIS")) \
-                    .orderBy("SEQ","INDEX") \
-                    .select(F.seq8().alias("__IDX"),col(right_col_name))
-                left=left.join(right,on="__IDX",how="left",lsuffix="___LEFT")
-            zipped = left.with_column("ZIPPED",F.array_construct(*vals))\
-                    .drop(*vals,"__IDX")
+                    .with_column("INDEX",F.coalesce(col("INDEX"),lit(0))) \
+                    .drop(right_col,"SEQ","KEY","PATH","THIS")
+                if right:
+                    right = right.join(new_right,on=["_IDX","INDEX"],how="left",lsuffix="___LEFT")
+                else:
+                    right = new_right
+            zipped = right.select("_IDX","INDEX",F.array_construct(*vals).alias("NGROUP"))
+            zipped.group_by("_IDX").agg(F.sql_expr("arrayagg(ngroup) within group (order by INDEX)"))
+            select 
+    _IDX, 
+    arrayagg(group) within group (order by INDEX)
+  from orders 
+  group by _IDX
+            zipped = right.order_by("INDEX").group_by("_IDX").agg(F.array_agg("$3"))
+
+            zipped = df_with_idx.with_column(self.special_col_name,F.array_construct(*vals))\
+                    .drop(*vals,"_IDX")
             return zipped
         
     class Explode(SpecialColumn):
         def __init__(self,expr,map=False,outer=False):
             """ Right not it must be explictly stated if the value is a map. By default it is assumed it is not"""
+            super().__init__("value" if map else "col")
             self.expr = expr
             self.map = map
             self.outer = outer
-        def add_columns(self,new_cols,idx):
-            self.value_col_name = self.gen_unique_value_name(idx,"value" if self.map else "col")
+            self._special_column_dependencies = [expr]
+        def add_columns(self,new_cols,alias:str = None):
+            self.value_col_name = self.special_col_name
             self.key_col_name = None
             if self.map:
-                self.key_col_name = self.gen_unique_value_name(idx,"key")
-                new_cols.append(self.key_col_name)
-            new_cols.append(self.value_col_name)
+                self.key_col_name = col(_generate_prefix("key"))
+                new_cols.append(self.key_col_name.alias(alias + "_1") if alias else self.key_col_name)
+            new_cols.append(self.alias(alias) if alias else self)
         def expand(self,df):
             if self.key_col_name:
                 df = df.join_table_function(flatten(input=self.expr,outer=lit(self.outer)).alias("SEQ",self.key_col_name,"PATH","INDEX",self.value_col_name,"THIS")).drop(["SEQ","PATH","INDEX","THIS"])
@@ -215,9 +289,12 @@ if not hasattr(DataFrame,"___extended"):
     def withColumnExtended(self,colname,expr):
         if isinstance(expr, SpecialColumn):
             new_cols = []
-            expr.add_columns(new_cols, 0)
-            df=expr.expand(self)
-            return self.withColumns(df,new_cols,[col(x) for x in new_cols])
+            expr.add_columns(new_cols, alias=colname)
+            df = self
+            for s in SpecialColumn.specials(expr):
+                df=s.expand(df)
+            return df.select(*self.columns,*new_cols)
+            #return self.with_columns(df,new_cols,[col(x) for x in new_cols])
         else:
             return _oldwithColumn(self,colname,expr)
         
@@ -227,18 +304,24 @@ if not hasattr(DataFrame,"___extended"):
 
     def selectExtended(self,*cols):
         ## EXPLODE
-        if any(isinstance(x, SpecialColumn) for x in cols):
+        if SpecialColumn.any_specials(*cols):
           new_cols = []
           extended_cols = []
+          # extend only the main cols
           for x in cols:
             if isinstance(x, SpecialColumn):
-                x.add_columns(new_cols,len(extended_cols))
+                x.add_columns(new_cols)
                 extended_cols.append(x)
             else:
                 new_cols.append(x)
           df = self
-          for extended_col in extended_cols:
-            df = extended_col.expand(df)
+          # but expand all tables, because there could be several joins
+          already = set()
+          for c in cols:
+            for extended_col in SpecialColumn.specials(c):
+                if not extended_col in already:
+                    already.add(extended_col)
+                    df = extended_col.expand(df)
           return oldSelect(df,*[_to_col_if_str(x,"extended") for x in new_cols])
         else:
             return oldSelect(self,*cols)

@@ -39,7 +39,7 @@ def test_array_distinct():
 def test_array_flatten():
     session = Session.builder.from_snowsql().getOrCreate()
     df = session.createDataFrame([([[1, 2, 3], [4, 5], [6]],1), ([[1],None, [4, 5]],2)], ['data','pos'])
-    res=df.select(F.flatten(df.data))
+    res=df.select(F.flatten(df.data).alias("FLATTEN"))
     res=res.collect()
     assert len(res)==2
     array1 = eval(res[0]['FLATTEN'])

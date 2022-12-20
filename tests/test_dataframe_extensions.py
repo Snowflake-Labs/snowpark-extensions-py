@@ -3,6 +3,7 @@ from snowflake.snowpark import Session, Row
 import snowpark_extensions
 import snowflake.snowpark
 from snowflake.snowpark.types import *
+from snowflake.snowpark import functions as F
 
 
 def test_applyinpandas():
@@ -149,4 +150,27 @@ def test_explode_outer_with_array():
 
 def test_array_zip():
     session = Session.builder.from_snowsql().getOrCreate()
-    df = session.createDataFrame([(([1, 2, 3], [2, 3, 4])),([5, 5, 7], [6])], ['vals1', 'vals2'])
+    df = session.createDataFrame([([2, None, 3],),([1],),([],)], ['data'])
+    # +---------------+
+    # |           data|
+    # +---------------+
+    # |[2, 1, null, 3]|
+    # |            [1]|
+    # |             []|
+    # +---------------+
+    df = df.withColumn("FIELDS", F.arrays_zip("data","data"))
+    # +------------+------------------------------+
+    # |data        |FIELDS                        |
+    # +------------+------------------------------+
+    # |[2, null, 3]|[{2, 2}, {null, null}, {3, 3}]|
+    # |[1]         |[{1, 1}]                      |
+    # |[]          |[]                            |
+    # +------------+------------------------------+
+    res = df.collect()
+    assert len(res)==3
+    res1 = eval(res[0][1].replace("null","None"))
+    res2 = eval(res[0][2].replace("null","None"))
+    res3 = eval(res[0][3].replace("null","None"))
+    assert res1==[[2,2],[None,None],[3,3]]
+    assert res2==[[1,1]]
+    assert res3==[]
