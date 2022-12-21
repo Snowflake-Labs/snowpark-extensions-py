@@ -57,3 +57,13 @@ Adding support for:
 * F.array_distinct
 * F.flatten for arrays
 * F.asc, F.desc, F.asc_nulls_first, F.desc_nulls_first
+
+
+Version 0.0.11
+-------------
+
+Fixing issues with explode and arrays_zip
+Whe found that some operations didn't work the the same for some operations
+adding `use_compat` support.
+
+Fixing implementation for array zip and other operators and modifying test cases.
