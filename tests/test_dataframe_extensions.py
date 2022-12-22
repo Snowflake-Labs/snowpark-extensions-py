@@ -5,6 +5,75 @@ import snowflake.snowpark
 from snowflake.snowpark.types import *
 from snowflake.snowpark import functions as F
 
+def test_pivot():
+    session = Session.builder.from_snowsql().getOrCreate()
+    data = [("Banana",1000,"USA"), ("Carrots",1500,"USA"), ("Beans",1600,"USA"),
+        ("Orange",2000,"USA"),("Orange",2000,"USA"),("Banana",400,"China"),
+        ("Carrots",1200,"China"),("Beans",1500,"China"),("Orange",4000,"China"),
+        ("Banana",2000,"Canada"),("Carrots",2000,"Canada"),("Beans",2000,"Mexico")]
+    df = session.createDataFrame(data, ["Product","Amount","Country"])
+    # |"PRODUCT"  |"AMOUNT"  |"COUNTRY"  |
+    # ------------------------------------
+    # |Banana     |1000      |USA        |
+    # |Carrots    |1500      |USA        |
+    # |Beans      |1600      |USA        |
+    # |Orange     |2000      |USA        |
+    # |Orange     |2000      |USA        |
+    # |Banana     |400       |China      |
+    # |Carrots    |1200      |China      |
+    # |Beans      |1500      |China      |
+    # |Orange     |4000      |China      |
+    # |Banana     |2000      |Canada     |
+    res = df.groupBy("Product").pivot("Country").sum("Amount").sort("Product").collect()
+    # +-------+------+-----+------+----+                                              
+    # |Product|Canada|China|Mexico| USA|
+    # +-------+------+-----+------+----+
+    # | Banana|  2000|  400|  null|1000|
+    # |  Beans|  null| 1500|  2000|1600|
+    # |Carrots|  2000| 1200|  null|1500|
+    # | Orange|  null| 4000|  null|4000|
+    # +-------+------+-----+------+----+
+    assert len(res)==4
+    assert res[0][0]=='Banana'  and res[0][1]==2000 and res[0][2]==400  and res[0][3]==None and res[0][4]==1000
+    assert res[1][0]=='Beans'   and res[1][1]==None and res[1][2]==1500 and res[1][3]==2000 and res[1][4]==1600
+    assert res[2][0]=='Carrots' and res[2][1]==2000 and res[2][2]==1200 and res[2][3]==None and res[2][4]==1500
+    assert res[3][0]=='Orange'  and res[3][1]==None and res[3][2]==4000 and res[3][3]==None and res[3][4]==4000
+
+def test_pivot_with_numbers_as_columns():
+    session = Session.builder.from_snowsql().getOrCreate()
+    df = session.createDataFrame([
+    (20741434 ,53  ,'  ', '2021-07-21 07:21:35.172000'),  
+    (20741454 ,10  ,'MM', '2021-07-21 07:21:35.173000'),  
+    (20741467 ,6   ,'MC', '2021-07-21 07:21:35.173000'),  
+    (20741474 ,11  ,'32', '2021-07-21 07:21:35.174000'),  
+    (20741496 ,28  ,'EA', '2021-07-21 07:21:35.174000'),  
+    (20741511 ,464 ,'  ', '2021-07-21 07:21:35.175000'),  
+    (20741544 ,1   ,'GG', '2021-07-21 07:21:35.175000'),  
+    (20741560 ,46  ,'NN', '2021-07-21 07:21:35.176000'),  
+    (20741583 ,464 ,'  ', '2021-07-21 07:21:35.177000'),  
+    (20741598 ,618 ,'3P', '2021-07-21 07:21:35.177000')    
+    ], ['A','B','C','D'])
+    df2 = (
+        df.groupBy("A").pivot("B").agg(F.min("C"))
+    )
+    # -----------------------------------------------------------------------------
+    # |"A"       |"1"   |"6"   |"10"  |"11"  |"28"  |"46"  |"53"  |"464"  |"618"  |
+    # -----------------------------------------------------------------------------
+    # |20741583  |NULL  |NULL  |NULL  |NULL  |NULL  |NULL  |NULL  |       |NULL   |
+    # |20741496  |NULL  |NULL  |NULL  |NULL  |EA    |NULL  |NULL  |NULL   |NULL   |
+    # |20741544  |GG    |NULL  |NULL  |NULL  |NULL  |NULL  |NULL  |NULL   |NULL   |
+    # |20741434  |NULL  |NULL  |NULL  |NULL  |NULL  |NULL  |      |NULL   |NULL   |
+    # |20741598  |NULL  |NULL  |NULL  |NULL  |NULL  |NULL  |NULL  |NULL   |3P     |
+    # |20741511  |NULL  |NULL  |NULL  |NULL  |NULL  |NULL  |NULL  |       |NULL   |
+    # |20741454  |NULL  |NULL  |MM    |NULL  |NULL  |NULL  |NULL  |NULL   |NULL   |
+    # |20741474  |NULL  |NULL  |NULL  |32    |NULL  |NULL  |NULL  |NULL   |NULL   |
+    # |20741467  |NULL  |MC    |NULL  |NULL  |NULL  |NULL  |NULL  |NULL   |NULL   |
+    # |20741560  |NULL  |NULL  |NULL  |NULL  |NULL  |NN    |NULL  |NULL   |NULL   |
+    # -----------------------------------------------------------------------------
+    res = df2.collect()
+    assert len(res)==10
+    assert df2.columns == ['A','"1"','"6"','"10"','"11"','"28"','"46"','"53"','"464"','"618"']
+
 
 def test_applyinpandas():
     session = Session.builder.from_snowsql().getOrCreate()

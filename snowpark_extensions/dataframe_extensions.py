@@ -10,7 +10,9 @@ from snowpark_extensions.utils import map_to_python_type, schema_str_to_schema
 import shortuuid
 from snowflake.snowpark import context
 from snowflake.snowpark.types import StructType,StructField
-from snowflake.snowpark._internal.analyzer.expression import Expression
+from snowflake.snowpark._internal.analyzer.expression import Expression, FunctionExpression
+from snowflake.snowpark._internal.analyzer.analyzer_utils import quote_name
+
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -353,6 +355,59 @@ from snowflake.snowpark import Window, Column
 from snowflake.snowpark.types import *
 from snowflake.snowpark.functions import udtf, col
 from snowflake.snowpark.relational_grouped_dataframe import RelationalGroupedDataFrame
+
+def group_by_pivot(self,pivot_col):
+      return GroupByPivot(self, pivot_col)
+RelationalGroupedDataFrame.pivot = group_by_pivot
+
+class GroupByPivot():
+      def __init__(self,old_groupby_col,pivot_col):
+            self.old_groupby_col = old_groupby_col
+            self.pivot_col=pivot_col
+            group_by_exprs = [F.sql_expr(x.sql) for x in old_groupby_col._grouping_exprs]
+            group_by_exprs.append(pivot_col)
+            self.df = old_groupby_col._df.groupBy(group_by_exprs)
+      def clean(self,pivoted):
+        def get_valid_id(id):
+            return id if re.match("[A-Za-z]\w+", id) else f'"{id}"'
+        n = len(self.value_list)
+        last_n_cols = self.value_list[-n:]
+        pivoted_cols = pivoted.columns[-n:]
+        previous_cols = pivoted.columns[:len(pivoted.columns)-n]
+        for i in range(0,n):
+            the_col = pivoted_cols[i]
+            the_value = self.value_list[i]
+            pivoted_cols[i] = col(the_col).alias(get_valid_id(str(the_value)))
+        return pivoted.select(*previous_cols,*pivoted_cols)
+      def prepare(self,col):
+            first = self.df.agg(col.alias("__firstAggregate"))
+            self.value_list = [x[0] for x in first.select(self.pivot_col).distinct().sort(self.pivot_col).collect()]
+            return first.pivot(pivot_col=self.pivot_col,values=self.value_list)
+      def avg(self, col: ColumnOrName) -> DataFrame:
+            """Return the average for the specified numeric columns."""
+            return self.prepare(F.avg(col)).avg("__firstAggregate")
+      mean = avg
+      def sum(self, col: ColumnOrName) -> DataFrame:
+            """Return the sum for the specified numeric columns."""
+            return  self.clean(self.prepare(F.sum(col)).sum("__firstAggregate"))
+      def median(self, col: ColumnOrName) -> DataFrame:
+            """Return the median for the specified numeric columns."""
+            return self.clean(self.prepare(F.median(col)).median("__firstAggregate"))
+      def min(self, col: ColumnOrName) -> DataFrame:
+            """Return the min for the specified numeric columns."""
+            return self.clean(self.prepare(F.min(col)).min("__firstAggregate"))
+      def max(self, col: ColumnOrName) -> DataFrame:
+            """Return the max for the specified numeric columns."""
+            return self.clean(self.prepare(col).max("__firstAggregate"))
+      def count(self) -> DataFrame:
+            """Return the number of rows for each group."""
+            return self.clean(self.prepare(col).count("__firstAggregate"))
+      def agg(self, aggregated_col: ColumnOrName) -> DataFrame:
+            if hasattr(aggregated_col, "_expression") and isinstance(aggregated_col._expression, FunctionExpression):
+                name = aggregated_col._expression.name
+                return self.clean(self.prepare(aggregated_col).function(name)(col("__firstAggregate")))
+            else:
+                raise Exception("Also functions expressions are supported") 
 
 if not hasattr(RelationalGroupedDataFrame, "applyInPandas"):
   def applyInPandas(self,func,schema):
