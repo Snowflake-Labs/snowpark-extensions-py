@@ -281,6 +281,7 @@ sf_df.select("id", "an_array", explode("an_array")).show()
 ```python
 sf_df.select("id", "an_array", explode_outer("an_array")).show()
 ```
+
 ```
 # +---+----------+----+
 # | id|  an_array| COL|
@@ -293,8 +294,10 @@ sf_df.select("id", "an_array", explode_outer("an_array")).show()
 ```
 
 For a map use
-```
+```python
 results = sf_df.select("id", "an_array", explode_outer("an_array",map=True))
+```
+
 ```
 # +---+----------+----+-----+
 # | id|  an_array| KEY| VALUE|
