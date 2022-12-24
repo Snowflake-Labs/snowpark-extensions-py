@@ -86,6 +86,8 @@ order by start_time desc;
 | DataFrame.simple_map           | if a simple lambda like `lambda x: x.col1 + x.col2` is used this functions can be used like `df.simple_map(lambda x: x.col1 + x.col2)`
 | DataFrame.groupby.applyInPandas| Maps each group of the current DataFrame using a pandas udf and returns the result as a DataFrame. |
 | DataFrame.replace        | extends replace to allow using a regex
+| DataFrame.groupBy.pivot        | extends the snowpark groupby to add a pivot operator
+
 
 ### Examples
 
@@ -204,6 +206,8 @@ df.group_by("ID").applyInPandas(
 | functions.explode_outer      | returns a new row for each element in the given array or map. Unlike explode, if the array/map is null or empty then null is produced    |
 | functions.arrays_zip         | returns a merged array of arrays |
 | functions.array_sort         | sorts the input array in ascending order. The elements of the input array must be orderable. Null elements will be placed at the end of the returned array.
+| functions.array_max          | returns the maximon value of the array.
+| functions.array_min          | returns the minimum value of the array.
 | functions.array_distinct     | removes duplicate values from the array.
 | functions.date_add           | returns the date that is n days days after                                          |
 | functions.date_sub           | returns the date that is n days before                                              |
@@ -211,6 +215,8 @@ df.group_by("ID").applyInPandas(
 | functions.asc                | returns a sort expression based on the ascending order of the given column name.    |
 | functions.desc               | returns a sort expression based on the descending order of the given column name.    |
 | functions.flatten            | creates a single array from an array of arrays
+| functions.sort_array         | sorts the input array in ascending or descending order according to the natural ordering of the array elements. Null elements will be placed at the beginning of the returned array in ascending order or at the end of the returned array in descending order
+
 
 
 ### Examples:

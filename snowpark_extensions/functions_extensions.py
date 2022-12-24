@@ -2,6 +2,7 @@
 
 
 from snowflake.snowpark import functions as F
+from snowflake.snowpark import context
 from snowflake.snowpark.functions import call_builtin, lit, concat, coalesce
 from snowflake.snowpark import DataFrame, Column
 from snowflake.snowpark.types import ArrayType, BooleanType
@@ -13,7 +14,7 @@ from snowflake.snowpark._internal.type_utils import (
     LiteralType,
 )
 from snowflake.snowpark.column import _to_col_if_str, _to_col_if_lit
-
+from snowflake.snowpark.dataframe import _generate_prefix
 
 if not hasattr(F,"___extended"):
     F.___extended = True
@@ -99,7 +100,61 @@ if not hasattr(F,"___extended"):
     def _array(*cols):
         return F.array_construct(*cols)
 
+    F._sort_array_function = None
+    def _sort_array(col:ColumnOrName,asc:ColumnOrLiteral=True):
+        if not F._sort_array_function:
+            session = context.get_active_session()
+            current_database = session.get_current_database()
+            function_name =_generate_prefix("_sort_array_helper")
+            F._sort_array_function = f"{current_database}.public.{function_name}"
+            session.sql(f"""
+            create or replace temporary function {F._sort_array_function}(ARR ARRAY,ASC BOOLEAN) returns STRING
+            language javascript as
+            $$
+            ARRLENGTH = ARR.length;
+            // filter nulls
+            ARR = ARR.filter(x => x !== null);
+            ARR.sort();
+            var RES = new Array(ARRLENGTH-ARR.length).fill(null).concat(ARR);
+            if (ASC) return RES; else return RES.reverse();
+            $$;
+            """).show()
+        return call_builtin(F._sort_array_function,col,asc)
+    F._array_max_function = None
+    def _array_max(col:ColumnOrName):
+        if not F._sort_array_function:
+            session = context.get_active_session()
+            current_database = session.get_current_database()
+            function_name =_generate_prefix("_array_max_function")
+            F._array_max_function = f"{current_database}.public.{function_name}"
+            session.sql(f"""
+            create or replace temporary function {F._array_max_function}(ARR ARRAY) returns VARIANT
+            language javascript as
+            $$
+            return Math.max(...ARR);
+            $$
+            """).show()
+        return call_builtin(F._array_max_function,col)
+    F._array_min_function = None
+    def _array_min(col:ColumnOrName):
+        if not F._sort_array_function:
+            session = context.get_active_session()
+            current_database = session.get_current_database()
+            function_name =_generate_prefix("_array_min_function")
+            F._array_min_function = f"{current_database}.public.{function_name}"
+            session.sql(f"""
+            create or replace temporary function {F._array_min_function}(ARR ARRAY) returns VARIANT
+            language javascript as
+            $$
+            return Math.min(...ARR);
+            $$
+            """).show()
+        return call_builtin(F._array_min_function,col)
+
+
     F.array = _array
+    F.array_max = _array_max
+    F.array_min = _array_min
     F.array_distinct = array_distinct
     F.regexp_extract = regexp_extract
     F.create_map = create_map
@@ -113,3 +168,4 @@ if not hasattr(F,"___extended"):
     F.desc = lambda col: _to_col_if_str(col, "desc").desc()
     F.asc_nulls_first = lambda col: _to_col_if_str(col, "asc_nulls_first").asc()
     F.desc_nulls_first = lambda col: _to_col_if_str(col, "desc_nulls_first").asc()
+    F.sort_array = _sort_array
