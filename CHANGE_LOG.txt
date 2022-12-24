@@ -67,3 +67,11 @@ Whe found that some operations didn't work the the same for some operations
 adding `use_compat` support.
 
 Fixing implementation for array zip and other operators and modifying test cases.
+
+Version 0.0.12
+--------------
+Adding support for dataframe.groupBy.pivot
+
+Version 0.0.13
+--------------
+Added support for sort_array, array_max, array_min
