@@ -3,9 +3,9 @@ import pytest
 import snowpark_extensions
 from snowflake.snowpark import Session
 from snowflake.snowpark.types import *
-from snowflake.snowpark.functions import col,lit, sort_array, array_max, array_min
+from snowflake.snowpark.functions import col,lit, sort_array, array_max, array_min, map_values
 from snowflake.snowpark import functions as F
-
+import re
 
 def test_asc():
     session = Session.builder.from_snowsql().getOrCreate()
@@ -130,3 +130,21 @@ def test_array_min():
     res=df.select(array_min(df.data).alias('min')).collect()
     assert res[0].MIN == '1' and res[1].MIN == '-1'
     #[Row(min=1), Row(min=-1)]
+
+def test_map_values():
+    session = Session.builder.from_snowsql().getOrCreate()
+    df = session.sql("SELECT object_construct('1', 'a', '2', 'b') as data")
+    res = df.select(map_values("data").alias("values")).collect()
+    # +------+
+    # |values|
+    # +------+
+    # |[a, b]|
+    # +------+
+    assert len(res)==1
+    array=re.sub(r"\s","",res[0].VALUES)
+    assert array == '["a","b"]'
+    df = session.sql("SELECT object_construct('1', 'value1', '2', parse_json('null')) as data")
+    res = df.select(map_values("data").alias("values")).collect()
+    assert len(res)==1
+    array=re.sub(r"\s","",res[0].VALUES)
+    assert array == '["value1",null]'

@@ -162,7 +162,28 @@ if not hasattr(DataFrame,"___extended"):
             if hasattr(c,"_is_special_column"):
                 yield c
 
-    
+    class MapValues(SpecialColumn):
+        def __init__(self,array_col):
+            super().__init__("values")
+            self.array_col = array_col
+            self._special_column_dependencies = [array_col]
+        def add_columns(self, new_cols, alias:str = None):
+            # add itself as column
+            new_cols.append(self.alias(alias) if alias else self)
+        def expand(self,df):
+            array_col = _to_col_if_str(self.array_col, "values")
+            df = df.with_column("__IDX",F.seq8())
+            flatten = table_function("flatten")
+            seq=_generate_prefix("SEQ")
+            key=_generate_prefix("KEY")
+            path=_generate_prefix("PATH")
+            index=_generate_prefix("INDEX")
+            value=_generate_prefix("VALUE")
+            this=_generate_prefix("THIS")
+            df_values=df.join_table_function(flatten(input=array_col,outer=lit(True)).alias(seq,key,path,index,value,this)).group_by("__IDX").agg(F.array_agg(value).alias(self.special_col_name)).distinct()
+            df = df.join(df_values,on="__IDX").drop("__IDX")
+            return df
+
     class ArraySort(SpecialColumn):
         def __init__(self,array_col):
             super().__init__("sorted")
@@ -300,7 +321,11 @@ $$;
         return ArrayFlatten(array_col,remove_arrays_when_there_is_a_null)
     def _array_sort(array_col):
         return ArraySort(array_col)
+    def _map_values(col:ColumnOrName):
+        col = _to_col_if_str(col,"map_values")
+        return MapValues(col)
 
+    F.map_values = _map_values    
     F.arrays_zip = _arrays_zip
     F.flatten    = _arrays_flatten
     F.array_sort = _array_sort

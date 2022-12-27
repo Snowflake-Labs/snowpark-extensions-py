@@ -75,3 +75,7 @@ Adding support for dataframe.groupBy.pivot
 Version 0.0.13
 --------------
 Added support for sort_array, array_max, array_min
+
+Version 0.0.14
+--------------
+Added support for map_values
