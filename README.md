@@ -216,7 +216,7 @@ df.group_by("ID").applyInPandas(
 | functions.desc               | returns a sort expression based on the descending order of the given column name.    |
 | functions.flatten            | creates a single array from an array of arrays
 | functions.sort_array         | sorts the input array in ascending or descending order according to the natural ordering of the array elements. Null elements will be placed at the beginning of the returned array in ascending order or at the end of the returned array in descending order
-
+| functions.map_values         | Returns an unordered array containing the values of the map. |
 
 
 ### Examples:
