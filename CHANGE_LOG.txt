@@ -79,3 +79,9 @@ Added support for sort_array, array_max, array_min
 Version 0.0.14
 --------------
 Added support for map_values
+
+Version 0.0.15
+--------------
+Changes on "special columns"
+change in implementation for array_sort and sort_array to better support aggregations
+adding helper for f.struct

@@ -3,7 +3,7 @@ import pytest
 import snowpark_extensions
 from snowflake.snowpark import Session
 from snowflake.snowpark.types import *
-from snowflake.snowpark.functions import col,lit, sort_array, array_max, array_min, map_values
+from snowflake.snowpark.functions import col,lit, array_sort,sort_array, array_max, array_min, map_values, struct,object_construct, array_agg
 from snowflake.snowpark import functions as F
 import re
 
@@ -96,7 +96,7 @@ def test_create_map():
 def test_array_sort():
     session = Session.builder.from_snowsql().getOrCreate()
     df = session.createDataFrame([([2, 1, None, 3],1),([1],2),([],3)], ['data','pos'])
-    res = df.select(df.pos,F.array_sort(df.data)).orderBy(col('pos')).collect()
+    res = df.select(df.pos,array_sort(df.data)).orderBy(col('pos')).collect()
     assert len(res) == 3
     array1 = eval(res[0][1].replace("null","None"))
     array2 = eval(res[1][1].replace("null","None"))
@@ -105,15 +105,72 @@ def test_array_sort():
     assert array2 == [1]
     assert array3 == []
 
+
+def test_array_sort2():
+    session = Session.builder.from_snowsql().getOrCreate()
+    data_block = [(1,20 ,'treat A','proc A', 10),
+    (2,30,'treat B','proc B', 12),
+    (2,30,'treat B','proc A', 11),
+    (4,50,'treat A','proc A', 14),
+    (1,20,'treat D','proc C', 15)]
+    schema_block = StructType([
+    StructField('person_id', IntegerType(), True),
+    StructField('person_age', IntegerType(), True),
+    StructField('treatment_name', StringType(), True),
+    StructField('procedure_name', StringType(), True),
+    StructField('days_supply', IntegerType(), True)
+    ])
+    df = session.createDataFrame(data_block, schema_block)
+    groupby = ["person_id", "person_age"]
+    df = (
+        df.groupBy(*groupby).agg(array_sort(array_agg(object_construct(F.lit('"days_supply"'),"days_supply", F.lit('"treatment_name"'),"treatment_name"))).alias("DATA"))
+    ).select("*")
+    res = df.collect()
+# --------------------------------------------------------------------
+# |"PERSON_ID"  |"PERSON_AGE"  |"DATA"                               |
+# --------------------------------------------------------------------
+# |2            |30            |[                                    |
+# |             |              |  {                                  |
+# |             |              |    "\"days_supply\"": 11,           |
+# |             |              |    "\"treatment_name\"": "treat B"  |
+# |             |              |  },                                 |
+# |             |              |  {                                  |
+# |             |              |    "\"days_supply\"": 12,           |
+# |             |              |    "\"treatment_name\"": "treat B"  |
+# |             |              |  }                                  |
+# |             |              |]                                    |
+# |4            |50            |[                                    |
+# |             |              |  {                                  |
+# |             |              |    "\"days_supply\"": 14,           |
+# |             |              |    "\"treatment_name\"": "treat A"  |
+# |             |              |  }                                  |
+# |             |              |]                                    |
+# |1            |20            |[                                    |
+# |             |              |  {                                  |
+# |             |              |    "\"days_supply\"": 10,           |
+# |             |              |    "\"treatment_name\"": "treat A"  |
+# |             |              |  },                                 |
+# |             |              |  {                                  |
+# |             |              |    "\"days_supply\"": 15,           |
+# |             |              |    "\"treatment_name\"": "treat D"  |
+# |             |              |  }                                  |
+# |             |              |]                                    |
+# --------------------------------------------------------------------
+    assert len(res)==3
+    assert re.sub(r"\s", "", res[0].DATA) == '[{"\\"days_supply\\"":11,"\\"treatment_name\\"":"treatB"},{"\\"days_supply\\"":12,"\\"treatment_name\\"":"treatB"}]'
+    assert re.sub(r"\s", "", res[1].DATA) == '[{"\\"days_supply\\"":14,"\\"treatment_name\\"":"treatA"}]'
+    assert re.sub(r"\s", "", res[2].DATA) == '[{"\\"days_supply\\"":10,"\\"treatment_name\\"":"treatA"},{"\\"days_supply\\"":15,"\\"treatment_name\\"":"treatD"}]'
 def test_sort_array():
     session = Session.builder.from_snowsql().getOrCreate()
     df = session.createDataFrame([([2, 1, None, 3],),([1],),([],)], ['data'])
+    df_sorted = df.select(sort_array(df.data).alias('r'))
+    assert df.schema[0].datatype == ArrayType(StringType())
     res  = df.select(sort_array(df.data).alias('r')).collect()
     # [Row(r=[None, 1, 2, 3]), Row(r=[1]), Row(r=[])]
-    assert res[0].R == ',1,2,3' and res[1].R == '1' and res[2].R==''
+    assert re.sub(r"\s","",res[0].R) == '[null,1,2,3]' and re.sub(r"\s","",res[1].R) == '[1]' and res[2].R=='[]'
     res = df.select(sort_array(df.data, asc=False).alias('r')).collect()
     #[Row(r=[3, 2, 1, None]), Row(r=[1]), Row(r=[])]
-    assert res[0].R=='3,2,1,' and res[1].R == '1' and res[2].R==''
+    assert re.sub(r"\s","",res[0].R)=='[3,2,1,null]' and re.sub(r"\s","",res[1].R) == '[1]' and res[2].R=='[]'
 
 def test_array_max():
     session = Session.builder.from_snowsql().getOrCreate()
@@ -148,3 +205,21 @@ def test_map_values():
     assert len(res)==1
     array=re.sub(r"\s","",res[0].VALUES)
     assert array == '["value1",null]'
+
+def test_struct():
+    session = Session.builder.from_snowsql().getOrCreate()
+    df = session.createDataFrame([('Bob', 80), ('Alice', None)], ["name", "age"])
+    res=df.select(struct('age', 'name').alias("struct")).collect()    
+#     [Row(struct=Row(age=2, name='Alice')), Row(struct=Row(age=5, name='Bob'))]
+    assert len(res)==2
+    assert re.sub(r"\s","",res[0].STRUCT) == '{"age":80,"name":"Bob"}'
+    assert re.sub(r"\s","",res[1].STRUCT) == '{"age":null,"name":"Alice"}'
+    res = df.select(struct([df.age, df.name]).alias("struct")).collect()
+    assert len(res)==2
+    assert re.sub(r"\s","",res[0].STRUCT) == '{"AGE":80,"NAME":"Bob"}'
+    assert re.sub(r"\s","",res[1].STRUCT) == '{"AGE":null,"NAME":"Alice"}'    
+#     [Row(struct=Row(age=2, name='Alice')), Row(struct=Row(age=5, name='Bob'))]
+    res = df.select(struct(df.age.alias("A"), df.name.alias("B")).alias("struct")).collect()
+    assert len(res)==2
+    assert re.sub(r"\s","",res[0].STRUCT) == '{"A":80,"B":"Bob"}'
+    assert re.sub(r"\s","",res[1].STRUCT) == '{"A":null,"B":"Alice"}'

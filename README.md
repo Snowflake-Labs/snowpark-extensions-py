@@ -217,6 +217,7 @@ df.group_by("ID").applyInPandas(
 | functions.flatten            | creates a single array from an array of arrays
 | functions.sort_array         | sorts the input array in ascending or descending order according to the natural ordering of the array elements. Null elements will be placed at the beginning of the returned array in ascending order or at the end of the returned array in descending order
 | functions.map_values         | Returns an unordered array containing the values of the map. |
+| functions.struct             | Returns an object built with the given columns |
 
 
 ### Examples:
@@ -380,3 +381,14 @@ Queries can use `Jinja2` syntax. For example:
 ```sql
 select * from tables where col={{COL1}}
 ```
+
+## Running notebooks in Snowpark
+
+There is an small script that uploads your notebook to snowflake into an stage and executes it. It will record an html with the results of the notebook execution.
+
+To use it:
+
+- install snowpark_extensions
+- runner --notebook notebook1.ipynb --stage my_stage --package ""
+
+
