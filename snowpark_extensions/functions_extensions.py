@@ -273,6 +273,16 @@ if not hasattr(F,"___extended"):
                 new_cols.append(c)
         return object_construct_keep_null(*new_cols)
 
+    def _bround(col: snowflake.snowpark.Column, scale: int = 0): 
+        power = pow(F.lit(10), F.lit(scale))
+        elevatedColumn = F.when(F.lit(0) == F.lit(scale), col).otherwise(col * power)
+        columnFloor = F.floor(elevatedColumn)
+        return F.when(
+            elevatedColumn - columnFloor == F.lit(0.5)
+            , F.when(columnFloor % F.lit(2) == F.lit(0), columnFloor).otherwise(columnFloor + F.lit(1))
+        ).otherwise(F.round(elevatedColumn)) / F.when(F.lit(0) == F.lit(scale), F.lit(1)).otherwise(power)
+    
+
     F.array = _array
     F.array_max = _array_max
     F.array_min = _array_min
@@ -292,3 +302,4 @@ if not hasattr(F,"___extended"):
     F.sort_array = _sort_array
     F.array_sort = _array_sort
     F.struct = _struct
+    F.bround = _bround
