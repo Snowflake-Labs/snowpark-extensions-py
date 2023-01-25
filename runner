@@ -197,7 +197,7 @@ def run_notebook(session:Session,stage:str,notebook_filename:str) -> str:
         target_name = ""
         try:
             exporter = HTMLExporter()
-            notebook_filename="simple_notebook.ipynb"
+            notebook_filename=notebook_name
             session.file.get(f'@{stage}/{notebook_filename}','/tmp/')
             with open(f'/tmp/{notebook_filename}') as f:
                 nb = nbformat.read(f, as_version=4)
