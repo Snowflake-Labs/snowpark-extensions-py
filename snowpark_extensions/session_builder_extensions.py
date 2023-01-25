@@ -62,12 +62,24 @@ if not hasattr(Session.SessionBuilder,"___extended"):
 
 
     def SessionBuilder_env(self):
-        self._options["user"]     = os.getenv("SNOW_USER") or os.getenv("SNOWSQL_USER")
-        self._options["password"] = os.getenv("SNOW_PASSWORD") or os.getenv("SNOWSQL_PWD")
-        self._options["account"]  = os.getenv("SNOW_ACCOUNT") or os.getenv("SNOWSQL_ACCOUNT")
-        self._options["role"]     = os.getenv("SNOW_ROLE") or os.getenv("SNOWSQL_ROLE")
-        self._options["warehouse"]= os.getenv("SNOW_WAREHOUSE") or os.getenv("SNOWSQL_WAREHOUSE")
-        self._options["database"] = os.getenv("SNOW_DATABASE") or os.getenv("SNOWSQL_DATABASE")
+        sf_user      = os.getenv("SNOW_USER")     or os.getenv("SNOWSQL_USER")
+        sf_password  = os.getenv("SNOW_PASSWORD") or os.getenv("SNOWSQL_PWD")
+        sf_account   = os.getenv("SNOW_ACCOUNT")  or os.getenv("SNOWSQL_ACCOUNT")
+        sf_role      = os.getenv("SNOW_ROLE")     or os.getenv("SNOWSQL_ROLE")
+        sf_warehouse = os.getenv("SNOW_WAREHOUSE") or os.getenv("SNOWSQL_WAREHOUSE")
+        sf_database  = os.getenv("SNOW_DATABASE") or os.getenv("SNOWSQL_DATABASE")
+        if sf_user is not None:
+            self._options["user"]     = os.getenv("SNOW_USER") or os.getenv("SNOWSQL_USER")
+        if sf_password is not None:
+            self._options["password"] = sf_password
+        if sf_account is not None:
+            self._options["account"]  = sf_account
+        if sf_role is not None:
+            self._options["role"]     = sf_role
+        if sf_warehouse is not None:
+            self._options["warehouse"]= sf_warehouse
+        if sf_database is not None:
+            self._options["database"] = sf_database
         return self
 
     def SessionBuilder_snowsql_config(self,section=None,configpath=f'{Path.home()}/.snowsql/config'):

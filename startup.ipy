@@ -1,0 +1,9 @@
+import pandas as pd
+from snowflake.snowpark import Session
+import snowpark_extensions
+from snowflake.snowpark.functions import col, lit
+from snowflake.snowpark import functions as F
+
+from snowpark_extensions import load_ipython_extension
+ip = get_ipython()
+load_ipython_extension(ip)

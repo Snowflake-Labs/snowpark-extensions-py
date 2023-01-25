@@ -378,9 +378,36 @@ It will preload the snowpark libraries and adds a simple magic.
 A `%%sql` magic can be used to run queries. 
 Queries can use `Jinja2` syntax. For example:
 
+If a previous cell you had something like:
+```python
+COL1=1
+```
+Then on following cells you can do:
+
 ```sql
+%%sql
 select * from tables where col={{COL1}}
 ```
+
+You can use give a name that you can use later for example:
+
+```sql
+%%sql tables
+select * from information_schema.tables limit 5
+```
+
+and then use that as a normal dataframe:
+```python
+if tables.count() > 5:
+    print("There are more that 5 tables")
+```
+
+The standard IPython display does not render snowpark `dataframe`. You can use `df.show()` but by default something like: `display(df)` will just print: `<snowflake.snowpark.dataframe.DataFrame at 0x7fa67d099c40>`
+
+You can configure Jupyter to run some imports and initialization code at the start of a notebook by creating a file called `startup.ipy` in the `~/.ipython/profile_default/startup` directory. Any code written in this file will be executed when you start a new Jupyter notebook.
+
+An [example startup.ipy](./startup.ipy) is provided
+
 
 ## Running notebooks in Snowpark
 
