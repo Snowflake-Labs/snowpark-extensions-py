@@ -3,7 +3,7 @@ import pytest
 import snowpark_extensions
 from snowflake.snowpark import Session
 from snowflake.snowpark.types import *
-from snowflake.snowpark.functions import col,lit, array_sort,sort_array, array_max, array_min, map_values, struct,object_construct, array_agg
+from snowflake.snowpark.functions import col,lit, array_sort,sort_array, array_max, array_min, map_values, struct,object_construct, array_agg, bround
 from snowflake.snowpark import functions as F
 import re
 
@@ -223,3 +223,74 @@ def test_struct():
     assert len(res)==2
     assert re.sub(r"\s","",res[0].STRUCT) == '{"A":80,"B":"Bob"}'
     assert re.sub(r"\s","",res[1].STRUCT) == '{"A":null,"B":"Alice"}'
+
+def test_bround():
+    session = Session.builder.from_snowsql().getOrCreate()
+    data0 = [(1.5,0),
+    (2.5,0),
+    (0.00,0),
+    (0.5,0),
+    (-1.5,0),
+    (-2.5,0)]
+
+    data1 = [
+    (2.25,1),
+    (2.65,1),
+    (0.00,1),
+    (1.05,1),
+    (1.15,1),
+    (-2.25,1),
+    (-2.35,1),
+    (None,1),
+    (1.5,1),
+    (1.5,-1) ]
+
+    data_null = [
+    (0.5,None),
+    (1.5,None),
+    (2.5,None),
+    (-1.5,None),
+    (-2.5,None),
+    (None,None)]
+    schema_df = StructType([
+    StructField('value', FloatType(), True),
+    StructField('scale', IntegerType(), True)
+    ])
+    
+    df_0 = session.createDataFrame(data0, schema_df)
+    df_1 = session.createDataFrame(data1, schema_df)
+    df_null = session.createDataFrame(data_null, schema_df)
+
+    res0 = df_0.withColumn("rounding",bround_udf(f.col('value')) ).collect()
+    assert len(res0) == 6
+    assert res0[0].ROUNDING == 2.0
+    assert res0[1].ROUNDING == 2.0
+    assert res0[2].ROUNDING == 0.0
+    assert res0[3].ROUNDING == 0.0
+    assert res0[4].ROUNDING == -2.0
+    assert res0[5].ROUNDING == -2.0
+
+
+    res1 = df_1.withColumn("rounding",bround_udf(f.col('value'),1) ).collect()
+    assert len(res1) == 10
+    assert res1[0].ROUNDING == 2.2
+    assert res1[1].ROUNDING == 2.6
+    assert res1[2].ROUNDING == 0.0
+    assert res1[3].ROUNDING == 1.0
+    assert res1[4].ROUNDING == 1.2
+    assert res1[5].ROUNDING == -2.2
+    assert res1[6].ROUNDING == -2.4
+    assert res1[7].ROUNDING == None
+    assert res1[8].ROUNDING == 1.5
+    assert res1[9].ROUNDING == 1.5
+
+
+    resNull = df_null.withColumn("rounding",bround_udf(f.col('value'),None) ).collect()
+    assert len(resNull) == 6
+    assert resNull[0].ROUNDING == None
+    assert resNull[1].ROUNDING == None
+    assert resNull[2].ROUNDING == None
+    assert resNull[3].ROUNDING == None
+    assert resNull[4].ROUNDING == None
+    assert resNull[5].ROUNDING == None
+

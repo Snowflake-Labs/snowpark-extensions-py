@@ -218,6 +218,7 @@ df.group_by("ID").applyInPandas(
 | functions.sort_array         | sorts the input array in ascending or descending order according to the natural ordering of the array elements. Null elements will be placed at the beginning of the returned array in ascending order or at the end of the returned array in descending order
 | functions.map_values         | Returns an unordered array containing the values of the map. |
 | functions.struct             | Returns an object built with the given columns |
+| functions.bround             | This function receives a column with a number and rounds it to scale decimal places with HALF_EVEN round mode, often called as "Banker's rounding" . This means that if the number is at the same distance from an even or odd number, it will round to the even number. |
 
 
 ### Examples:
