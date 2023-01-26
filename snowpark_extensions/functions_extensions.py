@@ -273,7 +273,7 @@ if not hasattr(F,"___extended"):
                 new_cols.append(c)
         return object_construct_keep_null(*new_cols)
 
-    def _bround(col: snowflake.snowpark.Column, scale: int = 0): 
+    def _bround(col: Column, scale: int = 0): 
         power = pow(F.lit(10), F.lit(scale))
         elevatedColumn = F.when(F.lit(0) == F.lit(scale), col).otherwise(col * power)
         columnFloor = F.floor(elevatedColumn)

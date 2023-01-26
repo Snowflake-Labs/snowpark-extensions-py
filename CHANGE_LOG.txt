@@ -90,3 +90,7 @@ Version 0.0.16
 --------------
 Extends the notebook extension to make it work on more environments
 from_env modified to only set connection settings if the variable has a value
+
+Version 0.0.17
+--------------
+Fixing issue with bround
