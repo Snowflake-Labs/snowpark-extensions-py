@@ -224,6 +224,11 @@ def test_struct():
     assert re.sub(r"\s","",res[0].STRUCT) == '{"A":80,"B":"Bob"}'
     assert re.sub(r"\s","",res[1].STRUCT) == '{"A":null,"B":"Alice"}'
 
+def test_datediff():
+    session = Session.builder.from_snowsql().getOrCreate()
+    df = session.createDataFrame([('2015-04-08','2015-05-10')], ['d1', 'd2'])
+    df.select(f.datediff(df.d2, df.d1).alias('diff')).collect()
+
 def test_bround():
     session = Session.builder.from_snowsql().getOrCreate()
     data0 = [(1.5,0),
