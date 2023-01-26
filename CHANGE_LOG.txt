@@ -94,3 +94,8 @@ from_env modified to only set connection settings if the variable has a value
 Version 0.0.17
 --------------
 Fixing issue with bround
+
+
+Version 0.0.18
+--------------
+Fixing issues when getting displayHTML on some environments
