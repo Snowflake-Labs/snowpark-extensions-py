@@ -402,7 +402,7 @@ and then use that as a normal dataframe:
 if tables.count() > 5:
     print("There are more that 5 tables")
 ```
-If you dont specify a name you can still access the last result using `__last`.
+If you dont specify a name you can still access the last result using `__df`.
 
 The standard IPython display does not render snowpark `dataframe`. You can use `df.show()` but by default something like: `display(df)` will just print: `<snowflake.snowpark.dataframe.DataFrame at 0x7fa67d099c40>`
 
