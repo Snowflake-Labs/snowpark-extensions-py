@@ -403,7 +403,11 @@ and then use that as a normal dataframe:
 if tables.count() > 5:
     print("There are more that 5 tables")
 ```
+<<<<<<< HEAD
 If you dont specify a name you can still access the last result using `__df`.
+=======
+If you dont specify a name you can still access the last result using `__last`.
+>>>>>>> 2bf4304 (adjustment for displayHTML)
 
 > NOTE: By default only 50 rows are displays. You can customize this limit for example to 100 rows with:
 ```
