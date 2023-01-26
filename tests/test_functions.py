@@ -227,7 +227,9 @@ def test_struct():
 def test_datediff():
     session = Session.builder.from_snowsql().getOrCreate()
     df = session.createDataFrame([('2015-04-08','2015-05-10')], ['d1', 'd2'])
-    df.select(f.datediff(df.d2, df.d1).alias('diff')).collect()
+    res = df.select(F.daydiff(F.to_date(df.d2), F.to_date(df.d1)).alias('diff')).collect()
+    assert res[0].DIFF == 32  
+
 
 def test_bround():
     session = Session.builder.from_snowsql().getOrCreate()
@@ -266,7 +268,7 @@ def test_bround():
     df_1 = session.createDataFrame(data1, schema_df)
     df_null = session.createDataFrame(data_null, schema_df)
 
-    res0 = df_0.withColumn("rounding",bround_udf(f.col('value')) ).collect()
+    res0 = df_0.withColumn("rounding",F.bround(F.col('value')) ).collect()
     assert len(res0) == 6
     assert res0[0].ROUNDING == 2.0
     assert res0[1].ROUNDING == 2.0
@@ -276,7 +278,7 @@ def test_bround():
     assert res0[5].ROUNDING == -2.0
 
 
-    res1 = df_1.withColumn("rounding",bround_udf(f.col('value'),1) ).collect()
+    res1 = df_1.withColumn("rounding",F.bround(F.col('value'),1) ).collect()
     assert len(res1) == 10
     assert res1[0].ROUNDING == 2.2
     assert res1[1].ROUNDING == 2.6
@@ -290,7 +292,7 @@ def test_bround():
     assert res1[9].ROUNDING == 1.5
 
 
-    resNull = df_null.withColumn("rounding",bround_udf(f.col('value'),None) ).collect()
+    resNull = df_null.withColumn("rounding",F.bround(F.col('value'),None) ).collect()
     assert len(resNull) == 6
     assert resNull[0].ROUNDING == None
     assert resNull[1].ROUNDING == None

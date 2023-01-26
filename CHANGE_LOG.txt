@@ -99,3 +99,8 @@ Fixing issue with bround
 Version 0.0.18
 --------------
 Fixing issues when getting displayHTML on some environments
+
+Version 0.0.19
+--------------
+Adding functions.daydiff as a direct replacement for datediff
+Fixing some test_cases

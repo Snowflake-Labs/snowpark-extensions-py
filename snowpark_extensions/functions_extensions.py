@@ -66,6 +66,12 @@ if not hasattr(F,"___extended"):
         col = _to_col_if_str(col,"reverse")
         return F.call_builtin('reverse',col)
 
+    def daydiff( col1: ColumnOrName, col2: ColumnOrName) -> Column:
+        """Calculates the difference between two date, or timestamp columns based in days"""
+        c1 = _to_col_if_str(col1, "daydiff")
+        c2 = _to_col_if_str(col2, "daydiff")
+        return F.call_builtin("datediff",lit("day"), c2,c1)
+
     def date_add(col,num_of_days):
         col = _to_col_if_str(col,"date_add")
         num_of_days=_to_col_if_str_or_int(num_of_days)
@@ -227,7 +233,7 @@ if not hasattr(F,"___extended"):
         return call_builtin(F._array_sort_function,col)        
     F._array_max_function = None
     def _array_max(col:ColumnOrName):
-        if not F._sort_array_function:
+        if not F._array_max_function:
             session = context.get_active_session()
             current_database = session.get_current_database()
             function_name =_generate_prefix("_array_max_function")
@@ -242,7 +248,7 @@ if not hasattr(F,"___extended"):
         return call_builtin(F._array_max_function,col)
     F._array_min_function = None
     def _array_min(col:ColumnOrName):
-        if not F._sort_array_function:
+        if not F._array_min_function:
             session = context.get_active_session()
             current_database = session.get_current_database()
             function_name =_generate_prefix("_array_min_function")
@@ -293,6 +299,7 @@ if not hasattr(F,"___extended"):
     F.from_unixtime = from_unixtime
     F.format_number = format_number
     F.reverse = reverse
+    F.daydiff = daydiff
     F.date_add = date_add
     F.date_sub = date_sub
     F.asc  = lambda col: _to_col_if_str(col, "asc").asc()

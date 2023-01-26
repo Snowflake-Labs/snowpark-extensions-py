@@ -209,6 +209,7 @@ df.group_by("ID").applyInPandas(
 | functions.array_max          | returns the maximon value of the array.
 | functions.array_min          | returns the minimum value of the array.
 | functions.array_distinct     | removes duplicate values from the array.
+| function.daydiff             | this function returns the difference in days between two dates. This function will be direct equivalent of the spark datediff. You can simple replace spark datediff by daydiff 
 | functions.date_add           | returns the date that is n days days after                                          |
 | functions.date_sub           | returns the date that is n days before                                              |
 | functions.regexp_extract     | extract a specific group matched by a regex, from the specified string column.      |
