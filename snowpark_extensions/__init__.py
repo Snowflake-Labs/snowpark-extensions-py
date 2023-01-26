@@ -8,6 +8,16 @@ from .types_extensions import *
 from .column_extensions import *
 from .utils import display
 
+
+def get_display_html() -> None:
+    import inspect
+    for frame in inspect.getouterframes(inspect.currentframe()):
+        global_names = set(frame.frame.f_globals)
+        # Use multiple functions to reduce risk of mismatch
+        if all(v in global_names for v in ["displayHTML", "display", "spark"]):
+            return frame.frame.f_globals["displayHTML"]
+    raise Exception("Unable to detect displayHTML function")
+
 def load_ipython_extension(ipython):
     def instructions():
         inst = """
@@ -21,7 +31,8 @@ from snowflake.snowpark import functions as F
     error_message_template="""<div style="background-color: #f44336; color: white; padding: 16px;"><strong>Error:</strong> <span id="error-message">@error</span></div>"""
     output_cell_output = None
     try:
-        output_cell_output = displayHTML
+        output_cell_output = get_display_html()
+        print("displayHTML detected")
     except:
         from IPython.display import display, HTML
         output_cell_output = lambda x: display(HTML(x))
@@ -48,7 +59,7 @@ from snowflake.snowpark import functions as F
                     if name:
                         self.shell.user_ns[name] = df
                     else:
-                        self.shell.user_ns["$df"] = df
+                        self.shell.user_ns["__df"] = df
                 except SnowparkSQLException as sce:
                     error_msg = sce.message
                     formatted = error_message_template.replace("@error", error_msg)
