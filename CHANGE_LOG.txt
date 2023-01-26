@@ -107,4 +107,5 @@ Fixing some test_cases
 
 Version 0.0.20
 --------------
-Changing the implementation for notebook integration for dataframe to a more standard approach
+Fixing issue with bround
+

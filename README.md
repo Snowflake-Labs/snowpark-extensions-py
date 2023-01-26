@@ -408,6 +408,7 @@ If you dont specify a name you can still access the last result using `__df`.
 =======
 If you dont specify a name you can still access the last result using `__last`.
 >>>>>>> 2bf4304 (adjustment for displayHTML)
+If you dont specify a name you can still access the last result using `__df`.
 
 > NOTE: By default only 50 rows are displays. You can customize this limit for example to 100 rows with:
 ```
