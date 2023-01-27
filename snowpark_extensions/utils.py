@@ -149,20 +149,3 @@ def schema_str_to_schema(schema_as_str):
         datatype = map_string_type_to_datatype(type)
         schema_fields.append(StructField(name,datatype))
     return StructType(schema_fields)
-
-from snowflake.snowpark import DataFrame
-def display(data:DataFrame, limit:int=10):
-    from IPython.display import display as _display, HTML
-    if isinstance(data, DataFrame):
-        try:
-            output_cell_output = displayHTML
-        except:
-            output_cell_output = lambda x: _display(HTML(x))
-        try:
-            print(f"Output restricted to {limit} rows")
-            html = data.limit(limit).to_pandas().to_html()
-            output_cell_output(html)
-        except Exception as e:
-            print(f"Error displaying dataframe {e}")
-    else:
-        _display(data)

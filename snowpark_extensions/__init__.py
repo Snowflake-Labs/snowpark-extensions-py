@@ -6,8 +6,9 @@ from .functions_extensions import *
 from .session_builder_extensions import *
 from .types_extensions import *
 from .column_extensions import *
-from .utils import display
 
+
+rows_limit = 50
 
 def get_display_html() -> None:
     import inspect
@@ -36,6 +37,29 @@ from snowflake.snowpark import functions as F
     except:
         from IPython.display import display, HTML
         output_cell_output = lambda x: display(HTML(x))
+
+    def snowflake_dataframe_formatter(df):
+        # Format the dataframe as a table using pandas
+        from snowflake.snowpark.exceptions import SnowparkSQLException
+        try:
+            count = df.count()
+            if count > rows_limit:
+                print(f"There are {count} rows. Showing only {rows_limit} ")
+            return df.limit(rows_limit).to_pandas().to_html()
+        except SnowparkSQLException as sce:
+            error_msg = sce.message
+            formatted = error_message_template.replace("@error", error_msg)
+            return formatted
+        except Exception as ex:
+            error_message = str(ex)
+            return f"<pre>{error_message}</pre>"
+   
+
+
+    # Register the display hook
+    from snowflake.snowpark import DataFrame
+    get_ipython().display_formatter.formatters['text/html'].for_type(DataFrame, snowflake_dataframe_formatter)
+
     from IPython.core.magic import (Magics, magics_class, cell_magic)
     @magics_class
     class SnowparkMagics(Magics):
@@ -51,22 +75,12 @@ from snowflake.snowpark import functions as F
                 name = None
                 if line and line.strip():
                     name = line.strip().split(" ")[0]
-                from snowflake.snowpark.exceptions import SnowparkSQLException
-                try:
-                    df = session.sql(res)
-                    html = df.to_pandas().to_html()
-                    output_cell_output(html)
-                    if name:
-                        self.shell.user_ns[name] = df
-                    else:
-                        self.shell.user_ns["__df"] = df
-                except SnowparkSQLException as sce:
-                    error_msg = sce.message
-                    formatted = error_message_template.replace("@error", error_msg)
-                    output_cell_output(formatted)
-                except Exception as ex:
-                    error_message = str(ex)
-                    output_cell_output(f"<pre>{error_message}</pre>")                    
+                df = session.sql(res)
+                if name:
+                    self.shell.user_ns[name] = df
+                else:
+                    self.shell.user_ns["__df"] = df
+                    return df
             else:
                 return "No session was found. You can setup one by running: session = Session.builder.from_env().getOrCreate()"
     magics = SnowparkMagics(ipython)
