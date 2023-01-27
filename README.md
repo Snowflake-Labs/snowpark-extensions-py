@@ -405,11 +405,17 @@ if tables.count() > 5:
 ```
 If you dont specify a name you can still access the last result using `__df`.
 
-The standard IPython display does not render snowpark `dataframe`. You can use `df.show()` but by default something like: `display(df)` will just print: `<snowflake.snowpark.dataframe.DataFrame at 0x7fa67d099c40>`
+> NOTE: By default only 50 rows are displays. You can customize this limit for example to 100 rows with:
+```
+import snowpark_extensions
+snowpark_extensions.rows_limit = 100
+```
 
-You can configure Jupyter to run some imports and initialization code at the start of a notebook by creating a file called `startup.ipy` in the `~/.ipython/profile_default/startup` directory. Any code written in this file will be executed when you start a new Jupyter notebook.
+You can configure Jupyter to run some imports and initialization code at the start of a notebook by creating a file called `startup.ipy` in the `~/.ipython/profile_default/startup` directory. 
 
-An [example startup.ipy](./startup.ipy) is provided
+Any code written in this file will be executed when you start a new Jupyter notebook.
+
+An [example startup.ipy](https://github.com/MobilizeNet/snowpark-extensions-py/blob/main/startup.ipy) is provided
 
 
 ## Running notebooks in Snowpark
