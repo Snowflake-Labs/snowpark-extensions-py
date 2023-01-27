@@ -26,7 +26,7 @@ session.sql(f"CREATE STAGE IF NOT EXISTS {args.stage}").show()
 session.file.put(args.notebook,f'@{args.stage}',auto_compress=False,overwrite=True)
 
 
-packages=["snowflake-snowpark-python","nbconvert","nbformat","ipython","jinja2==3.0.3","plotly"] #"stack_data","pexpect","pickleshare","backcall","decorator","prompt_toolkit","jedi"
+packages=["snowflake-snowpark-python","nbconvert","nbformat","ipython","jinja2==3.0.3","plotly"]
 packages.extend(set(filter(None, args.packages.split(','))))
 print(f"Using packages [magenta]{packages}")
 

@@ -104,3 +104,7 @@ Version 0.0.19
 --------------
 Adding functions.daydiff as a direct replacement for datediff
 Fixing some test_cases
+
+Version 0.0.20
+--------------
+Changing the implementation for notebook integration for dataframe to a more standard approach
