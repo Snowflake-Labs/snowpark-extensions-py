@@ -51,13 +51,6 @@ if not hasattr(F,"___extended"):
         # we add .* to the expression if needed
         return coalesce(call_builtin('regexp_substr',value,regexp,lit(1),lit(1),lit('e'),idx),lit(''))
 
-    def unix_timestamp(col):
-        return call_builtin("DATE_PART","epoch_second",col)
-
-    def from_unixtime(col):
-        col = _to_col_if_str(col,"from_unixtime")
-        return F.to_timestamp(col).alias('ts')
-
     def format_number(col,d):
         col = _to_col_if_str(col,"format_number")
         return F.to_varchar(col,'999,999,999,999,999.' + '0'*d)
@@ -295,17 +288,11 @@ if not hasattr(F,"___extended"):
     F.array_distinct = array_distinct
     F.regexp_extract = regexp_extract
     F.create_map = create_map
-    F.unix_timestamp = unix_timestamp
-    F.from_unixtime = from_unixtime
     F.format_number = format_number
     F.reverse = reverse
     F.daydiff = daydiff
     F.date_add = date_add
     F.date_sub = date_sub
-    F.asc  = lambda col: _to_col_if_str(col, "asc").asc()
-    F.desc = lambda col: _to_col_if_str(col, "desc").desc()
-    F.asc_nulls_first = lambda col: _to_col_if_str(col, "asc_nulls_first").asc()
-    F.desc_nulls_first = lambda col: _to_col_if_str(col, "desc_nulls_first").asc()
     F.sort_array = _sort_array
     F.array_sort = _array_sort
     F.struct = _struct

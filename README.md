@@ -198,8 +198,8 @@ df.group_by("ID").applyInPandas(
 | Name                         | Description                                                                         |
 |------------------------------|-------------------------------------------------------------------------------------|
 | functions.array_sort         | sorts the input array in ascending order or descending order. The elements of the input array must be orderable. Null elements will be placed at the end of the returned array. |
-| functions.unix_timestamp     | returns the UNIX timestamp of current time.                                         |
-| functions.from_unixtimestamp | can be used to convert UNIX time to Snowflake timestamp                             |
+| ~~functions.unix_timestamp~~     | ~~returns the UNIX timestamp of current time.~~ **Available in snowpark-python >= 1.1.0**                                         |
+| ~~functions.from_unixtimestamp~~ | ~~can be used to convert UNIX time to Snowflake timestamp~~ **Available in snowpark-python >= 1.1.0**                             |
 | functions.format_number      | formats numbers using the specified number of decimal places                        |
 | functions.reverse            | returns a reversed string                                                           |
 | functions.explode            | returns a new row for each element in the given array
@@ -213,8 +213,8 @@ df.group_by("ID").applyInPandas(
 | functions.date_add           | returns the date that is n days days after                                          |
 | functions.date_sub           | returns the date that is n days before                                              |
 | functions.regexp_extract     | extract a specific group matched by a regex, from the specified string column.      |
-| functions.asc                | returns a sort expression based on the ascending order of the given column name.    |
-| functions.desc               | returns a sort expression based on the descending order of the given column name.    |
+| ~~functions.asc~~                | ~~returns a sort expression based on the ascending order of the given column name.~~ **Available in snowpark-python >=1.1.0**    |
+| ~~functions.desc~~               | ~~returns a sort expression based on the descending order of the given column name.~~ **Available in snowpark-python >=1.1.0**    |
 | functions.flatten            | creates a single array from an array of arrays
 | functions.sort_array         | sorts the input array in ascending or descending order according to the natural ordering of the array elements. Null elements will be placed at the beginning of the returned array in ascending order or at the end of the returned array in descending order
 | functions.map_values         | Returns an unordered array containing the values of the map. |

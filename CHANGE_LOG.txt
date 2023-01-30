@@ -107,4 +107,9 @@ Fixing some test_cases
 
 Version 0.0.20
 --------------
-Changing the implementation for notebook integration for dataframe to a more standard approach
+Fixing issue with bround
+
+Version 0.0.21
+--------------
+Removing function that are now available in snowpark
+Adjust to use snowpark-python>=1.1.0
