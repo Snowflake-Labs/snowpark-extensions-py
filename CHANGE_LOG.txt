@@ -109,3 +109,7 @@ Version 0.0.20
 --------------
 Fixing issue with bround
 
+Version 0.0.21
+--------------
+Removing function that are now available in snowpark
+Adjust to use snowpark-python>=1.1.0
