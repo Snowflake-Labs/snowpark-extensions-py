@@ -1,0 +1,3 @@
+ M .vscode/settings.json
+?? .env
+?? bds-auto-save-avenegas_mobilize.net-2023-01-30-21-48-10.txt
