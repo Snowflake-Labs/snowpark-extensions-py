@@ -4,5 +4,19 @@
  ],
  "python.testing.unittestEnabled": false,
  "python.testing.pytestEnabled": true,
- "sqltools.connections": []
+ "sqltools.connections": [
+    {
+        "connId": 3136,
+        "role": "snowpark_analysis_role",
+        "driver": "Snowflake",
+        "name": "snowpark_extensions_tests",
+        "account": "mobilize",
+        "username": "U2FsdGVkX19D0UHPwm6BfYGGWD8PWOQS96Mer/P/kBzmKSy1Ju+PjkzKcqpIo4zm",
+        "password": "U2FsdGVkX1+TAMXWNSsAz3DIrETTXuGjC6p1PfV1R4A=",
+        "database": "snowpark_extensions_tests",
+        "warehouse": "snowpark_analysis_wh",
+        "schema": "public"
+    }
+],
+"sqltools.defaultConnId": 3136
 }

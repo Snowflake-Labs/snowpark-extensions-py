@@ -281,6 +281,8 @@ if not hasattr(F,"___extended"):
             , F.when(columnFloor % F.lit(2) == F.lit(0), columnFloor).otherwise(columnFloor + F.lit(1))
         ).otherwise(F.round(elevatedColumn)) / F.when(F.lit(0) == F.lit(scale), F.lit(1)).otherwise(power)
     
+    def datediff(col1:ColumnOrName, col2:ColumnOrName):
+        return F.call_builtin("datediff",lit("day"), col1, col2)
 
     F.array = _array
     F.array_max = _array_max
@@ -293,6 +295,7 @@ if not hasattr(F,"___extended"):
     F.daydiff = daydiff
     F.date_add = date_add
     F.date_sub = date_sub
+    F.datediff = datediff
     F.sort_array = _sort_array
     F.array_sort = _array_sort
     F.struct = _struct
