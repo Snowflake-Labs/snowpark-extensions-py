@@ -1,4 +1,0 @@
- M .vscode/settings.json
- M snowpark_extensions/functions_extensions.py
- M tests/test_functions.py
-?? bds-auto-save-avenegas_mobilize.net-2023-01-30-23-30-16.txt
