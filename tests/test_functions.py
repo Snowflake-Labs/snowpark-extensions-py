@@ -232,7 +232,7 @@ def test_daydiff():
 
 def test_datediff():
     session = Session.builder.from_snowsql().getOrCreate()
-    df = session.createDataFrame([('2019-08-24','2021-02-26')], ['d1', 'd2'])
+    df = session.createDataFrame([('2019-08-24', '2021-02-26')], ['d1', 'd2'])
     res = df.select(F.datediff(F.to_date(df.d1), F.to_date(df.d2)).alias('diff')).collect()
     assert res[0].DIFF == 552
 
