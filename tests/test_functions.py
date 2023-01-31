@@ -224,7 +224,7 @@ def test_struct():
     assert re.sub(r"\s","",res[0].STRUCT) == '{"A":80,"B":"Bob"}'
     assert re.sub(r"\s","",res[1].STRUCT) == '{"A":null,"B":"Alice"}'
 
-def test_datediff():
+def test_daydiff():
     session = Session.builder.from_snowsql().getOrCreate()
     df = session.createDataFrame([('2015-04-08','2015-05-10')], ['d1', 'd2'])
     res = df.select(F.daydiff(F.to_date(df.d2), F.to_date(df.d1)).alias('diff')).collect()
