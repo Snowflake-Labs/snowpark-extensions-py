@@ -224,11 +224,12 @@ def test_struct():
     assert re.sub(r"\s","",res[0].STRUCT) == '{"A":80,"B":"Bob"}'
     assert re.sub(r"\s","",res[1].STRUCT) == '{"A":null,"B":"Alice"}'
 
-def test_daydiff():
+def test_datediff():
     session = Session.builder.from_snowsql().getOrCreate()
     df = session.createDataFrame([('2015-04-08','2015-05-10')], ['d1', 'd2'])
     res = df.select(F.daydiff(F.to_date(df.d2), F.to_date(df.d1)).alias('diff')).collect()
     assert res[0].DIFF == 32  
+
 
 def test_bround():
     session = Session.builder.from_snowsql().getOrCreate()
@@ -300,3 +301,41 @@ def test_bround():
     assert resNull[4].ROUNDING == None
     assert resNull[5].ROUNDING == None
 
+def test_split_regex():
+    session = Session.builder.from_snowsql().config("schema","PUBLIC").getOrCreate()
+    from snowflake.snowpark.functions import split_regex
+    
+    df = session.createDataFrame([('oneAtwoBthreeC',)], ['s',])
+
+    res = df.select(split_regex(df.s, 'Z', -1).alias('s')).collect()
+    assert res[0].S == "['oneAtwoBthreeC']"
+
+    res = df.select(split_regex(df.s, 'Z', 0).alias('s')).collect()
+    assert res[0].S == "['oneAtwoBthreeC']"
+
+    res = df.select(split_regex(df.s, 'Z', 1).alias('s')).collect()
+    assert res[0].S == "['oneAtwoBthreeC']"
+
+    res = df.select(split_regex(df.s, 'Z', 2).alias('s')).collect()
+    assert res[0].S == "['oneAtwoBthreeC']"
+
+    res = df.select(split_regex(df.s, 't', 0).alias('s')).collect()
+    assert res[0].S == "['oneA', 'woB', 'hreeC']"
+
+    res = df.select(split_regex(df.s, 't', 1).alias('s')).collect()
+    assert res[0].S == "['oneAtwoBthreeC']"
+    
+    res = df.select(split_regex(df.s, '[ABC]', 0).alias('s')).collect()
+    assert res[0].S == "['one', 'two', 'three', '']"
+    
+    res = df.select(split_regex(df.s, '[ABC]', 1).alias('s')).collect()
+    assert res[0].S == "['oneAtwoBthreeC']"
+    
+    res = df.select(split_regex(df.s, '[ABC]', 2).alias('s')).collect()
+    assert res[0].S == "['one', 'twoBthreeC']"
+    
+    res = df.select(split_regex(df.s, '[ABC]', -1).alias('s')).collect()
+    assert res[0].S == "['one', 'two', 'three', '']"
+
+    res = df.select(split_regex(df.s, '[ABC]').alias('s')).collect()
+    assert res[0].S == "['one', 'two', 'three', '']"

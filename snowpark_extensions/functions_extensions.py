@@ -16,6 +16,7 @@ from snowflake.snowpark._internal.type_utils import (
 from snowflake.snowpark.column import _to_col_if_str, _to_col_if_lit
 from snowflake.snowpark.dataframe import _generate_prefix
 from snowflake.snowpark._internal.analyzer.unary_expression import Alias
+import re
 
 if not hasattr(F,"___extended"):
     F.___extended = True
@@ -50,6 +51,13 @@ if not hasattr(F,"___extended"):
         idx = _to_col_if_lit(idx,"regexp_extract")
         # we add .* to the expression if needed
         return coalesce(call_builtin('regexp_substr',value,regexp,lit(1),lit(1),lit('e'),idx),lit(''))
+
+    def unix_timestamp(col):
+        return call_builtin("DATE_PART","epoch_second",col)
+
+    def from_unixtime(col):
+        col = _to_col_if_str(col,"from_unixtime")
+        return F.to_timestamp(col).alias('ts')
 
     def format_number(col,d):
         col = _to_col_if_str(col,"format_number")
@@ -281,6 +289,51 @@ if not hasattr(F,"___extended"):
             , F.when(columnFloor % F.lit(2) == F.lit(0), columnFloor).otherwise(columnFloor + F.lit(1))
         ).otherwise(F.round(elevatedColumn)) / F.when(F.lit(0) == F.lit(scale), F.lit(1)).otherwise(power)
     
+    def has_special_char(string):
+        pattern = '[^A-Za-z0-9]+'
+        result = re.search(pattern, string)
+        return bool(result)
+
+    F.split_regex1 = None
+    F._oldsplit = F.split
+    def _split_regex(value:ColumnOrName, pattern:ColumnOrLiteralStr, limit:ColumnOrLiteral = -1):        
+        
+        value = _to_col_if_str(value,"split_regex")        
+        
+        if not F.split_regex1:
+            
+            session = context.get_active_session()
+            current_database = session.get_current_database()
+            
+            def split_regex2(value:str, pattern:str, limit:int)->str:                
+                
+                if limit == 1:                    
+                    return '[\''+ value +'\']'
+                else:
+                    limit = limit - 1
+
+                if limit < 0:
+                    limit = 0
+                
+                return re.split(pattern,value,limit)
+            
+            F.split_regex1 = session.udf.register(split_regex2,is_permanent=False,overwrite=True)
+
+        def is_not_a_regex(pattern):
+            return not has_special_char(pattern)
+
+        pattern_col = pattern
+
+        if isinstance(pattern_col, str):
+            pattern_col = lit(pattern_col)
+        
+        if limit == -1 and isinstance(pattern, str) and is_not_a_regex(pattern):
+            F._oldsplit(value, pattern)
+        
+        if isinstance(limit, int):
+            limit = lit(limit)
+
+        return F.split_regex1 (value, pattern_col, limit)
 
     F.array = _array
     F.array_max = _array_max
@@ -288,12 +341,19 @@ if not hasattr(F,"___extended"):
     F.array_distinct = array_distinct
     F.regexp_extract = regexp_extract
     F.create_map = create_map
+    F.unix_timestamp = unix_timestamp
+    F.from_unixtime = from_unixtime
     F.format_number = format_number
     F.reverse = reverse
     F.daydiff = daydiff
     F.date_add = date_add
     F.date_sub = date_sub
+    F.asc  = lambda col: _to_col_if_str(col, "asc").asc()
+    F.desc = lambda col: _to_col_if_str(col, "desc").desc()
+    F.asc_nulls_first = lambda col: _to_col_if_str(col, "asc_nulls_first").asc()
+    F.desc_nulls_first = lambda col: _to_col_if_str(col, "desc_nulls_first").asc()
     F.sort_array = _sort_array
     F.array_sort = _array_sort
     F.struct = _struct
     F.bround = _bround
+    F.split_regex = _split_regex
