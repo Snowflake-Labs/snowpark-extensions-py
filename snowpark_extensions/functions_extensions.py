@@ -298,7 +298,7 @@ if not hasattr(F,"___extended"):
         return not has_special_char(pattern)
 
     F._split_regex = None
-    F.snowpark_split = F.split
+    F.snowflake_split = F.split
     def _regexp_split(value:ColumnOrName, pattern:ColumnOrLiteralStr, limit:ColumnOrLiteral = -1):        
         value = _to_col_if_str(value,"split_regex")                
         if not F._split_regex:            
@@ -312,12 +312,15 @@ if not hasattr(F,"___extended"):
                 if limit < 0:
                     limit = 0                
                 return re.split(pattern,value,limit)            
-            F._split_regex = session.udf.register(split_regex_definition,is_permanent=False,overwrite=True)        
-        pattern_col = pattern
+            F._split_regex = session.udf.register(split_regex_definition,is_permanent=False,overwrite=True)      
+        # Replace parenthesis because re.split adds what is inside them into the result list 
+        # while Pyspark doesn't take in count
+        pattern = pattern.replace('(','').replace(')','') 
+        pattern_col = pattern        
         if isinstance(pattern, str):
             pattern_col = lit(pattern)        
-        if limit == -1 and isinstance(pattern, str) and is_not_a_regex(pattern):
-            F.snowpark_split(value, pattern_col)        
+        if limit < 0 and isinstance(pattern, str) and is_not_a_regex(pattern):
+            F.snowflake_split(value, pattern_col)        
         if isinstance(limit, int):
             limit = lit(limit)
         return F._split_regex (value, pattern_col, limit)
