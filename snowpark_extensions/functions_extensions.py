@@ -294,46 +294,33 @@ if not hasattr(F,"___extended"):
         result = re.search(pattern, string)
         return bool(result)
 
-    F.split_regex1 = None
-    F._oldsplit = F.split
-    def _split_regex(value:ColumnOrName, pattern:ColumnOrLiteralStr, limit:ColumnOrLiteral = -1):        
-        
-        value = _to_col_if_str(value,"split_regex")        
-        
-        if not F.split_regex1:
-            
+    def is_not_a_regex(pattern):
+        return not has_special_char(pattern)
+
+    F._split_regex = None
+    F.snowpark_split = F.split
+    def _regexp_split(value:ColumnOrName, pattern:ColumnOrLiteralStr, limit:ColumnOrLiteral = -1):        
+        value = _to_col_if_str(value,"split_regex")                
+        if not F._split_regex:            
             session = context.get_active_session()
-            current_database = session.get_current_database()
-            
-            def split_regex2(value:str, pattern:str, limit:int)->str:                
-                
+            current_database = session.get_current_database()            
+            def split_regex_definition(value:str, pattern:str, limit:int)->str:                
                 if limit == 1:                    
                     return '[\''+ value +'\']'
                 else:
                     limit = limit - 1
-
                 if limit < 0:
-                    limit = 0
-                
-                return re.split(pattern,value,limit)
-            
-            F.split_regex1 = session.udf.register(split_regex2,is_permanent=False,overwrite=True)
-
-        def is_not_a_regex(pattern):
-            return not has_special_char(pattern)
-
+                    limit = 0                
+                return re.split(pattern,value,limit)            
+            F._split_regex = session.udf.register(split_regex_definition,is_permanent=False,overwrite=True)        
         pattern_col = pattern
-
-        if isinstance(pattern_col, str):
-            pattern_col = lit(pattern_col)
-        
+        if isinstance(pattern, str):
+            pattern_col = lit(pattern)        
         if limit == -1 and isinstance(pattern, str) and is_not_a_regex(pattern):
-            F._oldsplit(value, pattern)
-        
+            F.snowpark_split(value, pattern_col)        
         if isinstance(limit, int):
             limit = lit(limit)
-
-        return F.split_regex1 (value, pattern_col, limit)
+        return F._split_regex (value, pattern_col, limit)
 
     F.array = _array
     F.array_max = _array_max
@@ -356,4 +343,4 @@ if not hasattr(F,"___extended"):
     F.array_sort = _array_sort
     F.struct = _struct
     F.bround = _bround
-    F.split_regex = _split_regex
+    F.regexp_split = _regexp_split

@@ -303,39 +303,44 @@ def test_bround():
 
 def test_split_regex():
     session = Session.builder.from_snowsql().config("schema","PUBLIC").getOrCreate()
-    from snowflake.snowpark.functions import split_regex
+    from snowflake.snowpark.functions import regexp_split
     
     df = session.createDataFrame([('oneAtwoBthreeC',)], ['s',])
 
-    res = df.select(split_regex(df.s, 'Z', -1).alias('s')).collect()
+    res = df.select(regexp_split(df.s, 'Z', -1).alias('s')).collect()
     assert res[0].S == "['oneAtwoBthreeC']"
 
-    res = df.select(split_regex(df.s, 'Z', 0).alias('s')).collect()
+    res = df.select(regexp_split(df.s, 'Z', 0).alias('s')).collect()
     assert res[0].S == "['oneAtwoBthreeC']"
 
-    res = df.select(split_regex(df.s, 'Z', 1).alias('s')).collect()
+    res = df.select(regexp_split(df.s, 'Z', 1).alias('s')).collect()
     assert res[0].S == "['oneAtwoBthreeC']"
 
-    res = df.select(split_regex(df.s, 'Z', 2).alias('s')).collect()
+    res = df.select(regexp_split(df.s, 'Z', 2).alias('s')).collect()
     assert res[0].S == "['oneAtwoBthreeC']"
 
-    res = df.select(split_regex(df.s, 't', 0).alias('s')).collect()
+    res = df.select(regexp_split(df.s, 't', 0).alias('s')).collect()
     assert res[0].S == "['oneA', 'woB', 'hreeC']"
 
-    res = df.select(split_regex(df.s, 't', 1).alias('s')).collect()
+    res = df.select(regexp_split(df.s, 't', 1).alias('s')).collect()
     assert res[0].S == "['oneAtwoBthreeC']"
     
-    res = df.select(split_regex(df.s, '[ABC]', 0).alias('s')).collect()
+    res = df.select(regexp_split(df.s, '[ABC]', 0).alias('s')).collect()
     assert res[0].S == "['one', 'two', 'three', '']"
     
-    res = df.select(split_regex(df.s, '[ABC]', 1).alias('s')).collect()
+    res = df.select(regexp_split(df.s, '[ABC]', 1).alias('s')).collect()
     assert res[0].S == "['oneAtwoBthreeC']"
     
-    res = df.select(split_regex(df.s, '[ABC]', 2).alias('s')).collect()
+    res = df.select(regexp_split(df.s, '[ABC]', 2).alias('s')).collect()
     assert res[0].S == "['one', 'twoBthreeC']"
     
-    res = df.select(split_regex(df.s, '[ABC]', -1).alias('s')).collect()
+    res = df.select(regexp_split(df.s, '[ABC]', -1).alias('s')).collect()
     assert res[0].S == "['one', 'two', 'three', '']"
 
-    res = df.select(split_regex(df.s, '[ABC]').alias('s')).collect()
+    res = df.select(regexp_split(df.s, '[ABC]').alias('s')).collect()
     assert res[0].S == "['one', 'two', 'three', '']"
+
+    df = session.createDataFrame([('mytext[a]helloWorld',)], ['s',])
+
+    res = df.select(regexp_split(df.s, 'text[a]', 2).alias('s')).collect()
+    assert res[0].S == "['mytext[a]helloWorld']"
