@@ -43,9 +43,18 @@ from snowflake.snowpark import functions as F
         from snowflake.snowpark.exceptions import SnowparkSQLException
         try:
             count = df.count()
-            if count > rows_limit:
+            if count == 0:
+                print(f"0 rows were returned.")
+            elif count == 1:
+                r=df.collect()
+                import pandas as pd
+                pandas_df = pd.DataFrame.from_records([x.as_dict() for x in r])
+                return pandas_df.to_html()
+            elif count > rows_limit:
                 print(f"There are {count} rows. Showing only {rows_limit} ")
-            return df.limit(rows_limit).to_pandas().to_html()
+                return df.limit(rows_limit).to_pandas().to_html()
+            else:
+                return df.to_pandas().to_html()
         except SnowparkSQLException as sce:
             error_msg = sce.message
             formatted = error_message_template.replace("@error", error_msg)
