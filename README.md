@@ -213,6 +213,7 @@ df.group_by("ID").applyInPandas(
 | functions.date_add           | returns the date that is n days days after                                          |
 | functions.date_sub           | returns the date that is n days before                                              |
 | functions.regexp_extract     | extract a specific group matched by a regex, from the specified string column.      |
+| functions.regexp_split     | splits a specific group matched by a regex, it is an extension of split wich supports a limit parameter.       |
 | ~~functions.asc~~                | ~~returns a sort expression based on the ascending order of the given column name.~~ **Available in snowpark-python >=1.1.0**    |
 | ~~functions.desc~~               | ~~returns a sort expression based on the descending order of the given column name.~~ **Available in snowpark-python >=1.1.0**    |
 | functions.flatten            | creates a single array from an array of arrays
@@ -355,6 +356,17 @@ df.select(F.regexp_extract('id', r'(\d+)_(\d+)', 2)).show()
 # |30                                                  |
 # |50                                                  |
 # ------------------------------------------------------
+```
+
+### regexp_split
+
+```python
+session = Session.builder.from_snowsql().create()
+
+df = session.createDataFrame([('oneAtwoBthreeC',)], ['s',])
+res = df.select(regexp_split(df.s, '[ABC]', 2).alias('s')).collect()
+print(str(res))
+# ['one', 'twoBthreeC']
 ```
 
 # utilities
