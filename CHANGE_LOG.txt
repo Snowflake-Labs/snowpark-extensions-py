@@ -124,4 +124,4 @@ Adding function extension regexp_split
 
  Version 0.0.23
 --------------
-Change in implementation of regexp_split to support diferent regular expression cases
+Change in implementation of regexp_split to support different regular expression cases
