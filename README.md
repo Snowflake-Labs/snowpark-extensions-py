@@ -366,7 +366,7 @@ session = Session.builder.from_snowsql().create()
 df = session.createDataFrame([('oneAtwoBthreeC',)], ['s',])
 res = df.select(regexp_split(df.s, '[ABC]', 2).alias('s')).collect()
 print(str(res))
-# ['one', 'twoBthreeC']
+# [\n  "one",\n  "twoBthreeC"\n]
 ```
 
 # utilities

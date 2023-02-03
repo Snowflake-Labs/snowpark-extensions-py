@@ -121,3 +121,7 @@ Adjustment for notebook integration in the case that only one row is returned. T
  Version 0.0.23
 --------------
 Adding function extension regexp_split
+
+ Version 0.0.23
+--------------
+Change in implementation of regexp_split to support diferent regular expression cases
