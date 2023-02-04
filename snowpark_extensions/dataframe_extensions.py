@@ -439,7 +439,7 @@ if not hasattr(RelationalGroupedDataFrame, "applyInPandas"):
           self.rows.append(row)
           # Merge rows into a dataframe
           if len(self.rows) >= 16000:
-             df = pd.DataFrame(self.rows)
+             df = pd.DataFrame(self.rows,columns=input_cols)
              self.dfs.append(df)
              self.rows = []
           # Merge dataframes into a single dataframe
