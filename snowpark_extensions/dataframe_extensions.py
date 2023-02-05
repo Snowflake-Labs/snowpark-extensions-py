@@ -422,7 +422,7 @@ class GroupByPivot():
                 raise Exception("Also functions expressions are supported") 
 
 if not hasattr(RelationalGroupedDataFrame, "applyInPandas"):
-  def applyInPandas(self,func,schema):
+  def applyInPandas(self,func,schema,batch_size=16000):
       output_schema = schema
       if isinstance(output_schema, str):
         output_schema = schema_str_to_schema(output_schema)
@@ -438,8 +438,8 @@ if not hasattr(RelationalGroupedDataFrame, "applyInPandas"):
       def process(self, *row):
           self.rows.append(row)
           # Merge rows into a dataframe
-          if len(self.rows) >= 16000:
-             df = pd.DataFrame(self.rows)
+          if len(self.rows) >= batch_size:
+             df = pd.DataFrame(self.rows, columns=input_cols)
              self.dfs.append(df)
              self.rows = []
           # Merge dataframes into a single dataframe
@@ -450,10 +450,10 @@ if not hasattr(RelationalGroupedDataFrame, "applyInPandas"):
       def end_partition(self):
         # Merge any remaining rows
         if len(self.rows) > 0:
-          df = pd.DataFrame(self.rows,columns=input_cols)
+          df = pd.DataFrame(self.rows, columns=input_cols)
           self.dfs.append(df)
           self.rows = []
-        pandas_input = pd.concat(self.dfs)        
+        pandas_input = pd.concat(self.dfs)   
         pandas_output = func(pandas_input)
         for row in pandas_output.itertuples(index=False):
              yield tuple(row)

@@ -5,6 +5,7 @@ from snowflake.snowpark import Session
 import os
 import shortuuid
 import io
+import sys
 
 if not hasattr(Session.SessionBuilder,"___extended"):         
 

@@ -88,7 +88,7 @@ def test_applyinpandas():
     df2 = normalize(df1)
     # schema can be an string or an StructType
     res = df.group_by("ID").applyInPandas(
-        normalize, schema="id long, v double").orderBy("V").collect()
+        normalize, schema="ID long, V double",batch_size=2).orderBy("V").collect()
     assert len(res)==5
     assert str(res[0].V) == '-0.8320502943378437'
     assert str(res[1].V) == '-0.7071067811865475'
