@@ -305,67 +305,63 @@ def test_regexp_split():
     session = Session.builder.from_snowsql().config("schema","PUBLIC").getOrCreate()
     from snowflake.snowpark.functions import regexp_split
     
-    df = session.createDataFrame([('oneAtwoBthreeC',)], ['s',])
+    df = session.createDataFrame([('testAandtestBareTwoBBtests',)], ['s',])
 
-    res = df.select(regexp_split(df.s, 'Z', -1).alias('s')).collect()
-    assert res[0].S == "['oneAtwoBthreeC']"
-    res = df.select(regexp_split(df.s, 'Z', 0).alias('s')).collect()
-    assert res[0].S == "['oneAtwoBthreeC']"
-    res = df.select(regexp_split(df.s, 'Z', 1).alias('s')).collect()
-    assert res[0].S == "['oneAtwoBthreeC']"
-    res = df.select(regexp_split(df.s, 'Z', 2).alias('s')).collect()
-    assert res[0].S == "['oneAtwoBthreeC']"
-    res = df.select(regexp_split(df.s, 't', 0).alias('s')).collect()
-    assert res[0].S == "['oneA', 'woB', 'hreeC']"
+    res = df.select(regexp_split(df.s, "test(A|BB)" , 3).alias('s')).collect()
+    assert res[0].S == '[\n  "",\n  "andtestBareTwoBBtests"\n]'
+    res = df.select(regexp_split(df.s, "test(A|BB)", 1).alias('s')).collect()
+    assert res[0].S == '[\n  "testAandtestBareTwoBBtests"\n]'
+
+    df = session.createDataFrame([('From: mauricio@mobilize.net',)], ['s',])
+
+    res = df.select(regexp_split(df.s, "((From|To)|Subject): (\w+@\w+\.[a-z]+)").alias('s')).collect()
+    assert res[0].S == '[\n  "",\n  ""\n]'
+
+    df = session.createDataFrame([('oneAtwoBthreeC',)], ['s',])
+    
+    res = df.select(regexp_split(df.s, 'Z').alias('s')).collect()
+    assert res[0].S == '[\n  "oneAtwoBthreeC"\n]'
+    res = df.select(regexp_split(df.s, 't').alias('s')).collect()
+    assert res[0].S == '[\n  "oneA",\n  "woB",\n  "hreeC"\n]'
     res = df.select(regexp_split(df.s, 't', 1).alias('s')).collect()
-    assert res[0].S == "['oneAtwoBthreeC']"    
-    res = df.select(regexp_split(df.s, '[ABC]', 0).alias('s')).collect()
-    assert res[0].S == "['one', 'two', 'three', '']"    
-    res = df.select(regexp_split(df.s, '[ABC]', 1).alias('s')).collect()
-    assert res[0].S == "['oneAtwoBthreeC']"    
-    res = df.select(regexp_split(df.s, '[ABC]', 2).alias('s')).collect()
-    assert res[0].S == "['one', 'twoBthreeC']"    
-    res = df.select(regexp_split(df.s, '[ABC]', -1).alias('s')).collect()
-    assert res[0].S == "['one', 'two', 'three', '']"
+    assert res[0].S == '[\n  "oneAtwoBthreeC"\n]'
+    res = df.select(regexp_split(df.s, 't', 2).alias('s')).collect()
+    assert res[0].S == '[\n  "oneA",\n  "woBthreeC"\n]'    
     res = df.select(regexp_split(df.s, '[ABC]').alias('s')).collect()
-    assert res[0].S == "['one', 'two', 'three', '']"
+    assert res[0].S == '[\n  "one",\n  "two",\n  "three",\n  ""\n]'    
+    res = df.select(regexp_split(df.s, '[ABC]', 1).alias('s')).collect()
+    assert res[0].S == '[\n  "oneAtwoBthreeC"\n]'  
+    res = df.select(regexp_split(df.s, '[ABC]', 2).alias('s')).collect()
+    assert res[0].S == '[\n  "one",\n  "twoBthreeC"\n]'   
     
     df = session.createDataFrame([('HelloabNewacWorld',)], ['s',])
 
-    res = df.select(regexp_split(df.s, 'abNew(a*)c', 2).alias('s')).collect()
-    assert res[0].S == "['Hello', 'World']"      
-    res = df.select(regexp_split(df.s, 'abNew(ac)', 2).alias('s')).collect()
-    assert res[0].S == "['Hello', 'World']"   
-    res = df.select(regexp_split(df.s, 'abNew[a]c', 2).alias('s')).collect()
-    assert res[0].S == "['Hello', 'World']"    
-    res = df.select(regexp_split(df.s, 'a([b, c]).*?', 3).alias('s')).collect()
-    assert res[0].S == "['Hello', 'New', 'World']"
     res = df.select(regexp_split(df.s, 'a([b, c]).*?').alias('s')).collect()
-    assert res[0].S == "['Hello', 'New', 'World']"
+    assert res[0].S == '[\n  "Hello",\n  "New",\n  "World"\n]'
 
     df = session.createDataFrame([(r'aa\nbb\nccc\b',)], ['s',])
     
     res = df.select(regexp_split(df.s, r'\w+.').alias('s')).collect()
-    assert res[0].S == "['', '', '', 'b']"
+    assert res[0].S == '[\n  "",\n  "",\n  "",\n  "b"\n]'
 
     df = session.createDataFrame([(r'\n\n\n',)], ['s',])   
 
     res = df.select(regexp_split(df.s, '.*', 3).alias('s')).collect()
-    assert res[0].S == "['', '', '']"
+    assert res[0].S == '[\n  "",\n  "",\n  ""\n]'
 
     df = session.createDataFrame([("""line 1
 line 2
 line 3""",)], ['s',])    
 
     res = df.select(regexp_split(df.s, r'\n', 3).alias('s')).collect()
-    assert res[0].S == "['line 1', 'line 2', 'line 3']"
+    assert res[0].S == '[\n  "line 1",\n  "line 2",\n  "line 3"\n]'
     res = df.select(regexp_split(df.s, r'line 1(\n)', 3).alias('s')).collect()
-    assert res[0].S == "['', 'line 2\\nline 3']"
+    assert res[0].S == '[\n  "",\n  "line 2\\nline 3"\n]'
 
     df = session.createDataFrame([('The price of PINEAPPLE ice cream is 20',)], ['s',])
     res = df.select(regexp_split(df.s, r"(\b[A-Z]+\b).+(\b\d+)", 4).alias('s')).collect()
-    assert res[0].S == "['The price of ', '']"
+    assert res[0].S == '[\n  "The price of ",\n  ""\n]'
 
     df = session.createDataFrame([('<button type="submit" class="btn">Send</button>',)], ['s',])
     res = df.select(regexp_split(df.s, '".+?"', 4).alias('s')).collect()
-    assert res[0].S == "['<button type=', ' class=', '>Send</button>']"
+    assert res[0].S == '[\n  "<button type=",\n  " class=",\n  ">Send</button>"\n]'

@@ -297,33 +297,40 @@ if not hasattr(F,"___extended"):
     def is_not_a_regex(pattern):
         return not has_special_char(pattern)
 
-    F._split_regex = None
+    F._split_regex_function = None
     F.snowflake_split = F.split
-    def _regexp_split(value:ColumnOrName, pattern:ColumnOrLiteralStr, limit:ColumnOrLiteral = -1):        
+    def _regexp_split(value:ColumnOrName, pattern:ColumnOrLiteralStr, limit:int = -1):
+         
         value = _to_col_if_str(value,"split_regex")                
-        if not F._split_regex:            
-            session = context.get_active_session()
-            current_database = session.get_current_database()            
-            def split_regex_definition(value:str, pattern:str, limit:int)->str:                
-                if limit == 1:                    
-                    return '[\''+ value +'\']'
-                else:
-                    limit = limit - 1
-                if limit < 0:
-                    limit = 0                
-                return re.split(pattern,value,limit)            
-            F._split_regex = session.udf.register(split_regex_definition,is_permanent=False,overwrite=True)      
-        # Replace parenthesis because re.split adds what is inside them into the result list 
-        # while Pyspark doesn't take in count
-        pattern = pattern.replace('(','').replace(')','') 
+        
         pattern_col = pattern        
         if isinstance(pattern, str):
             pattern_col = lit(pattern)        
         if limit < 0 and isinstance(pattern, str) and is_not_a_regex(pattern):
-            F.snowflake_split(value, pattern_col)        
-        if isinstance(limit, int):
-            limit = lit(limit)
-        return F._split_regex (value, pattern_col, limit)
+            return F.snowflake_split(value, pattern_col)  
+                    
+        session = context.get_active_session()
+        current_database = session.get_current_database() 
+        function_name =_generate_prefix("_regex_split_helper")           
+        F._split_regex_function = f"{current_database}.public.{function_name}"
+
+        session.sql(f"""CREATE OR REPLACE FUNCTION {F._split_regex_function} (input String, regex String, limit INT)
+RETURNS ARRAY
+LANGUAGE JAVA
+RUNTIME_VERSION = '11'
+PACKAGES = ('com.snowflake:snowpark:latest')
+HANDLER = 'MyJavaClass.regex_split_run' 
+AS
+$$
+import java.util.regex.Pattern;
+public class MyJavaClass {{
+    public String[] regex_split_run(String input,String regex, int limit) {{
+        Pattern pattern = Pattern.compile(regex);
+        return pattern.split(input, limit);
+    }}}}$$;""").show()
+
+        return call_builtin(F._split_regex_function, value, pattern_col, limit)
+
 
     F.array = _array
     F.array_max = _array_max

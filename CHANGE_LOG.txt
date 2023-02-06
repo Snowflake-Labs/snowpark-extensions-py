@@ -125,3 +125,7 @@ Adding function extension regexp_split
 Version 0.0.24
 --------------
 Fixing an issue with the current implementation of applyInPandas
+
+Version 0.0.25
+--------------
+Change in implementation of regexp_split to support different regular expression cases
