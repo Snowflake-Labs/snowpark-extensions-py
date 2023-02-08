@@ -52,13 +52,6 @@ if not hasattr(F,"___extended"):
         # we add .* to the expression if needed
         return coalesce(call_builtin('regexp_substr',value,regexp,lit(1),lit(1),lit('e'),idx),lit(''))
 
-    def unix_timestamp(col):
-        return call_builtin("DATE_PART","epoch_second",col)
-
-    def from_unixtime(col):
-        col = _to_col_if_str(col,"from_unixtime")
-        return F.to_timestamp(col).alias('ts')
-
     def format_number(col,d):
         col = _to_col_if_str(col,"format_number")
         return F.to_varchar(col,'999,999,999,999,999.' + '0'*d)
@@ -280,6 +273,52 @@ if not hasattr(F,"___extended"):
                 new_cols.append(c)
         return object_construct_keep_null(*new_cols)
 
+    F._array_flatten_udf = None
+    def _array_flatten(array):
+        if not F._array_flatten_udf:
+            @udf
+            def _array_flatten(array_in:list) -> list:
+                flat_list = []
+                for sublist in array_in:
+                    if type(sublist) == list:
+                        flat_list.extend(sublist)
+                    else:
+                        flat_list.append(sublist)              
+                return flat_list
+            F._array_flatten_udf = _array_flatten
+        array = _to_col_if_str(array, "array_flatten")
+        return F._array_flatten(array)
+
+    F._array_zip_udfs = {}
+
+    def build_array_zip_ddl(nargs:int):
+        function_name = _generate_prefix(f"array_zip_{nargs}")
+        args          = ",".join([f"list{x} ARRAY" for x in range(1,nargs+1)])
+        args_names    = ",".join([f"list{x}"       for x in range(1,nargs+1)])
+        return function_name,f"""
+CREATE OR REPLACE TEMPORARY FUNCTION {function_name}({args})
+returns ARRAY language python runtime_version = '3.8'
+handler = 'zip_list'
+as
+$$
+def zip_list({args_names}):
+    return list(zip({args_names}))
+$$;"""
+
+    def _arrays_zip(*lists):
+        nargs = len(lists)
+        if nargs < 2:
+            raise Exception("At least two list are needed for array_zip")
+        if not str(nargs) in F._array_zip_udfs:
+            try:
+                function_name, udf_ddl = build_array_zip_ddl(nargs)
+                context.get_active_session().sql(udf_ddl).show()
+                F._array_zip_udfs[str(nargs)] = function_name
+            except Exception as e:
+                raise Exception(f"Could not register support udf for array_zip. Error: {e}")
+        list_cols = [_to_col_if_str(x, "array_zip") for x in lists]
+        return F.call_builtin(F._array_zip_udfs[str(nargs)],*list_cols)
+
     def _bround(col: Column, scale: int = 0): 
         power = pow(F.lit(10), F.lit(scale))
         elevatedColumn = F.when(F.lit(0) == F.lit(scale), col).otherwise(col * power)
@@ -299,10 +338,8 @@ if not hasattr(F,"___extended"):
 
     F._split_regex_function = None
     F.snowflake_split = F.split
-    def _regexp_split(value:ColumnOrName, pattern:ColumnOrLiteralStr, limit:int = -1):
-         
+    def _regexp_split(value:ColumnOrName, pattern:ColumnOrLiteralStr, limit:int = -1):  
         value = _to_col_if_str(value,"split_regex")                
-        
         pattern_col = pattern        
         if isinstance(pattern, str):
             pattern_col = lit(pattern)        
@@ -328,29 +365,23 @@ public class MyJavaClass {{
         Pattern pattern = Pattern.compile(regex);
         return pattern.split(input, limit);
     }}}}$$;""").show()
-
         return call_builtin(F._split_regex_function, value, pattern_col, limit)
 
 
-    F.array = _array
-    F.array_max = _array_max
-    F.array_min = _array_min
+    F.array          = _array
+    F.array_max      = _array_max
+    F.array_min      = _array_min
+    F.array_flatten  = _array_flatten
     F.array_distinct = array_distinct
+    F.sort_array = _sort_array
+    F.array_sort = _array_sort
     F.regexp_extract = regexp_extract
-    F.create_map = create_map
-    F.unix_timestamp = unix_timestamp
-    F.from_unixtime = from_unixtime
-    F.format_number = format_number
+    F.create_map     = create_map
+    F.format_number  = format_number
     F.reverse = reverse
     F.daydiff = daydiff
     F.date_add = date_add
     F.date_sub = date_sub
-    F.asc  = lambda col: _to_col_if_str(col, "asc").asc()
-    F.desc = lambda col: _to_col_if_str(col, "desc").desc()
-    F.asc_nulls_first = lambda col: _to_col_if_str(col, "asc_nulls_first").asc()
-    F.desc_nulls_first = lambda col: _to_col_if_str(col, "desc_nulls_first").asc()
-    F.sort_array = _sort_array
-    F.array_sort = _array_sort
     F.struct = _struct
     F.bround = _bround
     F.regexp_split = _regexp_split

@@ -15,7 +15,7 @@ setup(name='snowpark_extensions',
       url='http://github.com/MobilizeNet/snowpark-extensions-py',
       author='mauricio.rojas',
       install_requires=['snowflake-snowpark-python[pandas]>=1.1.0', 
-                        'shortuuid', 'nest_asyncio', 'jinja2', 'rich'],
+                        'nest_asyncio', 'jinja2', 'rich'],
       author_email='mauricio.rojas@mobilize.net',
       packages=['snowpark_extensions'],
        scripts=[
