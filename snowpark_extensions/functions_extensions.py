@@ -3,7 +3,7 @@
 
 from snowflake.snowpark import functions as F
 from snowflake.snowpark import context
-from snowflake.snowpark.functions import call_builtin, col,lit, concat, coalesce, object_construct_keep_null
+from snowflake.snowpark.functions import call_builtin, col,lit, concat, coalesce, object_construct_keep_null, table_function, udf
 from snowflake.snowpark import DataFrame, Column
 from snowflake.snowpark.types import ArrayType, BooleanType
 from snowflake.snowpark._internal.type_utils import (
@@ -93,7 +93,7 @@ if not hasattr(F,"___extended"):
             col_list.append(value)
         return object_construct(*col_list)
 
-    def array_distinct(col):
+    def _array_distinct(col):
         col = _to_col_if_str(col,"array_distinct")
         return F.call_builtin('array_distinct',col)
 
@@ -287,7 +287,7 @@ if not hasattr(F,"___extended"):
                 return flat_list
             F._array_flatten_udf = _array_flatten
         array = _to_col_if_str(array, "array_flatten")
-        return F._array_flatten(array)
+        return F._array_flatten_udf(array)
 
     F._array_zip_udfs = {}
 
@@ -367,21 +367,61 @@ public class MyJavaClass {{
     }}}}$$;""").show()
         return call_builtin(F._split_regex_function, value, pattern_col, limit)
 
+    def _explode(expr,outer=False,map=False,use_compat=False):
+        value_col = "explode"
+        if map:
+            key = "key"
+            value_col = "value"
+        else:
+            key = _generate_prefix("KEY")
+        seq = _generate_prefix("SEQ")
+        path = _generate_prefix("PATH")
+        index = _generate_prefix("INDEX")
+        this = _generate_prefix("THIS")
+        flatten = table_function("flatten")
+        explode_res = flatten(input=expr,outer=lit(outer)).alias(seq,key,path,index,value_col,this)
+        # we patch the alias, to simplify explode use case where only one column is used
+        if not map:
+            explode_res.alias_adjust = lambda alias1 : [seq,key,path,index,alias1,this] 
+        # post action to execute after join
+        def post_action(df):
+            drop_columns = [seq,path,index,this] if map else [seq,key,path,index,this]
+            df = df.drop(drop_columns)
+            if use_compat:
+                # in case we need backwards compatibility with spark behavior
+                df=df.with_column(value_col,
+                F.iff(F.cast(value_col,ArrayType()) == F.array_construct(),lit(None),F.cast(value_col,ArrayType())))
+            return df
+        explode_res.post_action = post_action
+        return explode_res
+
+    def _explode_outer(expr,map=False, use_compat=False):
+        return _explode(expr,outer=True,map=map,use_compat=use_compat)
+
+    def _map_values(col:ColumnOrName):
+        col = _to_col_if_str(col,"map_values")
+        return MapValues(col)
+
 
     F.array          = _array
     F.array_max      = _array_max
     F.array_min      = _array_min
     F.array_flatten  = _array_flatten
-    F.array_distinct = array_distinct
-    F.sort_array = _sort_array
-    F.array_sort = _array_sort
-    F.regexp_extract = regexp_extract
+    F.array_distinct = _array_distinct
+    F.array_sort     = _array_sort
+    F.arrays_zip     = _arrays_zip
+    F.bround         = _bround
     F.create_map     = create_map
+    F.daydiff        = daydiff
+    F.date_add       = date_add
+    F.date_sub       = date_sub
+    F.explode        = _explode
+    F.explode_outer  = _explode_outer
     F.format_number  = format_number
-    F.reverse = reverse
-    F.daydiff = daydiff
-    F.date_add = date_add
-    F.date_sub = date_sub
-    F.struct = _struct
-    F.bround = _bround
-    F.regexp_split = _regexp_split
+    F.flatten        = _array_flatten
+    F.map_values     = _map_values
+    F.regexp_extract = regexp_extract
+    F.regexp_split   = _regexp_split
+    F.reverse        = reverse
+    F.sort_array     = _sort_array
+    F.struct         = _struct

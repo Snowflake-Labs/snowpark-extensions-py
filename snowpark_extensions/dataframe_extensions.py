@@ -12,6 +12,10 @@ from snowflake.snowpark.types import StructType,StructField
 from snowflake.snowpark._internal.analyzer.expression import Expression, FunctionExpression
 from snowflake.snowpark._internal.analyzer.unary_expression import Alias
 from snowflake.snowpark._internal.analyzer.analyzer_utils import quote_name
+from snowflake.snowpark import Window, Column
+from snowflake.snowpark.types import *
+from snowflake.snowpark.functions import udtf, col
+from snowflake.snowpark.relational_grouped_dataframe import RelationalGroupedDataFrame
 
 from typing import (
     TYPE_CHECKING,
@@ -138,172 +142,6 @@ if not hasattr(DataFrame,"___extended"):
 
     def has_null(col):
         return F.array_contains(F.sql_expr("parse_json('null')"),col) | F.coalesce(F.array_contains(lit(None) ,col),lit(False))
-
-    # SPECIAL COLUMN HELPERS
-
-
-    class SpecialColumn(Column):
-        def __init__(self,special_column_base_name="special_column"):
-            self.special_col_name = _generate_prefix(special_column_base_name)
-            super().__init__(self.special_col_name)
-            self._is_special_column = True
-            self._expression._is_special_column = True
-            sc = self
-            def _expand(df):
-                nonlocal sc
-                return sc.expand(df)
-            self._expression.expand = _expand
-            self._special_column_dependencies=[]
-            import uuid
-            self._hash = hash(str(uuid.uuid4()))
-            self.expanded = False
-        def __hash__(self):
-            return self._hash
-        def __eq__(self, other):
-            return self._hash == other._hash
-        def gen_unique_value_name(self,idx,base_name):
-            return base_name if idx == 0 else f"{base_name}_{idx}"
-        def add_columns(self,new_cols, alias:str=None):
-           pass
-        def expand(self,df):
-            self.expanded = True
-        @classmethod
-        def extract_specials(cls,c):
-            if isinstance(c, Expression):
-                if c.children:
-                    for child in c.children:
-                        is_child_special = cls.has_special_column(child)
-                        if is_child_special:
-                           return True
-            if hasattr(c,"_is_special_column"):
-                return True
-            if hasattr(c,"_expression") and c._expression and c._expression.children:
-                  for child in c._expression.children:
-                        is_child_special = cls.has_special_column(child)
-                        if is_child_special:
-                           return True
-        @classmethod
-        def any_specials(cls,*cols):
-            for c in cols:
-                for special in cls.specials(c):
-                    return True
-        @classmethod
-        def specials(cls,c):
-            """  Returns special columns that might add a join clause to the dataframe """
-            if isinstance(c, Expression):
-                if c.children:
-                    for child in c.children:
-                        for special in cls.specials(child):
-                            yield special
-            elif hasattr(c,"_expression") and c._expression.children:
-                for child in c._expression.children:
-                        for special in cls.specials(child):
-                            yield special
-            if hasattr(c,"_special_column_dependencies") and c._special_column_dependencies:
-                     for dependency in c._special_column_dependencies:
-                        for special in cls.specials(dependency):
-                            yield special
-            if hasattr(c,"_is_special_column"):
-                yield c
-
-    class MapValues(SpecialColumn):
-        def __init__(self,array_col):
-            super().__init__("values")
-            self.array_col = array_col
-            self._special_column_dependencies = [array_col]
-        def add_columns(self, new_cols, alias:str = None):
-            # add itself as column
-            new_cols.append(self.alias(alias) if alias else self)
-        def expand(self,df):
-            if not self.expanded:
-                array_col = _to_col_if_str(self.array_col, "values")
-                df = df.with_column("__IDX",F.seq8())
-                flatten = table_function("flatten")
-                seq=_generate_prefix("SEQ")
-                key=_generate_prefix("KEY")
-                path=_generate_prefix("PATH")
-                index=_generate_prefix("INDEX")
-                value=_generate_prefix("VALUE")
-                this=_generate_prefix("THIS")
-                df_values=df.join_table_function(flatten(input=array_col,outer=lit(True)).alias(seq,key,path,index,value,this)).group_by("__IDX").agg(F.array_agg(value).alias(self.special_col_name)).distinct()
-                df = df.join(df_values,on="__IDX").drop("__IDX")
-                self.expanded = True
-            return df
-
-    class ArrayFlatten(SpecialColumn):
-        def __init__(self,flatten_col,remove_arrays_when_there_is_a_null):
-            super().__init__("flatten")
-            self.flatten_col = flatten_col
-            self.remove_arrays_when_there_is_a_null = remove_arrays_when_there_is_a_null
-            self._special_column_dependencies = [flatten_col]
-        def add_columns(self, new_cols, alias:str = None):
-            new_cols.append(self.alias(alias) if alias else self)
-        def expand(self,df):
-            if not self.expanded:
-                array_col = _to_col_if_str(self.flatten_col, "flatten")
-                flatten = table_function("flatten")
-                df=df.join_table_function(flatten(array_col).alias("__SEQ_FLATTEN","KEY","PATH","__INDEX_FLATTEN","__FLATTEN_VALUE","THIS"))
-                df = df.drop("KEY","PATH","THIS")
-                if self.remove_arrays_when_there_is_a_null:
-                    df_with_has_null=df.withColumn("__HAS_NULL",has_null(array_col))
-                    df_flattened= df_with_has_null.group_by(col("__SEQ_FLATTEN")).agg(F.call_builtin("BOOLOR_AGG",col("__HAS_NULL")).alias("__HAS_NULL"),F.call_builtin("ARRAY_UNION_AGG",col("__FLATTEN_VALUE")).alias("__FLATTEN_VALUE"))
-                    df_flattened=df_flattened.with_column("__FLATTEN_VALUE",F.iff("__HAS_NULL", lit(None), col("__FLATTEN_VALUE"))).drop("__HAS_NULL")
-                    df=df.drop("__FLATTEN_VALUE").where(col("__INDEX_FLATTEN")==0).join(df_flattened,on="__SEQ_FLATTEN").drop("__SEQ_FLATTEN","__INDEX_FLATTEN").rename("__FLATTEN_VALUE",self.special_col_name)
-                else:
-                    df_flattened= df.group_by(col("__SEQ_FLATTEN")).agg(F.call_builtin("ARRAY_UNION_AGG",col("__FLATTEN_VALUE")).alias("__FLATTEN_VALUE"))
-                    df=df.drop("__FLATTEN_VALUE").where(col("__INDEX_FLATTEN")==0).join(df_flattened,on="__SEQ_FLATTEN").drop("__SEQ_FLATTEN","__INDEX_FLATTEN").rename("__FLATTEN_VALUE",self.special_col_name)
-                self.expanded = True
-            return df
-
-
-    def explode(expr,outer=False,map=False,use_compat=False):
-        value_col = "explode"
-        if map:
-            key = "key"
-            value_col = "value"
-        else:
-            key = _generate_prefix("KEY")
-        seq = _generate_prefix("SEQ")
-        path = _generate_prefix("PATH")
-        index = _generate_prefix("INDEX")
-        this = _generate_prefix("THIS")
-        flatten = table_function("flatten")
-        explode_res = flatten(input=expr,outer=lit(outer)).alias(seq,key,path,index,value_col,this)
-        # we patch the alias, to simplify explode use case where only one column is used
-        if not map:
-            explode_res.alias_adjust = lambda alias1 : [seq,key,path,index,alias1,this] 
-        # post action to execute after join
-        def post_action(df):
-            drop_columns = [seq,path,index,this] if map else [seq,key,path,index,this]
-            df = df.drop(drop_columns)
-            if use_compat:
-                # in case we need backwards compatibility with spark behavior
-                df=df.with_column(value_col,
-                F.iff(F.cast(value_col,ArrayType()) == F.array_construct(),lit(None),F.cast(value_col,ArrayType())))
-            return df
-        explode_res.post_action = post_action
-        return explode_res
-
-    def explode_outer(expr,map=False, use_compat=False):
-        return explode(expr,outer=True,map=map,use_compat=use_compat)
-
-    F.explode = explode
-    F.explode_outer = explode_outer
-    # def _arrays_zip(left,*right,use_compat=False):
-    #     """ In SF zip might return [undefined,...undefined] instead of [] """
-    #     return ArrayZip(left,*right,use_compat=use_compat)
-    def _arrays_flatten(array_col,remove_arrays_when_there_is_a_null=True):
-        return ArrayFlatten(array_col,remove_arrays_when_there_is_a_null)
-    def _map_values(col:ColumnOrName):
-        col = _to_col_if_str(col,"map_values")
-        return MapValues(col)
-
-    F.map_values = _map_values
-    F.arrays_zip = arrays_zip
-    F.flatten    = _arrays_flatten
-    flatten = table_function("flatten")
-    _oldwithColumn = DataFrame.withColumn
-    _oldSelect = DataFrame.select
     
     def selectExtended(self,*cols) -> "DataFrame":
         exprs = parse_positional_args_to_list(*cols)
@@ -356,23 +194,9 @@ if not hasattr(DataFrame,"___extended"):
            result = table_func.post_action(result)
         return result
 
-
-
-
-
     DataFrame.select = selectExtended
 
-
-from snowflake.snowpark import Window, Column
-from snowflake.snowpark.types import *
-from snowflake.snowpark.functions import udtf, col
-from snowflake.snowpark.relational_grouped_dataframe import RelationalGroupedDataFrame
-
-def group_by_pivot(self,pivot_col):
-      return GroupByPivot(self, pivot_col)
-RelationalGroupedDataFrame.pivot = group_by_pivot
-
-class GroupByPivot():
+    class GroupByPivot():
       def __init__(self,old_groupby_col,pivot_col):
             self.old_groupby_col = old_groupby_col
             self.pivot_col=pivot_col
@@ -420,6 +244,10 @@ class GroupByPivot():
                 return self.clean(self.prepare(aggregated_col).function(name)(col("__firstAggregate")))
             else:
                 raise Exception("Also functions expressions are supported")
+
+    def group_by_pivot(self,pivot_col):
+        return GroupByPivot(self, pivot_col)
+    RelationalGroupedDataFrame.pivot = group_by_pivot
 
 if not hasattr(RelationalGroupedDataFrame, "applyInPandas"):
   def applyInPandas(self,func,schema,batch_size=16000):

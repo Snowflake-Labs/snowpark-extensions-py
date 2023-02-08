@@ -44,9 +44,9 @@ def test_array_flatten():
     res=res.collect()
     assert len(res)==2
     array1 = eval(res[0]['FLATTEN'])
-    array2 = eval(res[1]['FLATTEN'] or 'None')
+    array2 = eval(res[1]['FLATTEN'].replace("null",'None'))
     assert array1[0]==1 and array1[1]==2 and array1[2]==3 and array1[3]==4 and array1[4]==5 and array1[5]==6
-    assert array2 is None 
+    assert array2 == [1, None, 4, 5] 
 
 def test_create_map():
     def do_assert(res):
@@ -277,7 +277,6 @@ def test_bround():
     assert res0[4].ROUNDING == -2.0
     assert res0[5].ROUNDING == -2.0
 
-
     res1 = df_1.withColumn("rounding",F.bround(F.col('value'),1) ).collect()
     assert len(res1) == 10
     assert res1[0].ROUNDING == 2.2
@@ -291,7 +290,6 @@ def test_bround():
     assert res1[8].ROUNDING == 1.5
     assert res1[9].ROUNDING == 1.5
 
-
     resNull = df_null.withColumn("rounding",F.bround(F.col('value'),None) ).collect()
     assert len(resNull) == 6
     assert resNull[0].ROUNDING == None
@@ -304,9 +302,7 @@ def test_bround():
 def test_regexp_split():
     session = Session.builder.from_snowsql().config("schema","PUBLIC").getOrCreate()
     from snowflake.snowpark.functions import regexp_split
-    
     df = session.createDataFrame([('testAandtestBareTwoBBtests',)], ['s',])
-
     res = df.select(regexp_split(df.s, "test(A|BB)" , 3).alias('s')).collect()
     assert res[0].S == '[\n  "",\n  "andtestBareTwoBBtests"\n]'
     res = df.select(regexp_split(df.s, "test(A|BB)", 1).alias('s')).collect()
