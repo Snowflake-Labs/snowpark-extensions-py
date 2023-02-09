@@ -23,7 +23,6 @@ from snowflake.snowpark import Session
 import snowpark_extensions
 new_session = Session.builder.from_snowsql().appName("app1").getOrCreate()
 ```
-```
 
 ## Currently provided extensions:
 
@@ -85,9 +84,9 @@ order by start_time desc;
 | DataFrame.map                  | provides an equivalent for the map function for example `df.map(func,input_types=[StringType(),StringType()],output_types=[StringType(),IntegerType()],to_row=True)` 
 | DataFrame.simple_map           | if a simple lambda like `lambda x: x.col1 + x.col2` is used this functions can be used like `df.simple_map(lambda x: x.col1 + x.col2)`
 | DataFrame.groupby.applyInPandas| Maps each group of the current DataFrame using a pandas udf and returns the result as a DataFrame. |
-| DataFrame.replace        | extends replace to allow using a regex
+| DataFrame.replace              | extends replace to allow using a regex
 | DataFrame.groupBy.pivot        | extends the snowpark groupby to add a pivot operator
-| DataFrame.stack  | This is an operator similar to the unpivot operator
+| DataFrame.stack                | This is an operator similar to the unpivot operator
 
 ### Examples
 
@@ -104,52 +103,54 @@ data = [('James','Smith','M',30),('Anna','Rose','F',41),('Robert','Williams','M'
 columns = ["firstname","lastname","gender","salary"]
 df = session.createDataFrame(data=data, schema = columns)
 df.show()
+```
+
+```
+--------------------------------------------------
+|"FIRSTNAME"  |"LASTNAME"  |"GENDER"  |"SALARY"  |
+--------------------------------------------------
+|James        |Smith       |M         |30        |
+|Anna         |Rose        |F         |41        |
+|Robert       |Williams    |M         |62        |
+--------------------------------------------------
+```
 
 
-#
-#--------------------------------------------------
-#|"FIRSTNAME"  |"LASTNAME"  |"GENDER"  |"SALARY"  |
-#--------------------------------------------------
-#|James        |Smith       |M         |30        |
-#|Anna         |Rose        |F         |41        |
-#|Robert       |Williams    |M         |62        |
-#--------------------------------------------------
-
-
-
-
+```python
 # using map with a lamda, the to_row indicates that the code will pass a row as x to the lambda
 # if you have a lambda like lambda x,y,z you can use to_row=False
 df2=df.map(lambda x: 
         (x[0]+","+x[1],x[2],x[3]*2),
         output_types=[StringType(),StringType(),IntegerType()],to_row=True)
 df2.show()
+```
 
-#
-#-----------------------------------
-#|"C_1"            |"C_2"  |"C_3"  |
-#-----------------------------------
-#|James,Smith      |M      |60     |
-#|Anna,Rose        |F      |82     |
-#|Robert,Williams  |M      |124    |
-#-----------------------------------
-#
+```
+-----------------------------------
+|"C_1"            |"C_2"  |"C_3"  |
+-----------------------------------
+|James,Smith      |M      |60     |
+|Anna,Rose        |F      |82     |
+|Robert,Williams  |M      |124    |
+-----------------------------------
+```
 
+```python
 # for simple lambda
 # simple map will just pass the same dataframe to the function
 # this approach is faster
 df2 = df.simple_map(lambda x: (x[0]+","+x[1],x[2],x[3]*2))
 df2.toDF(["name","gender","new_salary"]).show()
+```
 
-#---------------------------------------------
-#|"NAME"           |"GENDER"  |"NEW_SALARY"  |
-#---------------------------------------------
-#|James,Smith      |M         |60            |
-#|Anna,Rose        |F         |82            |
-#|Robert,Williams  |M         |124           |
-#---------------------------------------------
-#
-
+```
+---------------------------------------------
+|"NAME"           |"GENDER"  |"NEW_SALARY"  |
+---------------------------------------------
+|James,Smith      |M         |60            |
+|Anna,Rose        |F         |82            |
+|Robert,Williams  |M         |124           |
+---------------------------------------------
 ```
 
 ### replace with support for regex
@@ -197,19 +198,21 @@ df.group_by("ID").applyInPandas(
 
 Assuming you have a DataTable like:
 
-#  +-------+---------+-----+---------+----+
-#  |   Name|Analytics|   BI|Ingestion|  ML|
-#  +-------+---------+-----+---------+----+
-#  | Mickey|     null|12000|     null|8000|
-#  | Martin|     null| 5000|     null|null|
-#  |  Jerry|     null| null|     1000|null|
-#  |  Riley|     null| null|     null|9000|
-#  | Donald|     1000| null|     null|null|
-#  |   John|     null| null|     1000|null|
-#  |Patrick|     null| null|     null|1000|
-#  |  Emily|     8000| null|     3000|null|
-#  |   Arya|    10000| null|     2000|null|
-#  +-------+---------+-----+---------+----+    
+```
+  +-------+---------+-----+---------+----+
+  |   Name|Analytics|   BI|Ingestion|  ML|
+  +-------+---------+-----+---------+----+
+  | Mickey|     null|12000|     null|8000|
+  | Martin|     null| 5000|     null|null|
+  |  Jerry|     null| null|     1000|null|
+  |  Riley|     null| null|     null|9000|
+  | Donald|     1000| null|     null|null|
+  |   John|     null| null|     1000|null|
+  |Patrick|     null| null|     null|1000|
+  |  Emily|     8000| null|     3000|null|
+  |   Arya|    10000| null|     2000|null|
+  +-------+---------+-----+---------+----+    
+```
 
 ```python
 df.select("NAME",df.stack(4,lit('Analytics'), "ANALYTICS", lit('BI'), "BI", lit('Ingestion'), "INGESTION", lit('ML'), "ML").alias("Project", "Cost_To_Project")).filter(col("Cost_To_Project").is_not_null()).orderBy("NAME","Project")
