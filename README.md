@@ -87,7 +87,7 @@ order by start_time desc;
 | DataFrame.groupby.applyInPandas| Maps each group of the current DataFrame using a pandas udf and returns the result as a DataFrame. |
 | DataFrame.replace        | extends replace to allow using a regex
 | DataFrame.groupBy.pivot        | extends the snowpark groupby to add a pivot operator
-
+| DataFrame.stack  | This is an operator similar to the unpivot operator
 
 ### Examples
 
@@ -192,6 +192,58 @@ df.group_by("ID").applyInPandas(
 |1     |0.7071067811865475   |
 ------------------------------
 ```
+
+### stack
+
+Assuming you have a DataTable like:
+
+#  +-------+---------+-----+---------+----+
+#  |   Name|Analytics|   BI|Ingestion|  ML|
+#  +-------+---------+-----+---------+----+
+#  | Mickey|     null|12000|     null|8000|
+#  | Martin|     null| 5000|     null|null|
+#  |  Jerry|     null| null|     1000|null|
+#  |  Riley|     null| null|     null|9000|
+#  | Donald|     1000| null|     null|null|
+#  |   John|     null| null|     1000|null|
+#  |Patrick|     null| null|     null|1000|
+#  |  Emily|     8000| null|     3000|null|
+#  |   Arya|    10000| null|     2000|null|
+#  +-------+---------+-----+---------+----+    
+
+```python
+df.select("NAME",df.stack(4,lit('Analytics'), "ANALYTICS", lit('BI'), "BI", lit('Ingestion'), "INGESTION", lit('ML'), "ML").alias("Project", "Cost_To_Project")).filter(col("Cost_To_Project").is_not_null()).orderBy("NAME","Project")
+```
+
+That will return:
+```
+'-------------------------------------------
+|"NAME"   |"PROJECT"  |"COST_TO_PROJECT"  |
+-------------------------------------------
+|Arya     |Analytics  |10000              |
+|Arya     |Ingestion  |2000               |
+|Donald   |Analytics  |1000               |
+|Emily    |Analytics  |8000               |
+|Emily    |Ingestion  |3000               |
+|Jerry    |Ingestion  |1000               |
+|John     |Ingestion  |1000               |
+|Martin   |BI         |5000               |
+|Mickey   |BI         |12000              |
+|Mickey   |ML         |8000               |
+|Patrick  |ML         |1000               |
+|Riley    |ML         |9000               |
+-------------------------------------------
+```
+
+## DataFrameReader Extensions
+
+| Name                           | Description                                                                         |
+|--------------------------------|-------------------------------------------------------------------------------------|
+| DataFrameReader.format         | Specified the format of the file to load
+| DataFrameReader.load           | Loads a dataframe from a file. It will upload the files to an stage if needed 
+
+### Example
+
 
 ## Functions Extensions
 

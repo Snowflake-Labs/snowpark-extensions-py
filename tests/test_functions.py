@@ -361,3 +361,4 @@ line 3""",)], ['s',])
     df = session.createDataFrame([('<button type="submit" class="btn">Send</button>',)], ['s',])
     res = df.select(regexp_split(df.s, '".+?"', 4).alias('s')).collect()
     assert res[0].S == '[\n  "<button type=",\n  " class=",\n  ">Send</button>"\n]'
+

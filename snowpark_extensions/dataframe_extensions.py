@@ -196,6 +196,28 @@ if not hasattr(DataFrame,"___extended"):
 
     DataFrame.select = selectExtended
 
+    def stack(self,rows:int,*cols):
+        count_cols = len(cols)
+        if count_cols % rows != 0:
+            raise Exception("Invalid parameter. The given cols cannot be arrange in the give rows")
+        out_count_cols = int(count_cols / rows)
+        # determine the input schema
+        input_schema = self.select(cols).limit(1).schema
+        from snowflake.snowpark.functions import col
+        input_types = [x.datatype for x in input_schema.fields]
+        input_cols  = [x.name     for x in input_schema.fields]
+        output_cols = [f"col{x}" for x in range(1,out_count_cols)]
+        clazz=_generate_prefix("stack")
+        def process(self, *row):
+            for i in range(0, len(row), out_count_cols):
+                yield tuple(row[i:i+out_count_cols])
+        output_schema = StructType([StructField(f"col{i+1}",input_schema.fields[i].datatype) for i in range(0,out_count_cols)])
+        udtf_class = type(clazz, (object, ), {"process":process})
+        tfunc = udtf(udtf_class,output_schema=output_schema, input_types=input_types,name=clazz,replace=True,is_permanent=False,packages=["snowflake-snowpark-python"])
+        return tfunc(*cols)
+    
+    DataFrame.stack = stack
+
     class GroupByPivot():
       def __init__(self,old_groupby_col,pivot_col):
             self.old_groupby_col = old_groupby_col

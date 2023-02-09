@@ -101,15 +101,15 @@ if not hasattr(F,"___extended"):
     def _array(*cols):
         return F.array_construct(*cols)
 
-    F._sort_array_function = None
+    F._sort_array_udf = None
     def _sort_array(col:ColumnOrName,asc:ColumnOrLiteral=True):
-        if not F._sort_array_function:
+        if not F._sort_array_udf:
             session = context.get_active_session()
             current_database = session.get_current_database()
             function_name =_generate_prefix("_sort_array_helper")
-            F._sort_array_function = f"{current_database}.public.{function_name}"
+            F._sort_array_udf = f"{current_database}.public.{function_name}"
             session.sql(f"""
-            create or replace temporary function {F._sort_array_function}(ARR ARRAY,ASC BOOLEAN) returns ARRAY
+            create or replace temporary function {F._sort_array_udf}(ARR ARRAY,ASC BOOLEAN) returns ARRAY
             language javascript as
             $$
             ARRLENGTH = ARR.length;
@@ -161,18 +161,18 @@ if not hasattr(F,"___extended"):
             var RES = new Array(ARRLENGTH-ARR.length).fill(null).concat(ARR);
             if (ASC) return RES; else return RES.reverse();
         $$;""").show()
-        return call_builtin(F._sort_array_function,col,asc)
+        return call_builtin(F._sort_array_udf,col,asc)
 
 
-    F._array_sort_function = None
+    F._array_sort_udf = None
     def _array_sort(col:ColumnOrName):
-        if not F._array_sort_function:
+        if not F._array_sort_udf:
             session = context.get_active_session()
             current_database = session.get_current_database()
             function_name =_generate_prefix("_array_sort_helper")
-            F._array_sort_function = f"{current_database}.public.{function_name}"
+            F._array_sort_udf = f"{current_database}.public.{function_name}"
             session.sql(f"""
-            create or replace temporary function {F._array_sort_function}(ARR ARRAY) returns ARRAY
+            create or replace temporary function {F._array_sort_udf}(ARR ARRAY) returns ARRAY
             language javascript as
             $$
             ARRLENGTH = ARR.length;
@@ -224,37 +224,37 @@ if not hasattr(F,"___extended"):
         var RES = ARR.concat(new Array(ARRLENGTH-ARR.length).fill(null));
         return RES;
         $$;""").show()
-        return call_builtin(F._array_sort_function,col)        
-    F._array_max_function = None
+        return call_builtin(F._array_sort_udf,col)        
+    F._array_max_udf = None
     def _array_max(col:ColumnOrName):
-        if not F._array_max_function:
+        if not F._array_max_udf:
             session = context.get_active_session()
             current_database = session.get_current_database()
             function_name =_generate_prefix("_array_max_function")
-            F._array_max_function = f"{current_database}.public.{function_name}"
+            F._array_max_udf = f"{current_database}.public.{function_name}"
             session.sql(f"""
-            create or replace temporary function {F._array_max_function}(ARR ARRAY) returns VARIANT
+            create or replace temporary function {F._array_max_udf}(ARR ARRAY) returns VARIANT
             language javascript as
             $$
             return Math.max(...ARR);
             $$
             """).show()
-        return call_builtin(F._array_max_function,col)
-    F._array_min_function = None
+        return call_builtin(F._array_max_udf,col)
+    F._array_min_udf = None
     def _array_min(col:ColumnOrName):
-        if not F._array_min_function:
+        if not F._array_min_udf:
             session = context.get_active_session()
             current_database = session.get_current_database()
-            function_name =_generate_prefix("_array_min_function")
-            F._array_min_function = f"{current_database}.public.{function_name}"
+            function_name =_generate_prefix("_array_min_udf")
+            F._array_min_udf = f"{current_database}.public.{function_name}"
             session.sql(f"""
-            create or replace temporary function {F._array_min_function}(ARR ARRAY) returns VARIANT
+            create or replace temporary function {F._array_min_udf}(ARR ARRAY) returns VARIANT
             language javascript as
             $$
             return Math.min(...ARR);
             $$
             """).show()
-        return call_builtin(F._array_min_function,col)
+        return call_builtin(F._array_min_udf,col)
 
     def _struct(*cols):
         new_cols = []
@@ -336,22 +336,21 @@ $$;"""
     def is_not_a_regex(pattern):
         return not has_special_char(pattern)
 
-    F._split_regex_function = None
-    F.snowflake_split = F.split
+    F._split_regex_udf = None
     def _regexp_split(value:ColumnOrName, pattern:ColumnOrLiteralStr, limit:int = -1):  
         value = _to_col_if_str(value,"split_regex")                
         pattern_col = pattern        
         if isinstance(pattern, str):
             pattern_col = lit(pattern)        
         if limit < 0 and isinstance(pattern, str) and is_not_a_regex(pattern):
-            return F.snowflake_split(value, pattern_col)  
+            return F.split(value, pattern_col)  
                     
         session = context.get_active_session()
         current_database = session.get_current_database() 
         function_name =_generate_prefix("_regex_split_helper")           
-        F._split_regex_function = f"{current_database}.public.{function_name}"
+        F._split_regex_udf = f"{current_database}.public.{function_name}"
 
-        session.sql(f"""CREATE OR REPLACE FUNCTION {F._split_regex_function} (input String, regex String, limit INT)
+        session.sql(f"""CREATE OR REPLACE FUNCTION {F._split_regex_udf} (input String, regex String, limit INT)
 RETURNS ARRAY
 LANGUAGE JAVA
 RUNTIME_VERSION = '11'
@@ -365,7 +364,7 @@ public class MyJavaClass {{
         Pattern pattern = Pattern.compile(regex);
         return pattern.split(input, limit);
     }}}}$$;""").show()
-        return call_builtin(F._split_regex_function, value, pattern_col, limit)
+        return call_builtin(F._split_regex_udf, value, pattern_col, limit)
 
     def _explode(expr,outer=False,map=False,use_compat=False):
         value_col = "explode"
@@ -398,9 +397,19 @@ public class MyJavaClass {{
     def _explode_outer(expr,map=False, use_compat=False):
         return _explode(expr,outer=True,map=map,use_compat=use_compat)
 
+    F._map_values_udf = None
     def _map_values(col:ColumnOrName):
         col = _to_col_if_str(col,"map_values")
-        return MapValues(col)
+        if not F._map_values_udf:
+            @udf(replace=True,is_permanent=False)
+            def map_values(obj:dict)->list:
+                return list(obj.values())
+            F._map_values_udf = map_values
+        return F._map_values_udf(col)
+
+
+
+
 
 
     F.array          = _array

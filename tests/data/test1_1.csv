@@ -1,0 +1,6 @@
+case_id,province,city,group,infection_case,confirmed,latitude,longitude
+1000006,Seoul,Guro-gu,TRUE,Manmin Central Church,41,37.481059,126.894343
+1000007,Seoul,from other city,TRUE,SMR Newly Planted Churches Group,36,0,0
+1000008,Seoul,Dongdaemun-gu,TRUE,Dongan Church,17,37.592888,127.056766
+1000009,Seoul,from other city,TRUE,Coupang Logistics Center,25,0,0
+1000010,Seoul,Gwanak-gu,TRUE,Wangsung Church,30,37.481735,126.930121

@@ -281,3 +281,59 @@ def test_nested_specials():
     assert array3 == [3,3]
     assert array4 == [1,1]
     assert array5 == None
+
+
+def test_stack():
+#  +-------+---------+-----+---------+----+
+#  |   Name|Analytics|   BI|Ingestion|  ML|
+#  +-------+---------+-----+---------+----+
+#  | Mickey|     null|12000|     null|8000|
+#  | Martin|     null| 5000|     null|null|
+#  |  Jerry|     null| null|     1000|null|
+#  |  Riley|     null| null|     null|9000|
+#  | Donald|     1000| null|     null|null|
+#  |   John|     null| null|     1000|null|
+#  |Patrick|     null| null|     null|1000|
+#  |  Emily|     8000| null|     3000|null|
+#  |   Arya|    10000| null|     2000|null|
+#  +-------+---------+-----+---------+----+     
+    session = Session.builder.from_snowsql().getOrCreate()
+    data0 = [
+    ('Mickey' , None,12000,None,8000),
+    ('Martin' , None, 5000,None,None),
+    ('Jerry'  , None, None,1000,None),
+    ('Riley'  , None, None,None,9000),
+    ('Donald' , 1000, None,None,None),
+    ('John'   , None, None,1000,None),
+    ('Patrick', None, None,None,1000),
+    ('Emily'  , 8000, None,3000,None),
+    ('Arya'   ,10000, None,2000,None)]
+
+    schema_df = StructType([
+    StructField('Name'      ,  StringType(), True),
+    StructField('Analytics' , IntegerType(), True),
+    StructField('BI'        , IntegerType(), True),
+    StructField('Ingestion' , IntegerType(), True),
+    StructField('ML'        , IntegerType(), True)
+    ])
+
+    df = session.createDataFrame(data0,schema_df)
+    df.show()
+    unstacked = df.select("NAME",df.stack(4,F.lit('Analytics'), "ANALYTICS", F.lit('BI'), "BI", F.lit('Ingestion'), "INGESTION", F.lit('ML'), "ML").alias("Project", "Cost_To_Project"))
+    res = unstacked.collect()
+    assert len(res) == 36
+    res = unstacked.filter(F.col("Cost_To_Project").is_not_null()).orderBy("NAME","Project").collect()
+    assert len(res) == 12
+    assert list(res[ 0]) == ['Arya', 'Analytics', 10000]
+    assert list(res[ 1]) == ['Arya', 'Ingestion', 2000]
+    assert list(res[ 2]) == ['Donald', 'Analytics', 1000]
+    assert list(res[ 3]) == ['Emily', 'Analytics', 8000]
+    assert list(res[ 4]) == ['Emily', 'Ingestion', 3000]
+    assert list(res[ 5]) == ['Jerry', 'Ingestion', 1000]
+    assert list(res[ 6]) == ['John', 'Ingestion', 1000]
+    assert list(res[ 7]) == ['Martin', 'BI', 5000]
+    assert list(res[ 8]) == ['Mickey', 'BI', 12000]
+    assert list(res[ 9]) == ['Mickey', 'ML', 8000]
+    assert list(res[10]) == ['Patrick', 'ML', 1000]
+    assert list(res[11]) == ['Riley', 'ML', 9000]
+        
