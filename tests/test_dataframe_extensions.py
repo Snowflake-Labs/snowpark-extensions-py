@@ -217,41 +217,13 @@ def test_explode_outer_with_array():
     assert results[2].ID == 2 and results[2].COL == None
     assert results[3].ID == 3 and results[3].COL == None
 
-def test_array_zip_compat():
-    session = Session.builder.from_snowsql().getOrCreate()
-    df = session.createDataFrame([([2, None, 3],),([1],),([],)], ['data'])
-    # +---------------+
-    # |           data|
-    # +---------------+
-    # |[2, 1, null, 3]|
-    # |            [1]|
-    # |             []|
-    # +---------------+
-    df = df.withColumn("FIELDS", F.arrays_zip("data","data",use_compat=True))
-    # +------------+------------------------------+
-    # |data        |FIELDS                        |
-    # +------------+------------------------------+
-    # |[2, null, 3]|[{2, 2}, {null, null}, {3, 3}]|
-    # |[1]         |[{1, 1}]                      |
-    # |[]          |[]                            |
-    # +------------+------------------------------+
-    res = df.collect()
-    assert len(res)==3
-    res1 = eval(res[0][1].replace("null","None"))
-    res2 = eval(res[1][1].replace("null","None"))
-    # NOTE: SF will not return null but undefined
-    res3 = eval(res[2][1])
-    assert res1==[[2,2],[None,None],[3,3]]
-    assert res2==[[1,1]]
-    assert res3==[[]]
-
 def test_array_zip():
     session = Session.builder.from_snowsql().getOrCreate()
     df = session.createDataFrame([([2, None, 3],),([1],),([],)], ['data'])
     # +---------------+
     # |           data|
     # +---------------+
-    # |[2, 1, null, 3]|
+    # |[2, null, 3]   |
     # |            [1]|
     # |             []|
     # +---------------+
@@ -267,18 +239,27 @@ def test_array_zip():
     assert len(res)==3
     res1 = eval(res[0][1].replace("null","None"))
     res2 = eval(res[1][1].replace("null","None"))
-    # NOTE: SF will not return null but undefined
-    res3 = eval(re.sub("undefined","None",res[2][1]))
+    res3 = eval(res[2][1])
     assert res1==[[2,2],[None,None],[3,3]]
     assert res2==[[1,1]]
-    assert res3==[[None,None]]
+    assert res3==[]
+    df = df.withColumn("FIELDS", F.arrays_zip("data","data","data")).orderBy("data")
+    res = df.collect()
+    res1 = eval(res[0][1].replace("null","None"))
+    res2 = eval(res[1][1].replace("null","None"))
+    res3 = eval(res[2][1].replace("null","None"))
+    assert len(res)==3
+    assert res1==[]
+    assert res2==[[1,1,1]]
+    assert res3==[[2,2,2],[None,None,None],[3,3,3]]
+    
 
 
 def test_nested_specials():
     session = Session.builder.from_snowsql().getOrCreate()
     df = session.createDataFrame([([2, None, 3],),([1],),([],)], ['data'])
-    df2 = df.withColumn("FIELDS", F.arrays_zip("data","data",use_compat=True))
-    df = df.withColumn("FIELDS", F.explode_outer(F.arrays_zip("data","data",use_compat=True),use_compat=True))
+    #df2 = df.withColumn("FIELDS", F.arrays_zip("data","data"))
+    df = df.withColumn("FIELDS", F.explode_outer(F.arrays_zip("data","data")))
     res = df.collect()
     # +------------+------------+
     # |        data|      FIELDS|
@@ -300,3 +281,59 @@ def test_nested_specials():
     assert array3 == [3,3]
     assert array4 == [1,1]
     assert array5 == None
+
+
+def test_stack():
+#  +-------+---------+-----+---------+----+
+#  |   Name|Analytics|   BI|Ingestion|  ML|
+#  +-------+---------+-----+---------+----+
+#  | Mickey|     null|12000|     null|8000|
+#  | Martin|     null| 5000|     null|null|
+#  |  Jerry|     null| null|     1000|null|
+#  |  Riley|     null| null|     null|9000|
+#  | Donald|     1000| null|     null|null|
+#  |   John|     null| null|     1000|null|
+#  |Patrick|     null| null|     null|1000|
+#  |  Emily|     8000| null|     3000|null|
+#  |   Arya|    10000| null|     2000|null|
+#  +-------+---------+-----+---------+----+     
+    session = Session.builder.from_snowsql().getOrCreate()
+    data0 = [
+    ('Mickey' , None,12000,None,8000),
+    ('Martin' , None, 5000,None,None),
+    ('Jerry'  , None, None,1000,None),
+    ('Riley'  , None, None,None,9000),
+    ('Donald' , 1000, None,None,None),
+    ('John'   , None, None,1000,None),
+    ('Patrick', None, None,None,1000),
+    ('Emily'  , 8000, None,3000,None),
+    ('Arya'   ,10000, None,2000,None)]
+
+    schema_df = StructType([
+    StructField('Name'      ,  StringType(), True),
+    StructField('Analytics' , IntegerType(), True),
+    StructField('BI'        , IntegerType(), True),
+    StructField('Ingestion' , IntegerType(), True),
+    StructField('ML'        , IntegerType(), True)
+    ])
+
+    df = session.createDataFrame(data0,schema_df)
+    df.show()
+    unstacked = df.select("NAME",df.stack(4,F.lit('Analytics'), "ANALYTICS", F.lit('BI'), "BI", F.lit('Ingestion'), "INGESTION", F.lit('ML'), "ML").alias("Project", "Cost_To_Project"))
+    res = unstacked.collect()
+    assert len(res) == 36
+    res = unstacked.filter(F.col("Cost_To_Project").is_not_null()).orderBy("NAME","Project").collect()
+    assert len(res) == 12
+    assert list(res[ 0]) == ['Arya', 'Analytics', 10000]
+    assert list(res[ 1]) == ['Arya', 'Ingestion', 2000]
+    assert list(res[ 2]) == ['Donald', 'Analytics', 1000]
+    assert list(res[ 3]) == ['Emily', 'Analytics', 8000]
+    assert list(res[ 4]) == ['Emily', 'Ingestion', 3000]
+    assert list(res[ 5]) == ['Jerry', 'Ingestion', 1000]
+    assert list(res[ 6]) == ['John', 'Ingestion', 1000]
+    assert list(res[ 7]) == ['Martin', 'BI', 5000]
+    assert list(res[ 8]) == ['Mickey', 'BI', 12000]
+    assert list(res[ 9]) == ['Mickey', 'ML', 8000]
+    assert list(res[10]) == ['Patrick', 'ML', 1000]
+    assert list(res[11]) == ['Riley', 'ML', 9000]
+        

@@ -4,33 +4,61 @@
 
 import argparse
 from rich import print
-import shortuuid
 import os
 
 from snowflake.snowpark import Session
 from snowflake.snowpark.functions import sproc
 import snowpark_extensions
 
-print("[cyan]Snowpark Extensions Utilities")
+print("[cyan]Snowpark Extensions Extras")
+print("[cyan]Notebook Runner")
 print("[cyan]=============================")
-print("This tool will connect using snowconfig file")
 arguments = argparse.ArgumentParser()
-arguments.add_argument("--notebook",help="Jupyter Notebook to run",required=True)
+arguments.add_argument("--notebook",help="Jupyter Notebook to run")
+arguments.add_argument("--registerproc",default="",help="Register an stored proc that can then be used to run notebooks")
 arguments.add_argument("--stage",help="stage",default="NOTEBOOK_RUN")
 arguments.add_argument("--packages",help="packages",default="")
+arguments.add_argument("--imports" ,help="imports" ,default="")
+arguments.add_argument("--connection",dest="connection_args",nargs="*",required=True,help="Connect options, for example snowsql, snowsql connection,env")
 
 
 args = arguments.parse_args()
-session = Session.builder.from_snowsql().getOrCreate()
+print(args)
+session = None
+try:
+    if len(args.connection_args) >= 1:
+        first_arg = args.connection_args[0]
+        rest_args = args.connection_args[1:]
+        if first_arg == "snowsql":
+            session = Session.builder.from_snowsql(*rest_args).create()
+        elif first_arg == "env":
+            session = Session.builder.from_env().create()
+        else:
+            connection_args={}
+            for arg in args.connection_args:
+                key, value = arg.split("=")
+                connection_args[key] = value
+            session = Session.builder.configs(connection_args).create()
+except Exception as e:
+    print(e)
+    print("[red] An error happened while trying to connect")
+    exit(1)
+if not session:
+    print("[red] Not connected. Aborting")
+    exit(2)
 session.sql(f"CREATE STAGE IF NOT EXISTS {args.stage}").show()
-session.file.put(args.notebook,f'@{args.stage}',auto_compress=False,overwrite=True)
-
+print(f"Uploading notebook to stage {args.stage}")
+session.file.put(f"file://{args.notebook}",f'@{args.stage}',auto_compress=False,overwrite=True)
+print(f"Notebook uploaded")
 
 packages=["snowflake-snowpark-python","nbconvert","nbformat","ipython","jinja2==3.0.3","plotly"]
 packages.extend(set(filter(None, args.packages.split(','))))
 print(f"Using packages [magenta]{packages}")
-
-@sproc(replace=True,is_permanent=False,packages=packages,imports=["@test/snowpark_extensions.zip","@test/shortuuid.zip"]) #,"@test/IPython.zip"
+imports=[]
+if args.imports:
+    imports.extend(args.imports.split(','))
+is_permanent=False
+@sproc(name=args.registerproc,replace=True,is_permanent=is_permanent,packages=packages,imports=[])
 def run_notebook(session:Session,stage:str,notebook_filename:str) -> str:
         # (c) Matthew Wardrop 2019; Licensed under the MIT license
         #

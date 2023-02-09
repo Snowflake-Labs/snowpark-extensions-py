@@ -3,12 +3,11 @@ import configparser
 from pathlib import Path
 from snowflake.snowpark import Session
 import os
-import shortuuid
 import io
 import sys
 
 if not hasattr(Session.SessionBuilder,"___extended"):         
-
+    from snowflake.snowpark._internal.utils import generate_random_alphanumeric
     _logger = logging.getLogger(__name__)
 
     def console_handler(stream='stdout'):
@@ -38,7 +37,7 @@ if not hasattr(Session.SessionBuilder,"___extended"):
         session = self.___create()
         if hasattr(self,"__appname__"):
             setattr(session, "__appname__", self.__appname__)
-            uuid = shortuuid.uuid()
+            uuid = generate_random_alphanumeric()
             session.query_tag = f"APPNAME={session.__appname__};execution_id={uuid}"
         return session
     Session.SessionBuilder.create = SessionBuilder_extendedcreate

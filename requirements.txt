@@ -1,6 +1,5 @@
 snowflake-snowpark-python[pandas]
 pandas
-shortuuid
 rich
 nest_asyncio
 jinja2

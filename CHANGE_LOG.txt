@@ -129,3 +129,11 @@ Fixing an issue with the current implementation of applyInPandas
 Version 0.0.25
 --------------
 Change in implementation of regexp_split to support different regular expression cases
+
+Version 0.0.26
+--------------
+- Changes in the implementation for explode / explode_outer / array_zip / flatten
+to take advantege of changes in snowpark lib.
+- adding a stack method similar in functionality to unpivot
+- removing dependency to shortuuid
+- adding extensions for DataFrameReader
