@@ -86,10 +86,7 @@ if not hasattr(F,"___extended"):
         # flatten any iterables, to process them in pairs
         col_names = flatten_col_list(col_names)
         for name, value in pairwise(col_names):
-            if isinstance(name, str):
-                col_list.append(lit(name))
-            else:
-                col_list.append(name)
+            col_list.append(_to_col_if_str(name,"create_map"))
             col_list.append(value)
         return object_construct(*col_list)
 

@@ -117,7 +117,7 @@ df.show()
 
 
 ```python
-# using map with a lamda, the to_row indicates that the code will pass a row as x to the lambda
+# using map with a lambda, the to_row indicates that the code will pass a row as x to the lambda
 # if you have a lambda like lambda x,y,z you can use to_row=False
 df2=df.map(lambda x: 
         (x[0]+","+x[1],x[2],x[3]*2),
@@ -433,19 +433,22 @@ print(str(res))
 | utils.schema_str_to_schema | maps an schema specified as an string to a `StructType()`
 
 
-# Experimental
-
 ## Jupyter Notebook support
 
+A Jupyter extension has been created to allow integration in Jupyter notebooks. This extension implements a SQL magic, enabling users to run SQL commands within the Jupyter environment. This enhances the functionality of Jupyter notebooks and makes it easier for users to access and analyze their data using SQL. With this extension, data analysis becomes more streamlined, as users can execute SQL commands directly in the same environment where they are working on their notebooks.
+
+To enable this extension you can run the following into a cell:
 ```
 %load_ext snowpark_extensions
 ```
 
-This extension provides simple integration with Jupyter notebooks
-It will preload the snowpark libraries and adds a simple magic.
+After running this statement a `%%sql` magic can be used to run queries. For example:
+```
+%%sql
+select * from table1
+```
 
-A `%%sql` magic can be used to run queries. 
-Queries can use `Jinja2` syntax. For example:
+Queries can use also use `Jinja2` syntax. For example:
 
 If a previous cell you had something like:
 ```python
@@ -458,7 +461,7 @@ Then on following cells you can do:
 select * from tables where col={{COL1}}
 ```
 
-You can use give a name that you can use later for example:
+You can use give a name to the sql that you can use later for example:
 
 ```sql
 %%sql tables
@@ -473,7 +476,8 @@ if tables.count() > 5:
 If you dont specify a name you can still access the last result using `__df`.
 
 > NOTE: By default only 50 rows are displays. You can customize this limit for example to 100 rows with:
-```
+
+```python
 import snowpark_extensions
 snowpark_extensions.rows_limit = 100
 ```
@@ -484,12 +488,23 @@ Any code written in this file will be executed when you start a new Jupyter note
 
 An [example startup.ipy](https://github.com/MobilizeNet/snowpark-extensions-py/blob/main/startup.ipy) is provided
 
+# Logging Extras
 
-## Running notebooks in Snowpark
+## Snowpark Tags
 
-There is an small script that uploads your notebook to snowflake into an stage and executes it. It will record an html with the results of the notebook execution.
+Bart, an Snowflake Evangelist from EMEA created this amazing utility. 
+We are just wrapping it here in the extensions. See his post for a great description
+https://medium.com/snowflake/simple-tags-in-snowflake-snowpark-for-python-c5910749273
 
-To use it:
-
-- install snowpark_extensions
-- runner --notebook notebook1.ipynb --stage my_stage --package ""
+You can use in your snowpark procedures:
+```
+def process(session,...):
+    @Tag()
+    def foo(...):
+        ....
+    # or inside your code:
+    def goo(...):
+        # only queries from this context will be tagged
+        with Tag(session, f"drop_in_do_it_too"):
+            session.sql(f'''DROP TABLE IF EXISTS {to_table}''').collect()
+```

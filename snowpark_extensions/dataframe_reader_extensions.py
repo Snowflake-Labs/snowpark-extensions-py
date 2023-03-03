@@ -6,17 +6,36 @@ from snowflake.snowpark.functions import lit
 from snowflake.snowpark.dataframe import _generate_prefix
 
 if not hasattr(DataFrameReader,"___extended"):
-    
+    import logging    
     DataFrameReader.___extended = True
     DataFrameReader.__option = DataFrameReader.option
     def _option(self, key: str, value: Any) -> "DataFrameReader":
         key = key.upper()
-        if key == "SEP":
+        if key == "SEP" or key == "DELIMITER":
             key = "FIELD_DELIMITER"
         elif key == "HEADER":
             key  ="SKIP_HEADER"
             value = 1 if value == True or str(value).upper() == "TRUE" else 0
-        self.__option(key,value)
+        elif key == "LINESEP":
+            key  ="RECORD_DELIMITER"
+        elif key == "PATHGLOBFILTER":
+            key = "PATTERN"
+        elif key == "CODEC":
+            key = "COMPRESSION"
+        elif key == "QUOTE":
+            key = "FIELD_OPTIONALLY_ENCLOSED_BY"
+        elif key == "NULLVALUE":
+            key = "NULL_IF"
+        elif key == "DATEFORMAT":
+            key = "DATE_FORMAT"
+        elif key == "TIMESTAMPFORMAT":
+            key = "TIMESTAMP_FORMAT"
+        elif key == "INFERSCHEMA":
+            key = "INFER_SCHEMA"
+        elif key in ["RECURSIVEFILELOOKUP","QUOTEALL","MODIFIEDBEFORE","MODIFIEDAFTER","MULTILINE","MERGESCHEMA"]:
+            logging.error(f"DataFrameReader option {key} is not supported")
+            return self       
+        return self.__option(key,value)
 
     def _load(self,path: Union[str, List[str], None] = None, format: Optional[str] = None, schema: Union[StructType, str, None] = None,stage=None, **options) -> "DataFrame":
         self.options(dict(options))

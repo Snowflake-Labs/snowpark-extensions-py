@@ -7,6 +7,7 @@ from .functions_extensions import *
 from .session_builder_extensions import *
 from .types_extensions import *
 from .column_extensions import *
+from .logging_utils import logged, Tag
 
 
 rows_limit = 50

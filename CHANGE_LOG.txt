@@ -137,3 +137,8 @@ to take advantege of changes in snowpark lib.
 - adding a stack method similar in functionality to unpivot
 - removing dependency to shortuuid
 - adding extensions for DataFrameReader
+
+Version 0.0.27
+--------------
+- Fixing issue with create_map
+- Fixing issue with reader option
