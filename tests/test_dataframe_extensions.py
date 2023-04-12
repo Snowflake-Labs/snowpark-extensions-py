@@ -38,6 +38,21 @@ def test_pivot():
     assert res[1][0]=='Beans'   and res[1][1]==None and res[1][2]==1500 and res[1][3]==2000 and res[1][4]==1600
     assert res[2][0]=='Carrots' and res[2][1]==2000 and res[2][2]==1200 and res[2][3]==None and res[2][4]==1500
     assert res[3][0]=='Orange'  and res[3][1]==None and res[3][2]==4000 and res[3][3]==None and res[3][4]==4000
+    res = df.groupBy("Product").pivot("Country").count().sort("Product").collect()
+    # -----------------------------------------------------
+    # |"PRODUCT"  |"CANADA"  |"CHINA"  |"MEXICO"  |"USA"  |
+    # -----------------------------------------------------
+    # |Banana     |1         |1        |0         |1      |
+    # |Beans      |0         |1        |1         |1      |
+    # |Carrots    |1         |1        |0         |1      |
+    # |Orange     |0         |1        |0         |1      |
+    # -----------------------------------------------------
+    assert res[0][0]=='Banana'  and res[0][1]==1 and res[0][2]==1 and res[0][3]==0 and res[0][4]==1
+    assert res[1][0]=='Beans'   and res[1][1]==0 and res[1][2]==1 and res[1][3]==1 and res[1][4]==1
+    assert res[2][0]=='Carrots' and res[2][1]==1 and res[2][2]==1 and res[2][3]==0 and res[2][4]==1
+    assert res[3][0]=='Orange'  and res[3][1]==0 and res[3][2]==1 and res[3][3]==0 and res[3][4]==1
+
+    print("Done")
 
 def test_pivot_with_numbers_as_columns():
     session = Session.builder.from_snowsql().getOrCreate()

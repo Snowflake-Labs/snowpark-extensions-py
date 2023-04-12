@@ -142,3 +142,7 @@ Version 0.0.27
 --------------
 - Fixing issue with create_map
 - Fixing issue with reader option
+
+Version 0.0.28
+--------------
+- Fixing groupBy.pivot.count was not working

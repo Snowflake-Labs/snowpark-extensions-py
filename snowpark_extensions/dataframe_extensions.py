@@ -9,7 +9,7 @@ import numpy as np
 from snowpark_extensions.utils import map_to_python_type, schema_str_to_schema
 from snowflake.snowpark import context
 from snowflake.snowpark.types import StructType,StructField
-from snowflake.snowpark._internal.analyzer.expression import Expression, FunctionExpression
+from snowflake.snowpark._internal.analyzer.expression import Expression, FunctionExpression, UnresolvedAttribute
 from snowflake.snowpark._internal.analyzer.unary_expression import Alias
 from snowflake.snowpark._internal.analyzer.analyzer_utils import quote_name
 from snowflake.snowpark import Window, Column
@@ -221,6 +221,7 @@ if not hasattr(DataFrame,"___extended"):
     class GroupByPivot():
       def __init__(self,old_groupby_col,pivot_col):
             self.old_groupby_col = old_groupby_col
+            pivot_col = _to_col_if_str(pivot_col,"pivot")
             self.pivot_col=pivot_col
             group_by_exprs = [F.sql_expr(x.sql) for x in old_groupby_col._grouping_exprs]
             group_by_exprs.append(pivot_col)
@@ -237,8 +238,8 @@ if not hasattr(DataFrame,"___extended"):
             the_value = self.value_list[i]
             pivoted_cols[i] = col(the_col).alias(get_valid_id(str(the_value)))
         return pivoted.select(*previous_cols,*pivoted_cols)
-      def prepare(self,col):
-            first = self.df.agg(col.alias("__firstAggregate"))
+      def prepare(self,prepared_col):
+            first = self.df.agg(prepared_col.alias("__firstAggregate"))
             self.value_list = [x[0] for x in first.select(self.pivot_col).distinct().sort(self.pivot_col).collect()]
             return first.pivot(pivot_col=self.pivot_col,values=self.value_list)
       def avg(self, col: ColumnOrName) -> DataFrame:
@@ -259,13 +260,19 @@ if not hasattr(DataFrame,"___extended"):
             return self.clean(self.prepare(col).max("__firstAggregate"))
       def count(self) -> DataFrame:
             """Return the number of rows for each group."""
-            return self.clean(self.prepare(col).count("__firstAggregate"))
+            if hasattr(self.pivot_col, "_expression") and (isinstance(self.pivot_col._expression, UnresolvedAttribute) or isinstance(self.pivot_col,Alias)):
+                colname = self.pivot_col._expression.name
+                first = self.df.agg(self.pivot_col)
+                self.value_list = [x[0] for x in first.select(self.pivot_col).distinct().sort(self.pivot_col).collect()]
+                return self.clean(first.pivot(pivot_col=self.pivot_col,values=self.value_list).agg(F.sql_expr(f"COUNT({colname})")))
+            else:
+                raise Exception("pivot_col expression is not supported")
       def agg(self, aggregated_col: ColumnOrName) -> DataFrame:
             if hasattr(aggregated_col, "_expression") and isinstance(aggregated_col._expression, FunctionExpression):
                 name = aggregated_col._expression.name
                 return self.clean(self.prepare(aggregated_col).function(name)(col("__firstAggregate")))
             else:
-                raise Exception("Also functions expressions are supported")
+                raise Exception("Alias functions expressions are supported")
 
     def group_by_pivot(self,pivot_col):
         return GroupByPivot(self, pivot_col)
