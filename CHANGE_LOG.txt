@@ -146,3 +146,8 @@ Version 0.0.27
 Version 0.0.28
 --------------
 - Fixing groupBy.pivot.count was not working
+
+
+Version 0.0.29
+--------------
+- Adding patch for display to properly print Snowpark DataFrame

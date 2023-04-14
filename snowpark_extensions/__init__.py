@@ -21,6 +21,38 @@ def get_display_html() -> None:
             return frame.frame.f_globals["displayHTML"]
     raise Exception("Unable to detect displayHTML function")
 
+def patch_display():
+    try:
+        import IPython
+        import pandas as pd
+        from snowflake.snowpark import DataFrame
+        core_display = IPython.get_ipython().user_ns['display']
+        if not hasattr(core_display,"__extended__"):
+            print("Extending display")
+            def display_df(df):
+                if isinstance(df,DataFrame):
+                    try:
+                        count = df.count()
+                        if count == 0:
+                            core_display(pd.DataFrame())
+                        elif count == 1:
+                            core_display(pd.DataFrame.from_records([x.as_dict() for x in r]))
+                        elif count > rows_limit:
+                            core_display(f"There are {count} rows. Showing only {rows_limit} ")
+                            core_display(df.limit(rows_limit).to_pandas())
+                        else:
+                            core_display(df.to_pandas())
+                    except Exception as ex:
+                        return core_display(str(ex))
+                else:
+                    core_display(df)
+            setattr(display_df,"__extended__",True)
+            IPython.get_ipython().user_ns['display'] = display_df
+        else:
+            print("display already extended")
+    except:
+        print("Display was not extended")
+
 def load_ipython_extension(ipython):
     def instructions():
         inst = """
@@ -70,7 +102,7 @@ from snowflake.snowpark import functions as F
     # Register the display hook
     from snowflake.snowpark import DataFrame
     get_ipython().display_formatter.formatters['text/html'].for_type(DataFrame, snowflake_dataframe_formatter)
-
+    patch_display()
     from IPython.core.magic import (Magics, magics_class, cell_magic)
     @magics_class
     class SnowparkMagics(Magics):

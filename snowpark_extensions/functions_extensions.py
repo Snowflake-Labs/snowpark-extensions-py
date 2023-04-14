@@ -13,7 +13,7 @@ from snowflake.snowpark._internal.type_utils import (
     ColumnOrSqlExpr,
     LiteralType,
 )
-from snowflake.snowpark.column import _to_col_if_str, _to_col_if_lit
+from snowflake.snowpark.column import _to_col_if_str, _to_col_if_lit, _to_col_if_str_or_int
 from snowflake.snowpark.dataframe import _generate_prefix
 from snowflake.snowpark._internal.analyzer.unary_expression import Alias
 import re
@@ -61,20 +61,44 @@ if not hasattr(F,"___extended"):
         return F.call_builtin('reverse',col)
 
     def daydiff( col1: ColumnOrName, col2: ColumnOrName) -> Column:
-        """Calculates the difference between two date, or timestamp columns based in days"""
-        c1 = _to_col_if_str(col1, "daydiff")
-        c2 = _to_col_if_str(col2, "daydiff")
-        return F.call_builtin("datediff",lit("day"), c2,c1)
+        """Calculates the difference between two dates, or timestamp columns based in days
+           The result will reflect the difference between col2 - col1
+        """
+        col1 = _to_col_if_str(col1, "daydiff")
+        col2 = _to_col_if_str(col2, "daydiff")
+        return F.call_builtin("datediff",lit("day"), col2,col1)
 
     def date_add(col,num_of_days):
+        """
+        Adds the given number of days
+        """
+        # Convert the input to a column if it is a string
         col = _to_col_if_str(col,"date_add")
-        num_of_days=_to_col_if_str_or_int(num_of_days)
-        return dateadd(lit('day'),col,num_of_days)
+        # Check if the input is a string
+        if isinstance(num_of_days, str):
+            # Convert the string to a column
+            num_of_days=col(num_of_days)
+        # Check if the input is an integer
+        elif isinstance(num_of_days,int):
+            # Convert the integer to a column
+            num_of_days=lit(num_of_days)
+        # Check if the input is a Column
+        elif isinstance(num_of_days,Column):
+            # Do nothing
+            pass
+        # Check if the input is a string
+        else:
+            # Raise an error if the input is not a string
+            raise TypeError(
+            f"'date_add expected Column or name or int, got: {type(num_of_days)}"
+        )
+        # Return the dateadd function with the column and number of days
+        return F.dateadd(lit('day'),col,num_of_days)
 
     def date_sub(col,num_of_days):
         col = _to_col_if_str(col,"date_sub")
         num_of_days=_to_col_if_str_or_int(num_of_days)
-        return dateadd(lit('day'),col,-1 * num_of_days)
+        return F.dateadd(lit('day'),col,-1 * num_of_days)
 
     def create_map(*col_names):
         """
