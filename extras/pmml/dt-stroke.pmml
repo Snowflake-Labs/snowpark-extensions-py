@@ -1,0 +1,1801 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<PMML xmlns="http://www.dmg.org/PMML-4_4" xmlns:data="http://jpmml.org/jpmml-model/InlineTable" version="4.4">
+	<Header>
+		<Application name="JPMML-SparkML" version="1.8.0"/>
+		<Timestamp>2022-11-01T19:59:39Z</Timestamp>
+	</Header>
+	<DataDictionary>
+		<DataField name="STROKE" optype="categorical" dataType="integer">
+			<Value value="0"/>
+			<Value value="1"/>
+		</DataField>
+		<DataField name="AGE" optype="continuous" dataType="integer"/>
+		<DataField name="AVG_GLUCOSE_LEVEL" optype="continuous" dataType="double"/>
+		<DataField name="BMI" optype="continuous" dataType="double"/>
+		<DataField name="EVER_MARRIED" optype="continuous" dataType="integer"/>
+		<DataField name="GENDER" optype="continuous" dataType="integer"/>
+		<DataField name="HEART_DISEASE" optype="continuous" dataType="integer"/>
+		<DataField name="HYPERTENSION" optype="continuous" dataType="integer"/>
+		<DataField name="RESIDENCE_TYPE" optype="continuous" dataType="integer"/>
+		<DataField name="SMOKING_STATUS" optype="continuous" dataType="integer"/>
+		<DataField name="WORK_TYPE" optype="continuous" dataType="integer"/>
+	</DataDictionary>
+	<TreeModel functionName="classification" missingValueStrategy="nullPrediction">
+		<MiningSchema>
+			<MiningField name="STROKE" usageType="target"/>
+			<MiningField name="AGE"/>
+			<MiningField name="AVG_GLUCOSE_LEVEL"/>
+			<MiningField name="BMI"/>
+			<MiningField name="EVER_MARRIED"/>
+			<MiningField name="GENDER"/>
+			<MiningField name="HEART_DISEASE"/>
+			<MiningField name="HYPERTENSION"/>
+			<MiningField name="RESIDENCE_TYPE"/>
+			<MiningField name="SMOKING_STATUS"/>
+			<MiningField name="WORK_TYPE"/>
+		</MiningSchema>
+		<Output>
+			<OutputField name="pmml(prediction)" optype="categorical" dataType="integer" isFinalResult="false"/>
+			<OutputField name="prediction" optype="continuous" dataType="double" feature="transformedValue">
+				<MapValues outputColumn="data:output" dataType="double">
+					<FieldColumnPair field="pmml(prediction)" column="data:input"/>
+					<InlineTable>
+						<row>
+							<data:input>0</data:input>
+							<data:output>0</data:output>
+						</row>
+						<row>
+							<data:input>1</data:input>
+							<data:output>1</data:output>
+						</row>
+					</InlineTable>
+				</MapValues>
+			</OutputField>
+			<OutputField name="probability(0)" optype="continuous" dataType="double" feature="probability" value="0"/>
+			<OutputField name="probability(1)" optype="continuous" dataType="double" feature="probability" value="1"/>
+		</Output>
+		<Node>
+			<True/>
+			<Node>
+				<SimplePredicate field="AGE" operator="lessOrEqual" value="55.0"/>
+				<Node>
+					<SimplePredicate field="AGE" operator="lessOrEqual" value="42.0"/>
+					<Node>
+						<SimplePredicate field="AGE" operator="lessOrEqual" value="35.0"/>
+						<Node score="0" recordCount="4365">
+							<SimplePredicate field="AGE" operator="lessOrEqual" value="31.0"/>
+							<ScoreDistribution value="0" recordCount="4338"/>
+							<ScoreDistribution value="1" recordCount="27"/>
+						</Node>
+						<Node>
+							<SimplePredicate field="SMOKING_STATUS" operator="lessOrEqual" value="0.0"/>
+							<Node>
+								<SimplePredicate field="BMI" operator="lessOrEqual" value="27.28387221501683"/>
+								<Node score="1" recordCount="50">
+									<SimplePredicate field="EVER_MARRIED" operator="lessOrEqual" value="0.0"/>
+									<ScoreDistribution value="0" recordCount="17"/>
+									<ScoreDistribution value="1" recordCount="33"/>
+								</Node>
+								<Node score="0" recordCount="58">
+									<True/>
+									<ScoreDistribution value="0" recordCount="51"/>
+									<ScoreDistribution value="1" recordCount="7"/>
+								</Node>
+							</Node>
+							<Node score="0" recordCount="111">
+								<True/>
+								<ScoreDistribution value="0" recordCount="110"/>
+								<ScoreDistribution value="1" recordCount="1"/>
+							</Node>
+						</Node>
+						<Node score="0" recordCount="851">
+							<True/>
+							<ScoreDistribution value="0" recordCount="824"/>
+							<ScoreDistribution value="1" recordCount="27"/>
+						</Node>
+					</Node>
+					<Node>
+						<SimplePredicate field="GENDER" operator="lessOrEqual" value="0.0"/>
+						<Node>
+							<SimplePredicate field="SMOKING_STATUS" operator="lessOrEqual" value="0.0"/>
+							<Node>
+								<SimplePredicate field="BMI" operator="lessOrEqual" value="27.28387221501683"/>
+								<Node score="1" recordCount="66">
+									<SimplePredicate field="EVER_MARRIED" operator="lessOrEqual" value="0.0"/>
+									<ScoreDistribution value="0" recordCount="9"/>
+									<ScoreDistribution value="1" recordCount="57"/>
+								</Node>
+								<Node score="1" recordCount="62">
+									<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="85.69918301538027"/>
+									<ScoreDistribution value="0" recordCount="30"/>
+									<ScoreDistribution value="1" recordCount="32"/>
+								</Node>
+								<Node score="0" recordCount="40">
+									<True/>
+									<ScoreDistribution value="0" recordCount="34"/>
+									<ScoreDistribution value="1" recordCount="6"/>
+								</Node>
+							</Node>
+							<Node score="0" recordCount="161">
+								<True/>
+								<ScoreDistribution value="0" recordCount="141"/>
+								<ScoreDistribution value="1" recordCount="20"/>
+							</Node>
+						</Node>
+						<Node>
+							<SimplePredicate field="BMI" operator="lessOrEqual" value="38.65962440074473"/>
+							<Node score="0" recordCount="528">
+								<SimplePredicate field="BMI" operator="lessOrEqual" value="28.899410014031425"/>
+								<ScoreDistribution value="0" recordCount="509"/>
+								<ScoreDistribution value="1" recordCount="19"/>
+							</Node>
+							<Node>
+								<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="98.535"/>
+								<Node>
+									<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="95.41102136857322"/>
+									<Node score="1" recordCount="50">
+										<SimplePredicate field="WORK_TYPE" operator="lessOrEqual" value="1.0"/>
+										<ScoreDistribution value="0" recordCount="24"/>
+										<ScoreDistribution value="1" recordCount="26"/>
+									</Node>
+									<Node score="0" recordCount="165">
+										<True/>
+										<ScoreDistribution value="0" recordCount="150"/>
+										<ScoreDistribution value="1" recordCount="15"/>
+									</Node>
+								</Node>
+								<Node score="1" recordCount="44">
+									<True/>
+									<ScoreDistribution value="0" recordCount="14"/>
+									<ScoreDistribution value="1" recordCount="30"/>
+								</Node>
+							</Node>
+							<Node score="0" recordCount="148">
+								<True/>
+								<ScoreDistribution value="0" recordCount="146"/>
+								<ScoreDistribution value="1" recordCount="2"/>
+							</Node>
+						</Node>
+						<Node>
+							<SimplePredicate field="RESIDENCE_TYPE" operator="lessOrEqual" value="0.0"/>
+							<Node>
+								<SimplePredicate field="SMOKING_STATUS" operator="lessOrEqual" value="1.0"/>
+								<Node score="1" recordCount="39">
+									<SimplePredicate field="EVER_MARRIED" operator="lessOrEqual" value="0.0"/>
+									<ScoreDistribution value="0" recordCount="10"/>
+									<ScoreDistribution value="1" recordCount="29"/>
+								</Node>
+								<Node score="1" recordCount="31">
+									<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="74.14248751880876"/>
+									<ScoreDistribution value="0" recordCount="8"/>
+									<ScoreDistribution value="1" recordCount="23"/>
+								</Node>
+								<Node score="0" recordCount="58">
+									<True/>
+									<ScoreDistribution value="0" recordCount="33"/>
+									<ScoreDistribution value="1" recordCount="25"/>
+								</Node>
+							</Node>
+							<Node score="0" recordCount="37">
+								<True/>
+								<ScoreDistribution value="0" recordCount="25"/>
+								<ScoreDistribution value="1" recordCount="12"/>
+							</Node>
+						</Node>
+						<Node score="0" recordCount="96">
+							<True/>
+							<ScoreDistribution value="0" recordCount="86"/>
+							<ScoreDistribution value="1" recordCount="10"/>
+						</Node>
+					</Node>
+					<Node score="0" recordCount="751">
+						<True/>
+						<ScoreDistribution value="0" recordCount="720"/>
+						<ScoreDistribution value="1" recordCount="31"/>
+					</Node>
+				</Node>
+				<Node>
+					<SimplePredicate field="GENDER" operator="lessOrEqual" value="0.0"/>
+					<Node>
+						<SimplePredicate field="WORK_TYPE" operator="lessOrEqual" value="2.0"/>
+						<Node score="0" recordCount="406">
+							<SimplePredicate field="BMI" operator="lessOrEqual" value="23.60103636203077"/>
+							<ScoreDistribution value="0" recordCount="354"/>
+							<ScoreDistribution value="1" recordCount="52"/>
+						</Node>
+						<Node>
+							<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="174.84254383423985"/>
+							<Node>
+								<SimplePredicate field="SMOKING_STATUS" operator="lessOrEqual" value="1.0"/>
+								<Node>
+									<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="74.14248751880876"/>
+									<Node>
+										<SimplePredicate field="RESIDENCE_TYPE" operator="lessOrEqual" value="0.0"/>
+										<Node score="0" recordCount="43">
+											<SimplePredicate field="BMI" operator="lessOrEqual" value="25.488866673455053"/>
+											<ScoreDistribution value="0" recordCount="25"/>
+											<ScoreDistribution value="1" recordCount="18"/>
+										</Node>
+										<Node>
+											<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="68.90007376596796"/>
+											<Node score="1" recordCount="160">
+												<SimplePredicate field="BMI" operator="lessOrEqual" value="34.89966354389493"/>
+												<ScoreDistribution value="0" recordCount="39"/>
+												<ScoreDistribution value="1" recordCount="121"/>
+											</Node>
+											<Node score="0" recordCount="31">
+												<True/>
+												<ScoreDistribution value="0" recordCount="27"/>
+												<ScoreDistribution value="1" recordCount="4"/>
+											</Node>
+										</Node>
+										<Node score="1" recordCount="249">
+											<True/>
+											<ScoreDistribution value="0" recordCount="39"/>
+											<ScoreDistribution value="1" recordCount="210"/>
+										</Node>
+									</Node>
+									<Node>
+										<SimplePredicate field="BMI" operator="lessOrEqual" value="29.84462926184598"/>
+										<Node score="1" recordCount="93">
+											<SimplePredicate field="WORK_TYPE" operator="lessOrEqual" value="1.0"/>
+											<ScoreDistribution value="0" recordCount="14"/>
+											<ScoreDistribution value="1" recordCount="79"/>
+										</Node>
+										<Node>
+											<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="71.945"/>
+											<Node score="1" recordCount="32">
+												<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="62.945"/>
+												<ScoreDistribution value="0" recordCount="13"/>
+												<ScoreDistribution value="1" recordCount="19"/>
+											</Node>
+											<Node score="0" recordCount="42">
+												<True/>
+												<ScoreDistribution value="0" recordCount="32"/>
+												<ScoreDistribution value="1" recordCount="10"/>
+											</Node>
+										</Node>
+										<Node score="1" recordCount="34">
+											<True/>
+											<ScoreDistribution value="0" recordCount="5"/>
+											<ScoreDistribution value="1" recordCount="29"/>
+										</Node>
+									</Node>
+									<Node score="0" recordCount="57">
+										<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="68.90007376596796"/>
+										<ScoreDistribution value="0" recordCount="56"/>
+										<ScoreDistribution value="1" recordCount="1"/>
+									</Node>
+									<Node score="1" recordCount="46">
+										<True/>
+										<ScoreDistribution value="0" recordCount="22"/>
+										<ScoreDistribution value="1" recordCount="24"/>
+									</Node>
+								</Node>
+								<Node>
+									<SimplePredicate field="BMI" operator="lessOrEqual" value="32.55604261104567"/>
+									<Node>
+										<SimplePredicate field="BMI" operator="lessOrEqual" value="26.87308396645696"/>
+										<Node>
+											<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="95.41102136857322"/>
+											<Node score="0" recordCount="53">
+												<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="83.81515567368112"/>
+												<ScoreDistribution value="0" recordCount="48"/>
+												<ScoreDistribution value="1" recordCount="5"/>
+											</Node>
+											<Node>
+												<SimplePredicate field="BMI" operator="lessOrEqual" value="25.488866673455053"/>
+												<Node score="1" recordCount="31">
+													<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="87.93042341487757"/>
+													<ScoreDistribution value="0" recordCount="11"/>
+													<ScoreDistribution value="1" recordCount="20"/>
+												</Node>
+												<Node score="0" recordCount="47">
+													<True/>
+													<ScoreDistribution value="0" recordCount="30"/>
+													<ScoreDistribution value="1" recordCount="17"/>
+												</Node>
+											</Node>
+											<Node score="1" recordCount="59">
+												<True/>
+												<ScoreDistribution value="0" recordCount="15"/>
+												<ScoreDistribution value="1" recordCount="44"/>
+											</Node>
+										</Node>
+										<Node score="0" recordCount="122">
+											<True/>
+											<ScoreDistribution value="0" recordCount="112"/>
+											<ScoreDistribution value="1" recordCount="10"/>
+										</Node>
+									</Node>
+									<Node>
+										<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="104.65752620396205"/>
+										<Node>
+											<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="87.93042341487757"/>
+											<Node>
+												<SimplePredicate field="AGE" operator="lessOrEqual" value="50.0"/>
+												<Node score="0" recordCount="53">
+													<SimplePredicate field="AGE" operator="lessOrEqual" value="45.0"/>
+													<ScoreDistribution value="0" recordCount="37"/>
+													<ScoreDistribution value="1" recordCount="16"/>
+												</Node>
+												<Node score="0" recordCount="44">
+													<SimplePredicate field="RESIDENCE_TYPE" operator="lessOrEqual" value="0.0"/>
+													<ScoreDistribution value="0" recordCount="31"/>
+													<ScoreDistribution value="1" recordCount="13"/>
+												</Node>
+												<Node score="1" recordCount="106">
+													<True/>
+													<ScoreDistribution value="0" recordCount="21"/>
+													<ScoreDistribution value="1" recordCount="85"/>
+												</Node>
+											</Node>
+											<Node score="0" recordCount="51">
+												<True/>
+												<ScoreDistribution value="0" recordCount="49"/>
+												<ScoreDistribution value="1" recordCount="2"/>
+											</Node>
+										</Node>
+										<Node score="1" recordCount="178">
+											<SimplePredicate field="SMOKING_STATUS" operator="lessOrEqual" value="0.0"/>
+											<ScoreDistribution value="0" recordCount="25"/>
+											<ScoreDistribution value="1" recordCount="153"/>
+										</Node>
+										<Node score="0" recordCount="54">
+											<SimplePredicate field="WORK_TYPE" operator="lessOrEqual" value="0.0"/>
+											<ScoreDistribution value="0" recordCount="28"/>
+											<ScoreDistribution value="1" recordCount="26"/>
+										</Node>
+										<Node score="1" recordCount="44">
+											<SimplePredicate field="WORK_TYPE" operator="lessOrEqual" value="1.0"/>
+											<ScoreDistribution value="0" recordCount="0"/>
+											<ScoreDistribution value="1" recordCount="44"/>
+										</Node>
+										<Node score="0" recordCount="38">
+											<SimplePredicate field="BMI" operator="lessOrEqual" value="28.454026984625386"/>
+											<ScoreDistribution value="0" recordCount="24"/>
+											<ScoreDistribution value="1" recordCount="14"/>
+										</Node>
+										<Node score="1" recordCount="163">
+											<True/>
+											<ScoreDistribution value="0" recordCount="44"/>
+											<ScoreDistribution value="1" recordCount="119"/>
+										</Node>
+									</Node>
+									<Node>
+										<SimplePredicate field="RESIDENCE_TYPE" operator="lessOrEqual" value="0.0"/>
+										<Node>
+											<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="142.1633466999208"/>
+											<Node score="1" recordCount="58">
+												<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="111.72999999999999"/>
+												<ScoreDistribution value="0" recordCount="17"/>
+												<ScoreDistribution value="1" recordCount="41"/>
+											</Node>
+											<Node score="0" recordCount="44">
+												<True/>
+												<ScoreDistribution value="0" recordCount="34"/>
+												<ScoreDistribution value="1" recordCount="10"/>
+											</Node>
+										</Node>
+										<Node score="1" recordCount="56">
+											<True/>
+											<ScoreDistribution value="0" recordCount="8"/>
+											<ScoreDistribution value="1" recordCount="48"/>
+										</Node>
+									</Node>
+									<Node score="0" recordCount="69">
+										<True/>
+										<ScoreDistribution value="0" recordCount="68"/>
+										<ScoreDistribution value="1" recordCount="1"/>
+									</Node>
+								</Node>
+								<Node score="0" recordCount="87">
+									<SimplePredicate field="WORK_TYPE" operator="lessOrEqual" value="0.0"/>
+									<ScoreDistribution value="0" recordCount="87"/>
+									<ScoreDistribution value="1" recordCount="0"/>
+								</Node>
+								<Node score="0" recordCount="78">
+									<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="82.02125194912432"/>
+									<ScoreDistribution value="0" recordCount="64"/>
+									<ScoreDistribution value="1" recordCount="14"/>
+								</Node>
+								<Node>
+									<SimplePredicate field="AGE" operator="lessOrEqual" value="47.0"/>
+									<Node score="1" recordCount="39">
+										<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="87.93042341487757"/>
+										<ScoreDistribution value="0" recordCount="16"/>
+										<ScoreDistribution value="1" recordCount="23"/>
+									</Node>
+									<Node score="0" recordCount="89">
+										<True/>
+										<ScoreDistribution value="0" recordCount="73"/>
+										<ScoreDistribution value="1" recordCount="16"/>
+									</Node>
+								</Node>
+								<Node score="0" recordCount="77">
+									<SimplePredicate field="SMOKING_STATUS" operator="lessOrEqual" value="0.0"/>
+									<ScoreDistribution value="0" recordCount="59"/>
+									<ScoreDistribution value="1" recordCount="18"/>
+								</Node>
+								<Node>
+									<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="98.535"/>
+									<Node score="0" recordCount="48">
+										<SimplePredicate field="BMI" operator="lessOrEqual" value="40.94981285235188"/>
+										<ScoreDistribution value="0" recordCount="36"/>
+										<ScoreDistribution value="1" recordCount="12"/>
+									</Node>
+									<Node score="1" recordCount="35">
+										<True/>
+										<ScoreDistribution value="0" recordCount="12"/>
+										<ScoreDistribution value="1" recordCount="23"/>
+									</Node>
+								</Node>
+								<Node score="1" recordCount="74">
+									<SimplePredicate field="AGE" operator="lessOrEqual" value="50.0"/>
+									<ScoreDistribution value="0" recordCount="15"/>
+									<ScoreDistribution value="1" recordCount="59"/>
+								</Node>
+								<Node score="0" recordCount="52">
+									<True/>
+									<ScoreDistribution value="0" recordCount="31"/>
+									<ScoreDistribution value="1" recordCount="21"/>
+								</Node>
+							</Node>
+							<Node>
+								<SimplePredicate field="RESIDENCE_TYPE" operator="lessOrEqual" value="0.0"/>
+								<Node score="0" recordCount="88">
+									<SimplePredicate field="AGE" operator="lessOrEqual" value="47.0"/>
+									<ScoreDistribution value="0" recordCount="82"/>
+									<ScoreDistribution value="1" recordCount="6"/>
+								</Node>
+								<Node score="0" recordCount="55">
+									<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="83.81515567368112"/>
+									<ScoreDistribution value="0" recordCount="49"/>
+									<ScoreDistribution value="1" recordCount="6"/>
+								</Node>
+								<Node>
+									<SimplePredicate field="BMI" operator="lessOrEqual" value="33.14274630402741"/>
+									<Node score="0" recordCount="30">
+										<SimplePredicate field="BMI" operator="lessOrEqual" value="28.899410014031425"/>
+										<ScoreDistribution value="0" recordCount="21"/>
+										<ScoreDistribution value="1" recordCount="9"/>
+									</Node>
+									<Node score="1" recordCount="65">
+										<True/>
+										<ScoreDistribution value="0" recordCount="11"/>
+										<ScoreDistribution value="1" recordCount="54"/>
+									</Node>
+								</Node>
+								<Node score="0" recordCount="36">
+									<True/>
+									<ScoreDistribution value="0" recordCount="26"/>
+									<ScoreDistribution value="1" recordCount="10"/>
+								</Node>
+							</Node>
+							<Node score="0" recordCount="215">
+								<True/>
+								<ScoreDistribution value="0" recordCount="205"/>
+								<ScoreDistribution value="1" recordCount="10"/>
+							</Node>
+						</Node>
+						<Node>
+							<SimplePredicate field="AGE" operator="lessOrEqual" value="51.0"/>
+							<Node score="0" recordCount="53">
+								<SimplePredicate field="WORK_TYPE" operator="lessOrEqual" value="0.0"/>
+								<ScoreDistribution value="0" recordCount="33"/>
+								<ScoreDistribution value="1" recordCount="20"/>
+							</Node>
+							<Node score="0" recordCount="45">
+								<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="199.52441494163162"/>
+								<ScoreDistribution value="0" recordCount="30"/>
+								<ScoreDistribution value="1" recordCount="15"/>
+							</Node>
+							<Node>
+								<SimplePredicate field="BMI" operator="lessOrEqual" value="40.94981285235188"/>
+								<Node score="1" recordCount="51">
+									<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="216.00488531849874"/>
+									<ScoreDistribution value="0" recordCount="10"/>
+									<ScoreDistribution value="1" recordCount="41"/>
+								</Node>
+								<Node score="0" recordCount="32">
+									<True/>
+									<ScoreDistribution value="0" recordCount="25"/>
+									<ScoreDistribution value="1" recordCount="7"/>
+								</Node>
+							</Node>
+							<Node score="1" recordCount="63">
+								<True/>
+								<ScoreDistribution value="0" recordCount="14"/>
+								<ScoreDistribution value="1" recordCount="49"/>
+							</Node>
+						</Node>
+						<Node>
+							<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="222.5920137026623"/>
+							<Node>
+								<SimplePredicate field="BMI" operator="lessOrEqual" value="44.30786829848991"/>
+								<Node>
+									<SimplePredicate field="BMI" operator="lessOrEqual" value="38.65962440074473"/>
+									<Node score="1" recordCount="164">
+										<SimplePredicate field="BMI" operator="lessOrEqual" value="31.902972536336392"/>
+										<ScoreDistribution value="0" recordCount="20"/>
+										<ScoreDistribution value="1" recordCount="144"/>
+									</Node>
+									<Node score="0" recordCount="33">
+										<True/>
+										<ScoreDistribution value="0" recordCount="20"/>
+										<ScoreDistribution value="1" recordCount="13"/>
+									</Node>
+								</Node>
+								<Node score="1" recordCount="175">
+									<True/>
+									<ScoreDistribution value="0" recordCount="10"/>
+									<ScoreDistribution value="1" recordCount="165"/>
+								</Node>
+							</Node>
+							<Node score="1" recordCount="30">
+								<True/>
+								<ScoreDistribution value="0" recordCount="12"/>
+								<ScoreDistribution value="1" recordCount="18"/>
+							</Node>
+						</Node>
+						<Node score="0" recordCount="36">
+							<True/>
+							<ScoreDistribution value="0" recordCount="19"/>
+							<ScoreDistribution value="1" recordCount="17"/>
+						</Node>
+					</Node>
+					<Node score="0" recordCount="417">
+						<True/>
+						<ScoreDistribution value="0" recordCount="402"/>
+						<ScoreDistribution value="1" recordCount="15"/>
+					</Node>
+				</Node>
+				<Node>
+					<SimplePredicate field="WORK_TYPE" operator="lessOrEqual" value="1.0"/>
+					<Node>
+						<SimplePredicate field="WORK_TYPE" operator="lessOrEqual" value="0.0"/>
+						<Node score="1" recordCount="66">
+							<SimplePredicate field="EVER_MARRIED" operator="lessOrEqual" value="0.0"/>
+							<ScoreDistribution value="0" recordCount="27"/>
+							<ScoreDistribution value="1" recordCount="39"/>
+						</Node>
+						<Node score="0" recordCount="200">
+							<SimplePredicate field="AGE" operator="lessOrEqual" value="50.0"/>
+							<ScoreDistribution value="0" recordCount="187"/>
+							<ScoreDistribution value="1" recordCount="13"/>
+						</Node>
+						<Node score="0" recordCount="39">
+							<SimplePredicate field="SMOKING_STATUS" operator="lessOrEqual" value="0.0"/>
+							<ScoreDistribution value="0" recordCount="38"/>
+							<ScoreDistribution value="1" recordCount="1"/>
+						</Node>
+						<Node>
+							<SimplePredicate field="SMOKING_STATUS" operator="lessOrEqual" value="1.0"/>
+							<Node score="1" recordCount="60">
+								<SimplePredicate field="RESIDENCE_TYPE" operator="lessOrEqual" value="0.0"/>
+								<ScoreDistribution value="0" recordCount="20"/>
+								<ScoreDistribution value="1" recordCount="40"/>
+							</Node>
+							<Node score="0" recordCount="45">
+								<True/>
+								<ScoreDistribution value="0" recordCount="31"/>
+								<ScoreDistribution value="1" recordCount="14"/>
+							</Node>
+						</Node>
+						<Node score="0" recordCount="45">
+							<True/>
+							<ScoreDistribution value="0" recordCount="40"/>
+							<ScoreDistribution value="1" recordCount="5"/>
+						</Node>
+					</Node>
+					<Node score="1" recordCount="49">
+						<True/>
+						<ScoreDistribution value="0" recordCount="1"/>
+						<ScoreDistribution value="1" recordCount="48"/>
+					</Node>
+				</Node>
+				<Node>
+					<SimplePredicate field="BMI" operator="lessOrEqual" value="38.65962440074473"/>
+					<Node>
+						<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="235.7940894281243"/>
+						<Node>
+							<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="76.1255092808803"/>
+							<Node score="0" recordCount="165">
+								<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="68.90007376596796"/>
+								<ScoreDistribution value="0" recordCount="162"/>
+								<ScoreDistribution value="1" recordCount="3"/>
+							</Node>
+							<Node>
+								<SimplePredicate field="BMI" operator="lessOrEqual" value="29.84462926184598"/>
+								<Node score="0" recordCount="38">
+									<SimplePredicate field="BMI" operator="lessOrEqual" value="27.28387221501683"/>
+									<ScoreDistribution value="0" recordCount="36"/>
+									<ScoreDistribution value="1" recordCount="2"/>
+								</Node>
+								<Node score="1" recordCount="66">
+									<True/>
+									<ScoreDistribution value="0" recordCount="26"/>
+									<ScoreDistribution value="1" recordCount="40"/>
+								</Node>
+							</Node>
+							<Node score="0" recordCount="51">
+								<True/>
+								<ScoreDistribution value="0" recordCount="51"/>
+								<ScoreDistribution value="1" recordCount="0"/>
+							</Node>
+						</Node>
+						<Node score="0" recordCount="947">
+							<True/>
+							<ScoreDistribution value="0" recordCount="905"/>
+							<ScoreDistribution value="1" recordCount="42"/>
+						</Node>
+					</Node>
+					<Node score="1" recordCount="38">
+						<True/>
+						<ScoreDistribution value="0" recordCount="18"/>
+						<ScoreDistribution value="1" recordCount="20"/>
+					</Node>
+				</Node>
+				<Node>
+					<SimplePredicate field="SMOKING_STATUS" operator="lessOrEqual" value="0.0"/>
+					<Node score="0" recordCount="47">
+						<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="107.98427673180977"/>
+						<ScoreDistribution value="0" recordCount="32"/>
+						<ScoreDistribution value="1" recordCount="15"/>
+					</Node>
+					<Node score="1" recordCount="41">
+						<True/>
+						<ScoreDistribution value="0" recordCount="15"/>
+						<ScoreDistribution value="1" recordCount="26"/>
+					</Node>
+				</Node>
+				<Node score="0" recordCount="177">
+					<True/>
+					<ScoreDistribution value="0" recordCount="140"/>
+					<ScoreDistribution value="1" recordCount="37"/>
+				</Node>
+			</Node>
+			<Node>
+				<SimplePredicate field="AGE" operator="lessOrEqual" value="66.0"/>
+				<Node>
+					<SimplePredicate field="RESIDENCE_TYPE" operator="lessOrEqual" value="0.0"/>
+					<Node>
+						<SimplePredicate field="WORK_TYPE" operator="lessOrEqual" value="2.0"/>
+						<Node>
+							<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="107.98427673180977"/>
+							<Node>
+								<SimplePredicate field="SMOKING_STATUS" operator="lessOrEqual" value="0.0"/>
+								<Node>
+									<SimplePredicate field="BMI" operator="lessOrEqual" value="34.89966354389493"/>
+									<Node>
+										<SimplePredicate field="WORK_TYPE" operator="lessOrEqual" value="0.0"/>
+										<Node score="1" recordCount="78">
+											<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="80.05916607117462"/>
+											<ScoreDistribution value="0" recordCount="24"/>
+											<ScoreDistribution value="1" recordCount="54"/>
+										</Node>
+										<Node score="0" recordCount="33">
+											<True/>
+											<ScoreDistribution value="0" recordCount="26"/>
+											<ScoreDistribution value="1" recordCount="7"/>
+										</Node>
+									</Node>
+									<Node>
+										<SimplePredicate field="AGE" operator="lessOrEqual" value="57.0"/>
+										<Node score="0" recordCount="34">
+											<SimplePredicate field="BMI" operator="lessOrEqual" value="29.84462926184598"/>
+											<ScoreDistribution value="0" recordCount="18"/>
+											<ScoreDistribution value="1" recordCount="16"/>
+										</Node>
+										<Node score="1" recordCount="32">
+											<True/>
+											<ScoreDistribution value="0" recordCount="11"/>
+											<ScoreDistribution value="1" recordCount="21"/>
+										</Node>
+									</Node>
+									<Node score="1" recordCount="111">
+										<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="62.945"/>
+										<ScoreDistribution value="0" recordCount="10"/>
+										<ScoreDistribution value="1" recordCount="101"/>
+									</Node>
+									<Node score="0" recordCount="34">
+										<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="74.14248751880876"/>
+										<ScoreDistribution value="0" recordCount="31"/>
+										<ScoreDistribution value="1" recordCount="3"/>
+									</Node>
+									<Node score="1" recordCount="159">
+										<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="80.05916607117462"/>
+										<ScoreDistribution value="0" recordCount="10"/>
+										<ScoreDistribution value="1" recordCount="149"/>
+									</Node>
+									<Node>
+										<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="98.535"/>
+										<Node score="1" recordCount="63">
+											<SimplePredicate field="AGE" operator="lessOrEqual" value="60.0"/>
+											<ScoreDistribution value="0" recordCount="14"/>
+											<ScoreDistribution value="1" recordCount="49"/>
+										</Node>
+										<Node score="0" recordCount="32">
+											<True/>
+											<ScoreDistribution value="0" recordCount="26"/>
+											<ScoreDistribution value="1" recordCount="6"/>
+										</Node>
+									</Node>
+									<Node score="1" recordCount="114">
+										<True/>
+										<ScoreDistribution value="0" recordCount="18"/>
+										<ScoreDistribution value="1" recordCount="96"/>
+									</Node>
+								</Node>
+								<Node score="0" recordCount="61">
+									<True/>
+									<ScoreDistribution value="0" recordCount="44"/>
+									<ScoreDistribution value="1" recordCount="17"/>
+								</Node>
+							</Node>
+							<Node>
+								<SimplePredicate field="AGE" operator="lessOrEqual" value="62.0"/>
+								<Node score="1" recordCount="144">
+									<SimplePredicate field="EVER_MARRIED" operator="lessOrEqual" value="0.0"/>
+									<ScoreDistribution value="0" recordCount="25"/>
+									<ScoreDistribution value="1" recordCount="119"/>
+								</Node>
+								<Node>
+									<SimplePredicate field="GENDER" operator="lessOrEqual" value="0.0"/>
+									<Node>
+										<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="85.69918301538027"/>
+										<Node score="0" recordCount="48">
+											<SimplePredicate field="BMI" operator="lessOrEqual" value="24.900799971272974"/>
+											<ScoreDistribution value="0" recordCount="29"/>
+											<ScoreDistribution value="1" recordCount="19"/>
+										</Node>
+										<Node>
+											<SimplePredicate field="BMI" operator="lessOrEqual" value="33.939376631867106"/>
+											<Node>
+												<SimplePredicate field="HYPERTENSION" operator="lessOrEqual" value="0.0"/>
+												<Node score="1" recordCount="102">
+													<SimplePredicate field="AGE" operator="lessOrEqual" value="58.0"/>
+													<ScoreDistribution value="0" recordCount="21"/>
+													<ScoreDistribution value="1" recordCount="81"/>
+												</Node>
+												<Node score="0" recordCount="38">
+													<SimplePredicate field="AGE" operator="lessOrEqual" value="60.0"/>
+													<ScoreDistribution value="0" recordCount="19"/>
+													<ScoreDistribution value="1" recordCount="19"/>
+												</Node>
+												<Node score="1" recordCount="42">
+													<True/>
+													<ScoreDistribution value="0" recordCount="13"/>
+													<ScoreDistribution value="1" recordCount="29"/>
+												</Node>
+											</Node>
+											<Node score="1" recordCount="42">
+												<True/>
+												<ScoreDistribution value="0" recordCount="7"/>
+												<ScoreDistribution value="1" recordCount="35"/>
+											</Node>
+										</Node>
+										<Node score="0" recordCount="55">
+											<True/>
+											<ScoreDistribution value="0" recordCount="28"/>
+											<ScoreDistribution value="1" recordCount="27"/>
+										</Node>
+									</Node>
+									<Node score="0" recordCount="64">
+										<SimplePredicate field="AGE" operator="lessOrEqual" value="58.0"/>
+										<ScoreDistribution value="0" recordCount="47"/>
+										<ScoreDistribution value="1" recordCount="17"/>
+									</Node>
+									<Node score="1" recordCount="41">
+										<SimplePredicate field="BMI" operator="lessOrEqual" value="24.900799971272974"/>
+										<ScoreDistribution value="0" recordCount="6"/>
+										<ScoreDistribution value="1" recordCount="35"/>
+									</Node>
+									<Node score="1" recordCount="35">
+										<SimplePredicate field="WORK_TYPE" operator="lessOrEqual" value="1.0"/>
+										<ScoreDistribution value="0" recordCount="7"/>
+										<ScoreDistribution value="1" recordCount="28"/>
+									</Node>
+									<Node score="0" recordCount="60">
+										<True/>
+										<ScoreDistribution value="0" recordCount="40"/>
+										<ScoreDistribution value="1" recordCount="20"/>
+									</Node>
+								</Node>
+								<Node score="1" recordCount="32">
+									<SimplePredicate field="BMI" operator="lessOrEqual" value="23.60103636203077"/>
+									<ScoreDistribution value="0" recordCount="6"/>
+									<ScoreDistribution value="1" recordCount="26"/>
+								</Node>
+								<Node score="0" recordCount="94">
+									<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="83.81515567368112"/>
+									<ScoreDistribution value="0" recordCount="73"/>
+									<ScoreDistribution value="1" recordCount="21"/>
+								</Node>
+								<Node score="0" recordCount="33">
+									<SimplePredicate field="BMI" operator="lessOrEqual" value="31.4016403380355"/>
+									<ScoreDistribution value="0" recordCount="28"/>
+									<ScoreDistribution value="1" recordCount="5"/>
+								</Node>
+								<Node score="1" recordCount="56">
+									<True/>
+									<ScoreDistribution value="0" recordCount="19"/>
+									<ScoreDistribution value="1" recordCount="37"/>
+								</Node>
+							</Node>
+							<Node score="1" recordCount="49">
+								<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="65.62893852148204"/>
+								<ScoreDistribution value="0" recordCount="19"/>
+								<ScoreDistribution value="1" recordCount="30"/>
+							</Node>
+							<Node score="0" recordCount="108">
+								<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="98.535"/>
+								<ScoreDistribution value="0" recordCount="107"/>
+								<ScoreDistribution value="1" recordCount="1"/>
+							</Node>
+							<Node score="1" recordCount="43">
+								<True/>
+								<ScoreDistribution value="0" recordCount="20"/>
+								<ScoreDistribution value="1" recordCount="23"/>
+							</Node>
+						</Node>
+						<Node>
+							<SimplePredicate field="HYPERTENSION" operator="lessOrEqual" value="0.0"/>
+							<Node>
+								<SimplePredicate field="SMOKING_STATUS" operator="lessOrEqual" value="1.0"/>
+								<Node>
+									<SimplePredicate field="BMI" operator="lessOrEqual" value="24.276098040184912"/>
+									<Node score="0" recordCount="30">
+										<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="174.84254383423985"/>
+										<ScoreDistribution value="0" recordCount="28"/>
+										<ScoreDistribution value="1" recordCount="2"/>
+									</Node>
+									<Node score="1" recordCount="41">
+										<True/>
+										<ScoreDistribution value="0" recordCount="5"/>
+										<ScoreDistribution value="1" recordCount="36"/>
+									</Node>
+								</Node>
+								<Node score="1" recordCount="911">
+									<SimplePredicate field="SMOKING_STATUS" operator="lessOrEqual" value="0.0"/>
+									<ScoreDistribution value="0" recordCount="102"/>
+									<ScoreDistribution value="1" recordCount="809"/>
+								</Node>
+								<Node>
+									<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="174.84254383423985"/>
+									<Node score="0" recordCount="42">
+										<SimplePredicate field="AGE" operator="lessOrEqual" value="58.0"/>
+										<ScoreDistribution value="0" recordCount="29"/>
+										<ScoreDistribution value="1" recordCount="13"/>
+									</Node>
+									<Node score="1" recordCount="190">
+										<True/>
+										<ScoreDistribution value="0" recordCount="54"/>
+										<ScoreDistribution value="1" recordCount="136"/>
+									</Node>
+								</Node>
+								<Node score="1" recordCount="524">
+									<True/>
+									<ScoreDistribution value="0" recordCount="75"/>
+									<ScoreDistribution value="1" recordCount="449"/>
+								</Node>
+							</Node>
+							<Node>
+								<SimplePredicate field="GENDER" operator="lessOrEqual" value="0.0"/>
+								<Node>
+									<SimplePredicate field="HEART_DISEASE" operator="lessOrEqual" value="0.0"/>
+									<Node score="0" recordCount="45">
+										<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="190.1032676731"/>
+										<ScoreDistribution value="0" recordCount="26"/>
+										<ScoreDistribution value="1" recordCount="19"/>
+									</Node>
+									<Node score="1" recordCount="55">
+										<True/>
+										<ScoreDistribution value="0" recordCount="11"/>
+										<ScoreDistribution value="1" recordCount="44"/>
+									</Node>
+								</Node>
+								<Node score="1" recordCount="47">
+									<True/>
+									<ScoreDistribution value="0" recordCount="1"/>
+									<ScoreDistribution value="1" recordCount="46"/>
+								</Node>
+							</Node>
+							<Node score="0" recordCount="42">
+								<True/>
+								<ScoreDistribution value="0" recordCount="40"/>
+								<ScoreDistribution value="1" recordCount="2"/>
+							</Node>
+						</Node>
+						<Node>
+							<SimplePredicate field="SMOKING_STATUS" operator="lessOrEqual" value="0.0"/>
+							<Node>
+								<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="235.7940894281243"/>
+								<Node score="1" recordCount="30">
+									<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="174.84254383423985"/>
+									<ScoreDistribution value="0" recordCount="10"/>
+									<ScoreDistribution value="1" recordCount="20"/>
+								</Node>
+								<Node score="0" recordCount="34">
+									<True/>
+									<ScoreDistribution value="0" recordCount="19"/>
+									<ScoreDistribution value="1" recordCount="15"/>
+								</Node>
+							</Node>
+							<Node score="1" recordCount="42">
+								<True/>
+								<ScoreDistribution value="0" recordCount="6"/>
+								<ScoreDistribution value="1" recordCount="36"/>
+							</Node>
+						</Node>
+						<Node score="0" recordCount="70">
+							<True/>
+							<ScoreDistribution value="0" recordCount="60"/>
+							<ScoreDistribution value="1" recordCount="10"/>
+						</Node>
+					</Node>
+					<Node>
+						<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="77.85079300845614"/>
+						<Node>
+							<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="74.14248751880876"/>
+							<Node score="0" recordCount="47">
+								<SimplePredicate field="AGE" operator="lessOrEqual" value="62.0"/>
+								<ScoreDistribution value="0" recordCount="38"/>
+								<ScoreDistribution value="1" recordCount="9"/>
+							</Node>
+							<Node score="1" recordCount="34">
+								<SimplePredicate field="BMI" operator="lessOrEqual" value="28.454026984625386"/>
+								<ScoreDistribution value="0" recordCount="7"/>
+								<ScoreDistribution value="1" recordCount="27"/>
+							</Node>
+							<Node score="0" recordCount="33">
+								<True/>
+								<ScoreDistribution value="0" recordCount="17"/>
+								<ScoreDistribution value="1" recordCount="16"/>
+							</Node>
+						</Node>
+						<Node score="1" recordCount="103">
+							<True/>
+							<ScoreDistribution value="0" recordCount="21"/>
+							<ScoreDistribution value="1" recordCount="82"/>
+						</Node>
+					</Node>
+					<Node score="0" recordCount="321">
+						<True/>
+						<ScoreDistribution value="0" recordCount="274"/>
+						<ScoreDistribution value="1" recordCount="47"/>
+					</Node>
+				</Node>
+				<Node>
+					<SimplePredicate field="SMOKING_STATUS" operator="lessOrEqual" value="0.0"/>
+					<Node>
+						<SimplePredicate field="GENDER" operator="lessOrEqual" value="0.0"/>
+						<Node>
+							<SimplePredicate field="WORK_TYPE" operator="lessOrEqual" value="2.0"/>
+							<Node score="0" recordCount="44">
+								<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="74.14248751880876"/>
+								<ScoreDistribution value="0" recordCount="35"/>
+								<ScoreDistribution value="1" recordCount="9"/>
+							</Node>
+							<Node score="0" recordCount="49">
+								<SimplePredicate field="BMI" operator="lessOrEqual" value="24.276098040184912"/>
+								<ScoreDistribution value="0" recordCount="31"/>
+								<ScoreDistribution value="1" recordCount="18"/>
+							</Node>
+							<Node>
+								<SimplePredicate field="BMI" operator="lessOrEqual" value="37.17500307506819"/>
+								<Node>
+									<SimplePredicate field="AGE" operator="lessOrEqual" value="64.0"/>
+									<Node>
+										<SimplePredicate field="BMI" operator="lessOrEqual" value="30.380452594683476"/>
+										<Node>
+											<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="199.52441494163162"/>
+											<Node score="1" recordCount="32">
+												<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="82.02125194912432"/>
+												<ScoreDistribution value="0" recordCount="7"/>
+												<ScoreDistribution value="1" recordCount="25"/>
+											</Node>
+											<Node score="0" recordCount="38">
+												<True/>
+												<ScoreDistribution value="0" recordCount="35"/>
+												<ScoreDistribution value="1" recordCount="3"/>
+											</Node>
+										</Node>
+										<Node score="1" recordCount="40">
+											<True/>
+											<ScoreDistribution value="0" recordCount="1"/>
+											<ScoreDistribution value="1" recordCount="39"/>
+										</Node>
+									</Node>
+									<Node score="1" recordCount="272">
+										<True/>
+										<ScoreDistribution value="0" recordCount="36"/>
+										<ScoreDistribution value="1" recordCount="236"/>
+									</Node>
+								</Node>
+								<Node score="1" recordCount="108">
+									<True/>
+									<ScoreDistribution value="0" recordCount="5"/>
+									<ScoreDistribution value="1" recordCount="103"/>
+								</Node>
+							</Node>
+							<Node score="0" recordCount="48">
+								<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="199.52441494163162"/>
+								<ScoreDistribution value="0" recordCount="31"/>
+								<ScoreDistribution value="1" recordCount="17"/>
+							</Node>
+							<Node score="1" recordCount="65">
+								<True/>
+								<ScoreDistribution value="0" recordCount="19"/>
+								<ScoreDistribution value="1" recordCount="46"/>
+							</Node>
+						</Node>
+						<Node score="0" recordCount="65">
+							<True/>
+							<ScoreDistribution value="0" recordCount="57"/>
+							<ScoreDistribution value="1" recordCount="8"/>
+						</Node>
+					</Node>
+					<Node score="0" recordCount="129">
+						<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="98.535"/>
+						<ScoreDistribution value="0" recordCount="121"/>
+						<ScoreDistribution value="1" recordCount="8"/>
+					</Node>
+					<Node>
+						<SimplePredicate field="BMI" operator="lessOrEqual" value="35.94355906815947"/>
+						<Node score="1" recordCount="58">
+							<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="111.72999999999999"/>
+							<ScoreDistribution value="0" recordCount="19"/>
+							<ScoreDistribution value="1" recordCount="39"/>
+						</Node>
+						<Node>
+							<SimplePredicate field="BMI" operator="lessOrEqual" value="32.55604261104567"/>
+							<Node score="1" recordCount="50">
+								<SimplePredicate field="AGE" operator="lessOrEqual" value="62.0"/>
+								<ScoreDistribution value="0" recordCount="14"/>
+								<ScoreDistribution value="1" recordCount="36"/>
+							</Node>
+							<Node score="0" recordCount="32">
+								<True/>
+								<ScoreDistribution value="0" recordCount="19"/>
+								<ScoreDistribution value="1" recordCount="13"/>
+							</Node>
+						</Node>
+						<Node score="0" recordCount="33">
+							<True/>
+							<ScoreDistribution value="0" recordCount="25"/>
+							<ScoreDistribution value="1" recordCount="8"/>
+						</Node>
+					</Node>
+					<Node score="0" recordCount="45">
+						<True/>
+						<ScoreDistribution value="0" recordCount="44"/>
+						<ScoreDistribution value="1" recordCount="1"/>
+					</Node>
+				</Node>
+				<Node>
+					<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="142.1633466999208"/>
+					<Node>
+						<SimplePredicate field="EVER_MARRIED" operator="lessOrEqual" value="0.0"/>
+						<Node score="0" recordCount="65">
+							<SimplePredicate field="BMI" operator="lessOrEqual" value="35.94355906815947"/>
+							<ScoreDistribution value="0" recordCount="49"/>
+							<ScoreDistribution value="1" recordCount="16"/>
+						</Node>
+						<Node score="1" recordCount="56">
+							<True/>
+							<ScoreDistribution value="0" recordCount="12"/>
+							<ScoreDistribution value="1" recordCount="44"/>
+						</Node>
+					</Node>
+					<Node score="0" recordCount="308">
+						<SimplePredicate field="BMI" operator="lessOrEqual" value="27.63097222795207"/>
+						<ScoreDistribution value="0" recordCount="303"/>
+						<ScoreDistribution value="1" recordCount="5"/>
+					</Node>
+					<Node score="0" recordCount="410">
+						<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="98.535"/>
+						<ScoreDistribution value="0" recordCount="369"/>
+						<ScoreDistribution value="1" recordCount="41"/>
+					</Node>
+					<Node>
+						<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="107.98427673180977"/>
+						<Node score="1" recordCount="76">
+							<SimplePredicate field="BMI" operator="lessOrEqual" value="31.902972536336392"/>
+							<ScoreDistribution value="0" recordCount="24"/>
+							<ScoreDistribution value="1" recordCount="52"/>
+						</Node>
+						<Node score="0" recordCount="55">
+							<True/>
+							<ScoreDistribution value="0" recordCount="39"/>
+							<ScoreDistribution value="1" recordCount="16"/>
+						</Node>
+					</Node>
+					<Node score="0" recordCount="87">
+						<True/>
+						<ScoreDistribution value="0" recordCount="86"/>
+						<ScoreDistribution value="1" recordCount="1"/>
+					</Node>
+				</Node>
+				<Node>
+					<SimplePredicate field="WORK_TYPE" operator="lessOrEqual" value="1.0"/>
+					<Node score="1" recordCount="103">
+						<SimplePredicate field="BMI" operator="lessOrEqual" value="31.4016403380355"/>
+						<ScoreDistribution value="0" recordCount="10"/>
+						<ScoreDistribution value="1" recordCount="93"/>
+					</Node>
+					<Node score="0" recordCount="34">
+						<True/>
+						<ScoreDistribution value="0" recordCount="25"/>
+						<ScoreDistribution value="1" recordCount="9"/>
+					</Node>
+				</Node>
+				<Node>
+					<SimplePredicate field="WORK_TYPE" operator="lessOrEqual" value="2.0"/>
+					<Node>
+						<SimplePredicate field="BMI" operator="lessOrEqual" value="40.94981285235188"/>
+						<Node>
+							<SimplePredicate field="BMI" operator="lessOrEqual" value="30.899030562086025"/>
+							<Node score="0" recordCount="55">
+								<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="216.00488531849874"/>
+								<ScoreDistribution value="0" recordCount="38"/>
+								<ScoreDistribution value="1" recordCount="17"/>
+							</Node>
+							<Node score="1" recordCount="35">
+								<True/>
+								<ScoreDistribution value="0" recordCount="5"/>
+								<ScoreDistribution value="1" recordCount="30"/>
+							</Node>
+						</Node>
+						<Node score="0" recordCount="103">
+							<True/>
+							<ScoreDistribution value="0" recordCount="88"/>
+							<ScoreDistribution value="1" recordCount="15"/>
+						</Node>
+					</Node>
+					<Node score="1" recordCount="37">
+						<True/>
+						<ScoreDistribution value="0" recordCount="9"/>
+						<ScoreDistribution value="1" recordCount="28"/>
+					</Node>
+				</Node>
+				<Node score="0" recordCount="52">
+					<True/>
+					<ScoreDistribution value="0" recordCount="51"/>
+					<ScoreDistribution value="1" recordCount="1"/>
+				</Node>
+			</Node>
+			<Node>
+				<SimplePredicate field="SMOKING_STATUS" operator="lessOrEqual" value="1.0"/>
+				<Node>
+					<SimplePredicate field="RESIDENCE_TYPE" operator="lessOrEqual" value="0.0"/>
+					<Node>
+						<SimplePredicate field="GENDER" operator="lessOrEqual" value="0.0"/>
+						<Node>
+							<SimplePredicate field="WORK_TYPE" operator="lessOrEqual" value="2.0"/>
+							<Node score="1" recordCount="1302">
+								<SimplePredicate field="EVER_MARRIED" operator="lessOrEqual" value="0.0"/>
+								<ScoreDistribution value="0" recordCount="27"/>
+								<ScoreDistribution value="1" recordCount="1275"/>
+							</Node>
+							<Node>
+								<SimplePredicate field="AGE" operator="lessOrEqual" value="81.0"/>
+								<Node>
+									<SimplePredicate field="AGE" operator="lessOrEqual" value="71.0"/>
+									<Node>
+										<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="117.12651720943202"/>
+										<Node>
+											<SimplePredicate field="BMI" operator="lessOrEqual" value="32.55604261104567"/>
+											<Node score="1" recordCount="96">
+												<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="65.62893852148204"/>
+												<ScoreDistribution value="0" recordCount="8"/>
+												<ScoreDistribution value="1" recordCount="88"/>
+											</Node>
+											<Node>
+												<SimplePredicate field="BMI" operator="lessOrEqual" value="27.63097222795207"/>
+												<Node>
+													<SimplePredicate field="BMI" operator="lessOrEqual" value="26.87308396645696"/>
+													<Node score="1" recordCount="32">
+														<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="77.85079300845614"/>
+														<ScoreDistribution value="0" recordCount="6"/>
+														<ScoreDistribution value="1" recordCount="26"/>
+													</Node>
+													<Node score="0" recordCount="46">
+														<True/>
+														<ScoreDistribution value="0" recordCount="32"/>
+														<ScoreDistribution value="1" recordCount="14"/>
+													</Node>
+												</Node>
+												<Node score="1" recordCount="53">
+													<True/>
+													<ScoreDistribution value="0" recordCount="6"/>
+													<ScoreDistribution value="1" recordCount="47"/>
+												</Node>
+											</Node>
+											<Node score="0" recordCount="53">
+												<True/>
+												<ScoreDistribution value="0" recordCount="36"/>
+												<ScoreDistribution value="1" recordCount="17"/>
+											</Node>
+										</Node>
+										<Node score="0" recordCount="40">
+											<True/>
+											<ScoreDistribution value="0" recordCount="39"/>
+											<ScoreDistribution value="1" recordCount="1"/>
+										</Node>
+									</Node>
+									<Node score="1" recordCount="662">
+										<True/>
+										<ScoreDistribution value="0" recordCount="45"/>
+										<ScoreDistribution value="1" recordCount="617"/>
+									</Node>
+								</Node>
+								<Node score="1" recordCount="3456">
+									<SimplePredicate field="HYPERTENSION" operator="lessOrEqual" value="0.0"/>
+									<ScoreDistribution value="0" recordCount="219"/>
+									<ScoreDistribution value="1" recordCount="3237"/>
+								</Node>
+								<Node score="0" recordCount="33">
+									<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="74.14248751880876"/>
+									<ScoreDistribution value="0" recordCount="17"/>
+									<ScoreDistribution value="1" recordCount="16"/>
+								</Node>
+								<Node score="1" recordCount="279">
+									<True/>
+									<ScoreDistribution value="0" recordCount="47"/>
+									<ScoreDistribution value="1" recordCount="232"/>
+								</Node>
+							</Node>
+							<Node score="0" recordCount="35">
+								<True/>
+								<ScoreDistribution value="0" recordCount="26"/>
+								<ScoreDistribution value="1" recordCount="9"/>
+							</Node>
+						</Node>
+						<Node>
+							<SimplePredicate field="AGE" operator="lessOrEqual" value="72.0"/>
+							<Node>
+								<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="77.85079300845614"/>
+								<Node score="0" recordCount="39">
+									<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="74.14248751880876"/>
+									<ScoreDistribution value="0" recordCount="23"/>
+									<ScoreDistribution value="1" recordCount="16"/>
+								</Node>
+								<Node score="1" recordCount="57">
+									<True/>
+									<ScoreDistribution value="0" recordCount="2"/>
+									<ScoreDistribution value="1" recordCount="55"/>
+								</Node>
+							</Node>
+							<Node score="0" recordCount="53">
+								<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="111.72999999999999"/>
+								<ScoreDistribution value="0" recordCount="53"/>
+								<ScoreDistribution value="1" recordCount="0"/>
+							</Node>
+							<Node score="1" recordCount="35">
+								<SimplePredicate field="BMI" operator="lessOrEqual" value="27.63097222795207"/>
+								<ScoreDistribution value="0" recordCount="6"/>
+								<ScoreDistribution value="1" recordCount="29"/>
+							</Node>
+							<Node score="0" recordCount="44">
+								<True/>
+								<ScoreDistribution value="0" recordCount="26"/>
+								<ScoreDistribution value="1" recordCount="18"/>
+							</Node>
+						</Node>
+						<Node>
+							<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="216.00488531849874"/>
+							<Node score="1" recordCount="705">
+								<SimplePredicate field="SMOKING_STATUS" operator="lessOrEqual" value="0.0"/>
+								<ScoreDistribution value="0" recordCount="63"/>
+								<ScoreDistribution value="1" recordCount="642"/>
+							</Node>
+							<Node>
+								<SimplePredicate field="AGE" operator="lessOrEqual" value="80.0"/>
+								<Node score="1" recordCount="399">
+									<SimplePredicate field="BMI" operator="lessOrEqual" value="27.63097222795207"/>
+									<ScoreDistribution value="0" recordCount="49"/>
+									<ScoreDistribution value="1" recordCount="350"/>
+								</Node>
+								<Node>
+									<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="128.8096157663138"/>
+									<Node score="1" recordCount="38">
+										<SimplePredicate field="AGE" operator="lessOrEqual" value="74.0"/>
+										<ScoreDistribution value="0" recordCount="6"/>
+										<ScoreDistribution value="1" recordCount="32"/>
+									</Node>
+									<Node score="0" recordCount="49">
+										<True/>
+										<ScoreDistribution value="0" recordCount="35"/>
+										<ScoreDistribution value="1" recordCount="14"/>
+									</Node>
+								</Node>
+								<Node score="1" recordCount="79">
+									<True/>
+									<ScoreDistribution value="0" recordCount="13"/>
+									<ScoreDistribution value="1" recordCount="66"/>
+								</Node>
+							</Node>
+							<Node score="0" recordCount="56">
+								<True/>
+								<ScoreDistribution value="0" recordCount="30"/>
+								<ScoreDistribution value="1" recordCount="26"/>
+							</Node>
+						</Node>
+						<Node score="0" recordCount="38">
+							<True/>
+							<ScoreDistribution value="0" recordCount="24"/>
+							<ScoreDistribution value="1" recordCount="14"/>
+						</Node>
+					</Node>
+					<Node>
+						<SimplePredicate field="HYPERTENSION" operator="lessOrEqual" value="0.0"/>
+						<Node>
+							<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="128.8096157663138"/>
+							<Node score="0" recordCount="69">
+								<SimplePredicate field="AGE" operator="lessOrEqual" value="69.0"/>
+								<ScoreDistribution value="0" recordCount="52"/>
+								<ScoreDistribution value="1" recordCount="17"/>
+							</Node>
+							<Node>
+								<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="111.72999999999999"/>
+								<Node>
+									<SimplePredicate field="WORK_TYPE" operator="lessOrEqual" value="2.0"/>
+									<Node score="0" recordCount="34">
+										<SimplePredicate field="WORK_TYPE" operator="lessOrEqual" value="0.0"/>
+										<ScoreDistribution value="0" recordCount="19"/>
+										<ScoreDistribution value="1" recordCount="15"/>
+									</Node>
+									<Node score="1" recordCount="543">
+										<True/>
+										<ScoreDistribution value="0" recordCount="105"/>
+										<ScoreDistribution value="1" recordCount="438"/>
+									</Node>
+								</Node>
+								<Node>
+									<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="92.87627991302753"/>
+									<Node score="0" recordCount="30">
+										<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="76.1255092808803"/>
+										<ScoreDistribution value="0" recordCount="21"/>
+										<ScoreDistribution value="1" recordCount="9"/>
+									</Node>
+									<Node score="1" recordCount="58">
+										<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="77.85079300845614"/>
+										<ScoreDistribution value="0" recordCount="3"/>
+										<ScoreDistribution value="1" recordCount="55"/>
+									</Node>
+									<Node score="0" recordCount="34">
+										<SimplePredicate field="BMI" operator="lessOrEqual" value="31.902972536336392"/>
+										<ScoreDistribution value="0" recordCount="22"/>
+										<ScoreDistribution value="1" recordCount="12"/>
+									</Node>
+									<Node score="1" recordCount="45">
+										<True/>
+										<ScoreDistribution value="0" recordCount="1"/>
+										<ScoreDistribution value="1" recordCount="44"/>
+									</Node>
+								</Node>
+								<Node score="0" recordCount="44">
+									<True/>
+									<ScoreDistribution value="0" recordCount="34"/>
+									<ScoreDistribution value="1" recordCount="10"/>
+								</Node>
+							</Node>
+							<Node score="0" recordCount="33">
+								<True/>
+								<ScoreDistribution value="0" recordCount="28"/>
+								<ScoreDistribution value="1" recordCount="5"/>
+							</Node>
+						</Node>
+						<Node>
+							<SimplePredicate field="AGE" operator="lessOrEqual" value="80.0"/>
+							<Node score="1" recordCount="646">
+								<SimplePredicate field="WORK_TYPE" operator="lessOrEqual" value="2.0"/>
+								<ScoreDistribution value="0" recordCount="55"/>
+								<ScoreDistribution value="1" recordCount="591"/>
+							</Node>
+							<Node score="1" recordCount="143">
+								<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="190.1032676731"/>
+								<ScoreDistribution value="0" recordCount="11"/>
+								<ScoreDistribution value="1" recordCount="132"/>
+							</Node>
+							<Node score="0" recordCount="38">
+								<True/>
+								<ScoreDistribution value="0" recordCount="20"/>
+								<ScoreDistribution value="1" recordCount="18"/>
+							</Node>
+						</Node>
+						<Node score="1" recordCount="46">
+							<True/>
+							<ScoreDistribution value="0" recordCount="18"/>
+							<ScoreDistribution value="1" recordCount="28"/>
+						</Node>
+					</Node>
+					<Node score="0" recordCount="90">
+						<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="174.84254383423985"/>
+						<ScoreDistribution value="0" recordCount="81"/>
+						<ScoreDistribution value="1" recordCount="9"/>
+					</Node>
+					<Node score="0" recordCount="64">
+						<SimplePredicate field="BMI" operator="lessOrEqual" value="35.94355906815947"/>
+						<ScoreDistribution value="0" recordCount="35"/>
+						<ScoreDistribution value="1" recordCount="29"/>
+					</Node>
+					<Node score="1" recordCount="44">
+						<True/>
+						<ScoreDistribution value="0" recordCount="9"/>
+						<ScoreDistribution value="1" recordCount="35"/>
+					</Node>
+				</Node>
+				<Node>
+					<SimplePredicate field="WORK_TYPE" operator="lessOrEqual" value="2.0"/>
+					<Node>
+						<SimplePredicate field="GENDER" operator="lessOrEqual" value="0.0"/>
+						<Node score="1" recordCount="530">
+							<SimplePredicate field="EVER_MARRIED" operator="lessOrEqual" value="0.0"/>
+							<ScoreDistribution value="0" recordCount="36"/>
+							<ScoreDistribution value="1" recordCount="494"/>
+						</Node>
+						<Node>
+							<SimplePredicate field="BMI" operator="lessOrEqual" value="34.89966354389493"/>
+							<Node>
+								<SimplePredicate field="HYPERTENSION" operator="lessOrEqual" value="0.0"/>
+								<Node>
+									<SimplePredicate field="BMI" operator="lessOrEqual" value="25.488866673455053"/>
+									<Node score="0" recordCount="47">
+										<SimplePredicate field="AGE" operator="lessOrEqual" value="71.0"/>
+										<ScoreDistribution value="0" recordCount="38"/>
+										<ScoreDistribution value="1" recordCount="9"/>
+									</Node>
+									<Node score="1" recordCount="158">
+										<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="76.1255092808803"/>
+										<ScoreDistribution value="0" recordCount="19"/>
+										<ScoreDistribution value="1" recordCount="139"/>
+									</Node>
+									<Node score="0" recordCount="32">
+										<SimplePredicate field="AGE" operator="lessOrEqual" value="78.0"/>
+										<ScoreDistribution value="0" recordCount="31"/>
+										<ScoreDistribution value="1" recordCount="1"/>
+									</Node>
+									<Node score="1" recordCount="120">
+										<True/>
+										<ScoreDistribution value="0" recordCount="31"/>
+										<ScoreDistribution value="1" recordCount="89"/>
+									</Node>
+								</Node>
+								<Node score="1" recordCount="71">
+									<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="68.90007376596796"/>
+									<ScoreDistribution value="0" recordCount="27"/>
+									<ScoreDistribution value="1" recordCount="44"/>
+								</Node>
+								<Node>
+									<SimplePredicate field="AGE" operator="lessOrEqual" value="74.0"/>
+									<Node score="1" recordCount="191">
+										<SimplePredicate field="BMI" operator="lessOrEqual" value="28.899410014031425"/>
+										<ScoreDistribution value="0" recordCount="24"/>
+										<ScoreDistribution value="1" recordCount="167"/>
+									</Node>
+									<Node score="1" recordCount="113">
+										<SimplePredicate field="SMOKING_STATUS" operator="lessOrEqual" value="0.0"/>
+										<ScoreDistribution value="0" recordCount="21"/>
+										<ScoreDistribution value="1" recordCount="92"/>
+									</Node>
+									<Node>
+										<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="190.1032676731"/>
+										<Node score="1" recordCount="42">
+											<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="87.93042341487757"/>
+											<ScoreDistribution value="0" recordCount="13"/>
+											<ScoreDistribution value="1" recordCount="29"/>
+										</Node>
+										<Node score="0" recordCount="30">
+											<True/>
+											<ScoreDistribution value="0" recordCount="20"/>
+											<ScoreDistribution value="1" recordCount="10"/>
+										</Node>
+									</Node>
+									<Node score="1" recordCount="30">
+										<True/>
+										<ScoreDistribution value="0" recordCount="5"/>
+										<ScoreDistribution value="1" recordCount="25"/>
+									</Node>
+								</Node>
+								<Node>
+									<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="104.65752620396205"/>
+									<Node score="1" recordCount="190">
+										<SimplePredicate field="BMI" operator="lessOrEqual" value="27.28387221501683"/>
+										<ScoreDistribution value="0" recordCount="15"/>
+										<ScoreDistribution value="1" recordCount="175"/>
+									</Node>
+									<Node score="1" recordCount="49">
+										<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="83.81515567368112"/>
+										<ScoreDistribution value="0" recordCount="13"/>
+										<ScoreDistribution value="1" recordCount="36"/>
+									</Node>
+									<Node score="0" recordCount="30">
+										<True/>
+										<ScoreDistribution value="0" recordCount="21"/>
+										<ScoreDistribution value="1" recordCount="9"/>
+									</Node>
+								</Node>
+								<Node score="1" recordCount="547">
+									<True/>
+									<ScoreDistribution value="0" recordCount="29"/>
+									<ScoreDistribution value="1" recordCount="518"/>
+								</Node>
+							</Node>
+							<Node>
+								<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="208.5574296322609"/>
+								<Node>
+									<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="90.17500000000001"/>
+									<Node score="1" recordCount="33">
+										<SimplePredicate field="BMI" operator="lessOrEqual" value="25.488866673455053"/>
+										<ScoreDistribution value="0" recordCount="7"/>
+										<ScoreDistribution value="1" recordCount="26"/>
+									</Node>
+									<Node score="0" recordCount="44">
+										<True/>
+										<ScoreDistribution value="0" recordCount="25"/>
+										<ScoreDistribution value="1" recordCount="19"/>
+									</Node>
+								</Node>
+								<Node score="0" recordCount="59">
+									<True/>
+									<ScoreDistribution value="0" recordCount="46"/>
+									<ScoreDistribution value="1" recordCount="13"/>
+								</Node>
+							</Node>
+							<Node score="1" recordCount="88">
+								<True/>
+								<ScoreDistribution value="0" recordCount="13"/>
+								<ScoreDistribution value="1" recordCount="75"/>
+							</Node>
+						</Node>
+						<Node>
+							<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="235.7940894281243"/>
+							<Node>
+								<SimplePredicate field="AGE" operator="lessOrEqual" value="74.0"/>
+								<Node score="1" recordCount="42">
+									<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="90.17500000000001"/>
+									<ScoreDistribution value="0" recordCount="11"/>
+									<ScoreDistribution value="1" recordCount="31"/>
+								</Node>
+								<Node score="0" recordCount="33">
+									<SimplePredicate field="BMI" operator="lessOrEqual" value="40.94981285235188"/>
+									<ScoreDistribution value="0" recordCount="25"/>
+									<ScoreDistribution value="1" recordCount="8"/>
+								</Node>
+								<Node score="1" recordCount="30">
+									<True/>
+									<ScoreDistribution value="0" recordCount="13"/>
+									<ScoreDistribution value="1" recordCount="17"/>
+								</Node>
+							</Node>
+							<Node score="0" recordCount="42">
+								<True/>
+								<ScoreDistribution value="0" recordCount="42"/>
+								<ScoreDistribution value="1" recordCount="0"/>
+							</Node>
+						</Node>
+						<Node score="1" recordCount="46">
+							<True/>
+							<ScoreDistribution value="0" recordCount="4"/>
+							<ScoreDistribution value="1" recordCount="42"/>
+						</Node>
+					</Node>
+					<Node score="0" recordCount="62">
+						<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="71.945"/>
+						<ScoreDistribution value="0" recordCount="53"/>
+						<ScoreDistribution value="1" recordCount="9"/>
+					</Node>
+					<Node>
+						<SimplePredicate field="BMI" operator="lessOrEqual" value="35.94355906815947"/>
+						<Node score="0" recordCount="66">
+							<SimplePredicate field="BMI" operator="lessOrEqual" value="25.488866673455053"/>
+							<ScoreDistribution value="0" recordCount="49"/>
+							<ScoreDistribution value="1" recordCount="17"/>
+						</Node>
+						<Node>
+							<SimplePredicate field="BMI" operator="lessOrEqual" value="28.899410014031425"/>
+							<Node score="1" recordCount="181">
+								<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="95.41102136857322"/>
+								<ScoreDistribution value="0" recordCount="28"/>
+								<ScoreDistribution value="1" recordCount="153"/>
+							</Node>
+							<Node score="0" recordCount="41">
+								<SimplePredicate field="AGE" operator="lessOrEqual" value="76.0"/>
+								<ScoreDistribution value="0" recordCount="25"/>
+								<ScoreDistribution value="1" recordCount="16"/>
+							</Node>
+							<Node score="1" recordCount="68">
+								<True/>
+								<ScoreDistribution value="0" recordCount="13"/>
+								<ScoreDistribution value="1" recordCount="55"/>
+							</Node>
+						</Node>
+						<Node>
+							<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="128.8096157663138"/>
+							<Node>
+								<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="90.17500000000001"/>
+								<Node score="1" recordCount="33">
+									<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="80.05916607117462"/>
+									<ScoreDistribution value="0" recordCount="12"/>
+									<ScoreDistribution value="1" recordCount="21"/>
+								</Node>
+								<Node score="0" recordCount="33">
+									<True/>
+									<ScoreDistribution value="0" recordCount="18"/>
+									<ScoreDistribution value="1" recordCount="15"/>
+								</Node>
+							</Node>
+							<Node score="0" recordCount="36">
+								<True/>
+								<ScoreDistribution value="0" recordCount="36"/>
+								<ScoreDistribution value="1" recordCount="0"/>
+							</Node>
+						</Node>
+						<Node score="1" recordCount="70">
+							<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="142.1633466999208"/>
+							<ScoreDistribution value="0" recordCount="4"/>
+							<ScoreDistribution value="1" recordCount="66"/>
+						</Node>
+						<Node score="1" recordCount="55">
+							<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="208.5574296322609"/>
+							<ScoreDistribution value="0" recordCount="16"/>
+							<ScoreDistribution value="1" recordCount="39"/>
+						</Node>
+						<Node score="0" recordCount="36">
+							<True/>
+							<ScoreDistribution value="0" recordCount="20"/>
+							<ScoreDistribution value="1" recordCount="16"/>
+						</Node>
+					</Node>
+					<Node score="0" recordCount="43">
+						<True/>
+						<ScoreDistribution value="0" recordCount="37"/>
+						<ScoreDistribution value="1" recordCount="6"/>
+					</Node>
+				</Node>
+				<Node>
+					<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="208.5574296322609"/>
+					<Node>
+						<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="117.12651720943202"/>
+						<Node>
+							<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="92.87627991302753"/>
+							<Node score="0" recordCount="77">
+								<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="68.90007376596796"/>
+								<ScoreDistribution value="0" recordCount="68"/>
+								<ScoreDistribution value="1" recordCount="9"/>
+							</Node>
+							<Node score="1" recordCount="82">
+								<SimplePredicate field="EVER_MARRIED" operator="lessOrEqual" value="0.0"/>
+								<ScoreDistribution value="0" recordCount="12"/>
+								<ScoreDistribution value="1" recordCount="70"/>
+							</Node>
+							<Node score="0" recordCount="55">
+								<SimplePredicate field="BMI" operator="lessOrEqual" value="24.900799971272974"/>
+								<ScoreDistribution value="0" recordCount="42"/>
+								<ScoreDistribution value="1" recordCount="13"/>
+							</Node>
+							<Node>
+								<SimplePredicate field="GENDER" operator="lessOrEqual" value="0.0"/>
+								<Node>
+									<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="77.85079300845614"/>
+									<Node score="0" recordCount="37">
+										<SimplePredicate field="BMI" operator="lessOrEqual" value="33.939376631867106"/>
+										<ScoreDistribution value="0" recordCount="19"/>
+										<ScoreDistribution value="1" recordCount="18"/>
+									</Node>
+									<Node score="1" recordCount="32">
+										<True/>
+										<ScoreDistribution value="0" recordCount="6"/>
+										<ScoreDistribution value="1" recordCount="26"/>
+									</Node>
+								</Node>
+								<Node score="0" recordCount="53">
+									<True/>
+									<ScoreDistribution value="0" recordCount="43"/>
+									<ScoreDistribution value="1" recordCount="10"/>
+								</Node>
+							</Node>
+							<Node score="1" recordCount="79">
+								<SimplePredicate field="BMI" operator="lessOrEqual" value="28.899410014031425"/>
+								<ScoreDistribution value="0" recordCount="14"/>
+								<ScoreDistribution value="1" recordCount="65"/>
+							</Node>
+							<Node score="0" recordCount="36">
+								<True/>
+								<ScoreDistribution value="0" recordCount="20"/>
+								<ScoreDistribution value="1" recordCount="16"/>
+							</Node>
+						</Node>
+						<Node score="0" recordCount="134">
+							<True/>
+							<ScoreDistribution value="0" recordCount="120"/>
+							<ScoreDistribution value="1" recordCount="14"/>
+						</Node>
+					</Node>
+					<Node score="0" recordCount="55">
+						<SimplePredicate field="BMI" operator="lessOrEqual" value="27.63097222795207"/>
+						<ScoreDistribution value="0" recordCount="41"/>
+						<ScoreDistribution value="1" recordCount="14"/>
+					</Node>
+					<Node score="1" recordCount="224">
+						<SimplePredicate field="AGE" operator="lessOrEqual" value="77.0"/>
+						<ScoreDistribution value="0" recordCount="38"/>
+						<ScoreDistribution value="1" recordCount="186"/>
+					</Node>
+					<Node score="0" recordCount="53">
+						<True/>
+						<ScoreDistribution value="0" recordCount="28"/>
+						<ScoreDistribution value="1" recordCount="25"/>
+					</Node>
+				</Node>
+				<Node score="0" recordCount="77">
+					<True/>
+					<ScoreDistribution value="0" recordCount="74"/>
+					<ScoreDistribution value="1" recordCount="3"/>
+				</Node>
+			</Node>
+			<Node>
+				<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="128.8096157663138"/>
+				<Node>
+					<SimplePredicate field="AVG_GLUCOSE_LEVEL" operator="lessOrEqual" value="77.85079300845614"/>
+					<Node>
+						<SimplePredicate field="BMI" operator="lessOrEqual" value="27.63097222795207"/>
+						<Node score="0" recordCount="32">
+							<SimplePredicate field="BMI" operator="lessOrEqual" value="24.276098040184912"/>
+							<ScoreDistribution value="0" recordCount="30"/>
+							<ScoreDistribution value="1" recordCount="2"/>
+						</Node>
+						<Node score="1" recordCount="71">
+							<True/>
+							<ScoreDistribution value="0" recordCount="19"/>
+							<ScoreDistribution value="1" recordCount="52"/>
+						</Node>
+					</Node>
+					<Node score="0" recordCount="49">
+						<True/>
+						<ScoreDistribution value="0" recordCount="48"/>
+						<ScoreDistribution value="1" recordCount="1"/>
+					</Node>
+				</Node>
+				<Node score="0" recordCount="241">
+					<True/>
+					<ScoreDistribution value="0" recordCount="219"/>
+					<ScoreDistribution value="1" recordCount="22"/>
+				</Node>
+			</Node>
+			<Node>
+				<SimplePredicate field="WORK_TYPE" operator="lessOrEqual" value="2.0"/>
+				<Node>
+					<SimplePredicate field="BMI" operator="lessOrEqual" value="31.902972536336392"/>
+					<Node score="1" recordCount="78">
+						<SimplePredicate field="AGE" operator="lessOrEqual" value="69.0"/>
+						<ScoreDistribution value="0" recordCount="8"/>
+						<ScoreDistribution value="1" recordCount="70"/>
+					</Node>
+					<Node score="1" recordCount="42">
+						<SimplePredicate field="GENDER" operator="lessOrEqual" value="0.0"/>
+						<ScoreDistribution value="0" recordCount="15"/>
+						<ScoreDistribution value="1" recordCount="27"/>
+					</Node>
+					<Node score="0" recordCount="41">
+						<True/>
+						<ScoreDistribution value="0" recordCount="24"/>
+						<ScoreDistribution value="1" recordCount="17"/>
+					</Node>
+				</Node>
+				<Node score="0" recordCount="33">
+					<True/>
+					<ScoreDistribution value="0" recordCount="28"/>
+					<ScoreDistribution value="1" recordCount="5"/>
+				</Node>
+			</Node>
+			<Node score="0" recordCount="62">
+				<True/>
+				<ScoreDistribution value="0" recordCount="51"/>
+				<ScoreDistribution value="1" recordCount="11"/>
+			</Node>
+		</Node>
+	</TreeModel>
+</PMML>
