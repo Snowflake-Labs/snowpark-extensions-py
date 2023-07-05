@@ -79,14 +79,6 @@ if not hasattr(DataFrame,"___extended"):
     TableFunctionCall.alias = adjusted_table_alias
     TableFunctionCall.as_   = adjusted_table_alias
 
-    def get_dtypes(schema):
-        data = np.array([map_to_python_type(x.datatype) for x in schema.fields])
-        # providing an index
-        dtypes_series = pd.Series(data, index=schema.names)
-        return dtypes_series
-
-    DataFrame.dtypes = property(lambda self: get_dtypes(self.schema))
-
 
     def map(self,func,output_types,input_types=None,input_cols=None,to_row=False):
         clazz= _generate_prefix("map")

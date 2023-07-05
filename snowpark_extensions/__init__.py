@@ -4,6 +4,7 @@
 from .dataframe_extensions import *
 from .dataframe_reader_extensions import *
 from .functions_extensions import *
+from .session_extensions import *
 from .session_builder_extensions import *
 from .types_extensions import *
 from .column_extensions import *

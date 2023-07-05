@@ -268,7 +268,7 @@ def test_bround():
     df_1 = session.createDataFrame(data1, schema_df)
     df_null = session.createDataFrame(data_null, schema_df)
 
-    res0 = df_0.withColumn("rounding",F.bround(F.col('value')) ).collect()
+    res0 = df_0.withColumn("rounding",F.bround(F.col('value').cast(DecimalType(20,4)),0)).collect()
     assert len(res0) == 6
     assert res0[0].ROUNDING == 2.0
     assert res0[1].ROUNDING == 2.0
@@ -277,27 +277,27 @@ def test_bround():
     assert res0[4].ROUNDING == -2.0
     assert res0[5].ROUNDING == -2.0
 
-    res1 = df_1.withColumn("rounding",F.bround(F.col('value'),1) ).collect()
+    res1 = df_1.withColumn("rounding",F.bround(F.col('value').cast(DecimalType(20,4)),1)).collect()
     assert len(res1) == 10
-    assert res1[0].ROUNDING == 2.2
-    assert res1[1].ROUNDING == 2.6
-    assert res1[2].ROUNDING == 0.0
-    assert res1[3].ROUNDING == 1.0
-    assert res1[4].ROUNDING == 1.2
-    assert res1[5].ROUNDING == -2.2
-    assert res1[6].ROUNDING == -2.4
-    assert res1[7].ROUNDING == None
-    assert res1[8].ROUNDING == 1.5
-    assert res1[9].ROUNDING == 1.5
+    assert str(res1[0].ROUNDING) == "2.2"
+    assert str(res1[1].ROUNDING) == "2.6"
+    assert str(res1[2].ROUNDING) == "0.0"
+    assert str(res1[3].ROUNDING) == "1.0"
+    assert str(res1[4].ROUNDING) == "1.2"
+    assert str(res1[5].ROUNDING) == "-2.2"
+    assert str(res1[6].ROUNDING) == "-2.4"
+    assert str(res1[7].ROUNDING) == "None"
+    assert str(res1[8].ROUNDING) == "1.5"
+    assert str(res1[9].ROUNDING) == "1.5"
 
-    resNull = df_null.withColumn("rounding",F.bround(F.col('value'),None) ).collect()
+    resNull = df_null.withColumn("rounding",F.bround(F.col('value').cast(DecimalType(20,4)),None) ).collect()
     assert len(resNull) == 6
-    assert resNull[0].ROUNDING == None
-    assert resNull[1].ROUNDING == None
-    assert resNull[2].ROUNDING == None
-    assert resNull[3].ROUNDING == None
-    assert resNull[4].ROUNDING == None
-    assert resNull[5].ROUNDING == None
+    assert str(resNull[0].ROUNDING) == "None"
+    assert str(resNull[1].ROUNDING) == "None"
+    assert str(resNull[2].ROUNDING) == "None"
+    assert str(resNull[3].ROUNDING) == "None"
+    assert str(resNull[4].ROUNDING) == "None"
+    assert str(resNull[5].ROUNDING) == "None"
 
 def test_regexp_split():
     session = Session.builder.from_snowsql().config("schema","PUBLIC").getOrCreate()

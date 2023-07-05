@@ -39,66 +39,9 @@ if not hasattr(F,"___extended"):
                 acc = acc + flatten_col_list(innerObj)
             return acc
 
-
-    def regexp_extract(value:ColumnOrLiteralStr,regexp:ColumnOrLiteralStr,idx:int) -> Column:
-        """
-        Extract a specific group matched by a regex, from the specified string column. 
-        If the regex did not match, or the specified group did not match, 
-        an empty string is returned.        
-        """
-        value = _to_col_if_str(value,"regexp_extract")
-        regexp = _to_col_if_lit(regexp,"regexp_extract")
-        idx = _to_col_if_lit(idx,"regexp_extract")
-        # we add .* to the expression if needed
-        return coalesce(call_builtin('regexp_substr',value,regexp,lit(1),lit(1),lit('e'),idx),lit(''))
-
     def format_number(col,d):
         col = _to_col_if_str(col,"format_number")
         return F.to_varchar(col,'999,999,999,999,999.' + '0'*d)
-
-    def reverse(col):
-        col = _to_col_if_str(col,"reverse")
-        return F.call_builtin('reverse',col)
-
-    def daydiff( col1: ColumnOrName, col2: ColumnOrName) -> Column:
-        """Calculates the difference between two dates, or timestamp columns based in days
-           The result will reflect the difference between col2 - col1
-        """
-        col1 = _to_col_if_str(col1, "daydiff")
-        col2 = _to_col_if_str(col2, "daydiff")
-        return F.call_builtin("datediff",lit("day"), col2,col1)
-
-    def date_add(col,num_of_days):
-        """
-        Adds the given number of days
-        """
-        # Convert the input to a column if it is a string
-        col = _to_col_if_str(col,"date_add")
-        # Check if the input is a string
-        if isinstance(num_of_days, str):
-            # Convert the string to a column
-            num_of_days=col(num_of_days)
-        # Check if the input is an integer
-        elif isinstance(num_of_days,int):
-            # Convert the integer to a column
-            num_of_days=lit(num_of_days)
-        # Check if the input is a Column
-        elif isinstance(num_of_days,Column):
-            # Do nothing
-            pass
-        # Check if the input is a string
-        else:
-            # Raise an error if the input is not a string
-            raise TypeError(
-            f"'date_add expected Column or name or int, got: {type(num_of_days)}"
-        )
-        # Return the dateadd function with the column and number of days
-        return F.dateadd(lit('day'),col,num_of_days)
-
-    def date_sub(col,num_of_days):
-        col = _to_col_if_str(col,"date_sub")
-        num_of_days=_to_col_if_str_or_int(num_of_days)
-        return F.dateadd(lit('day'),col,-1 * num_of_days)
 
     def create_map(*col_names):
         """
@@ -114,11 +57,9 @@ if not hasattr(F,"___extended"):
             col_list.append(value)
         return object_construct(*col_list)
 
-    def _array_distinct(col):
-        col = _to_col_if_str(col,"array_distinct")
-        return F.call_builtin('array_distinct',col)
-
-
+    def _explode_outer(col,map=None):
+        return F.table_function("flatten")(input=col,outer=F.lit(True))
+    
     def _array(*cols):
         return F.array_construct(*cols)
 
@@ -387,37 +328,6 @@ public class MyJavaClass {{
     }}}}$$;""").show()
         return call_builtin(F._split_regex_udf, value, pattern_col, limit)
 
-    def _explode(expr,outer=False,map=False,use_compat=False):
-        value_col = "explode"
-        if map:
-            key = "key"
-            value_col = "value"
-        else:
-            key = _generate_prefix("KEY")
-        seq = _generate_prefix("SEQ")
-        path = _generate_prefix("PATH")
-        index = _generate_prefix("INDEX")
-        this = _generate_prefix("THIS")
-        flatten = table_function("flatten")
-        explode_res = flatten(input=expr,outer=lit(outer)).alias(seq,key,path,index,value_col,this)
-        # we patch the alias, to simplify explode use case where only one column is used
-        if not map:
-            explode_res.alias_adjust = lambda alias1 : [seq,key,path,index,alias1,this] 
-        # post action to execute after join
-        def post_action(df):
-            drop_columns = [seq,path,index,this] if map else [seq,key,path,index,this]
-            df = df.drop(drop_columns)
-            if use_compat:
-                # in case we need backwards compatibility with spark behavior
-                df=df.with_column(value_col,
-                F.iff(F.cast(value_col,ArrayType()) == F.array_construct(),lit(None),F.cast(value_col,ArrayType())))
-            return df
-        explode_res.post_action = post_action
-        return explode_res
-
-    def _explode_outer(expr,map=False, use_compat=False):
-        return _explode(expr,outer=True,map=map,use_compat=use_compat)
-
     F._map_values_udf = None
     def _map_values(col:ColumnOrName):
         col = _to_col_if_str(col,"map_values")
@@ -437,21 +347,12 @@ public class MyJavaClass {{
     F.array_max      = _array_max
     F.array_min      = _array_min
     F.array_flatten  = _array_flatten
-    F.array_distinct = _array_distinct
     F.array_sort     = _array_sort
     F.arrays_zip     = _arrays_zip
-    F.bround         = _bround
     F.create_map     = create_map
-    F.daydiff        = daydiff
-    F.date_add       = date_add
-    F.date_sub       = date_sub
-    F.explode        = _explode
     F.explode_outer  = _explode_outer
     F.format_number  = format_number
     F.flatten        = _array_flatten
     F.map_values     = _map_values
-    F.regexp_extract = regexp_extract
     F.regexp_split   = _regexp_split
-    F.reverse        = reverse
     F.sort_array     = _sort_array
-    F.struct         = _struct

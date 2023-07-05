@@ -151,3 +151,10 @@ Version 0.0.28
 Version 0.0.29
 --------------
 - Adding patch for display to properly print Snowpark DataFrame
+
+
+Version 0.0.30
+--------------
+- Syncing with latest snowpark python client lib.
+- APIs like reverse, explode, struct, bround, array_distinct, daydiff, date_add, date_sub,regexp_extract  have been removed from this library.
+- There are breaking changes in explode, explode_outer and bround
