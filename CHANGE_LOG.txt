@@ -158,3 +158,7 @@ Version 0.0.30
 - Syncing with latest snowpark python client lib.
 - APIs like reverse, explode, struct, bround, array_distinct, daydiff, date_add, date_sub,regexp_extract  have been removed from this library.
 - There are breaking changes in explode, explode_outer and bround
+
+Version 0.0.31
+--------------
+- Support for explode has been validated updating documentation

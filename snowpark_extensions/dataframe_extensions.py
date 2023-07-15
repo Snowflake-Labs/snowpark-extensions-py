@@ -134,59 +134,6 @@ if not hasattr(DataFrame,"___extended"):
 
     def has_null(col):
         return F.array_contains(F.sql_expr("parse_json('null')"),col) | F.coalesce(F.array_contains(lit(None) ,col),lit(False))
-    
-    def selectExtended(self,*cols) -> "DataFrame":
-        exprs = parse_positional_args_to_list(*cols)
-        if not exprs:
-            raise ValueError("The input of select() cannot be empty")
-        names = []
-        table_func = None
-        join_plan = None
-        for e in exprs:
-            if isinstance(e, Column):
-                names.append(e._named())
-            elif isinstance(e, str):
-                names.append(Column(e)._named())
-            elif isinstance(e, TableFunctionCall):
-                if table_func:
-                    raise ValueError(
-                        f"At most one table function can be called inside a select(). "
-                        f"Called '{table_func.name}' and '{e.name}'."
-                    )
-                table_func = e
-                func_expr = _create_table_function_expression(func=table_func)
-                join_plan = self._session._analyzer.resolve(
-                    TableFunctionJoin(self._plan, func_expr)
-                )
-                _, new_cols = _get_cols_after_join_table(
-                    func_expr, self._plan, join_plan
-                )
-                names.extend(new_cols)
-            else:
-                raise TypeError(
-                    "The input of select() must be Column, column name, TableFunctionCall, or a list of them"
-                )
-        if self._select_statement:
-            if join_plan:
-                result=self._with_plan(
-                    SelectStatement(
-                        from_=SelectSnowflakePlan(
-                            join_plan, analyzer=self._session._analyzer
-                        ),
-                        analyzer=self._session._analyzer,
-                    ).select(names)
-                )
-                if table_func and hasattr(table_func,"post_action"):
-                    result = table_func.post_action(result)
-                return result
-            return self._with_plan(self._select_statement.select(names))
-
-        result = self._with_plan(Project(names, join_plan or self._plan))
-        if table_func and hasattr(table_func,"post_action"):
-           result = table_func.post_action(result)
-        return result
-
-    DataFrame.select = selectExtended
 
     def stack(self,rows:int,*cols):
         count_cols = len(cols)

@@ -128,9 +128,10 @@ def test_explode_with_map():
     # |  2|        []|        {}|
     # |  3|      null|      null|
     # +---+----------+----------+ 
+    print("aaa")
     sf_df.select("id", "an_array", explode("a_map")).show()
     exploded = sf_df.select("id", "an_array", explode("a_map"))
-    exploded =  exploded.drop(["SEQ","PATH","INDEX","THIS"])
+    #exploded =  exploded.drop(["SEQ","PATH","INDEX","THIS"])
     results = exploded.collect()
     # ---------------------------------------
     # |"ID"  |"AN_ARRAY"  |"KEY"  |"VALUE"  |
@@ -269,7 +270,6 @@ def test_array_zip():
     assert res3==[[2,2,2],[None,None,None],[3,3,3]]
     
 
-@pytest.mark.skip(reason="this is changing due to teh changes with explode")
 def test_nested_specials():
     session = Session.builder.from_snowsql().getOrCreate()
     df = session.createDataFrame([([2, None, 3],),([1],),([],)], ['data'])
