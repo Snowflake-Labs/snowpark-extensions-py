@@ -13,7 +13,7 @@ We recommended installing using [PYPI](https://pypi.org/)
 
 ```bash
 
-    $ pip install snowconvert-deploy-tool --upgrade
+    $ pip install snowpark-extensions
 ```
 
 > note:: If you run this command on MacOS change `pip` by `pip3`
