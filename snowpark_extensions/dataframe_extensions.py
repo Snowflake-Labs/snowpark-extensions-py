@@ -218,7 +218,7 @@ if not hasattr(DataFrame,"___extended"):
     RelationalGroupedDataFrame.pivot = group_by_pivot
 
 if not hasattr(RelationalGroupedDataFrame, "applyInPandas"):
-  def applyInPandas(self,func,schema,batch_size=16000):
+  def applyInPandas(self,func,schema,batch_size=16000,imports=[],packages=[]):
       output_schema = schema
       if isinstance(output_schema, str):
         output_schema = schema_str_to_schema(output_schema)
@@ -256,7 +256,8 @@ if not hasattr(RelationalGroupedDataFrame, "applyInPandas"):
       non_ambigous_output_schema = StructType([StructField(f"pd_{i}",output_schema.fields[i].datatype) for i in range(len(output_schema.fields))])
       renamed_back = [col(f"pd_{i}").alias(output_schema.fields[i].name) for i in range(len(non_ambigous_output_schema.fields))]
       udtf_class = type(clazz, (object, ), {"__init__":__init__,"process":process,"end_partition":end_partition})
-      tfunc = udtf(udtf_class,output_schema=non_ambigous_output_schema, input_types=input_types,name=clazz,replace=True,is_permanent=False,packages=["snowflake-snowpark-python", "pandas"])
+      packages = list(set(packages + ["snowflake-snowpark-python", "pandas"]))
+      tfunc = udtf(udtf_class,output_schema=non_ambigous_output_schema, input_types=input_types,name=clazz,replace=True,is_permanent=False,imports=imports,packages=packages)
       return self._df.join_table_function(tfunc(*input_cols).over(partition_by=grouping_exprs, order_by=grouping_exprs)).select(*renamed_back)
 
   RelationalGroupedDataFrame.applyInPandas = applyInPandas
