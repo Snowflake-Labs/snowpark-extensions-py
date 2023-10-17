@@ -164,7 +164,7 @@ def test_explode_outer_with_map():
     # |  3|      null|      null|
     # +---+----------+----------+
 
-    results = sf_df.select("id", "an_array", explode_outer("a_map",map=True)).collect()
+    results = sf_df.select("id", "an_array", explode_outer("a_map")).collect()
     # +---+----------+----+-----+
     # | id|  an_array| KEY| VALUE|
     # +---+----------+----+-----+

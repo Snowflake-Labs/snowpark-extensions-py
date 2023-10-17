@@ -56,9 +56,6 @@ if not hasattr(F,"___extended"):
             col_list.append(_to_col_if_str(name,"create_map"))
             col_list.append(value)
         return object_construct(*col_list)
-
-    def _explode_outer(col,map=None):
-        return F.table_function("flatten")(input=col,outer=F.lit(True))
     
     def _array(*cols):
         return F.array_construct(*cols)
@@ -350,7 +347,6 @@ public class MyJavaClass {{
     F.array_sort     = _array_sort
     F.arrays_zip     = _arrays_zip
     F.create_map     = create_map
-    F.explode_outer  = _explode_outer
     F.format_number  = format_number
     F.flatten        = _array_flatten
     F.map_values     = _map_values

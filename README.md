@@ -59,6 +59,47 @@ import snowpark_extensions
 new_session = Session.builder.env().appName("app1").create()
 ```
 
+
+> NOTE: since 1.8.0 the [python connector was updated](https://docs.snowflake.com/en/release-notes/clients-drivers/python-connector-2023#version-3-1-0-july-31-2023) and we provide support for an unified configuration storage for `snowflake-python-connector` and `snowflake-snowpark-python` with this approach.
+>
+> You can use this connections leveraging `Session.builder.getOrCreate()` or `Session.builder.create()`
+>
+> By default, we look for the `connections.toml` file in the location specified in the `SNOWFLAKE_HOME` environment variable (default: `~/.snowflake`). If this folder does not exist, the Python connector looks for the file in the `platformdirs` location, as follows:
+>
+> * On Linux: `~/.config/snowflake/`, but follows XDG settings
+> * On Mac: `~/Library/Application Support/snowflake/`
+> * On Windows: `%USERPROFILE%\AppData\Local\snowflake\`
+>
+> The default connection by default is 'default' but it can be controlled with the environment variable: `SNOWFLAKE_DEFAULT_CONNECTION_NAME`.
+>
+> If you dont want to use a file you can set the file contents thru the `SNOWFLAKE_CONNECTIONS` environment variable.
+>
+> Connection file looks like:
+>
+> ```
+> [default]
+> accountname = "myaccount"
+> username = "user1"
+> password = 'xxxxx'
+> rolename = "user_role"
+> dbname = "demodb"
+> schemaname = "public"
+> warehousename = "load_wh"
+>
+>
+> [snowpark]
+> accountname = "myaccount"
+> username = "user2"
+> password = 'yyyyy'
+> rolename = "user_role"
+> dbname = "demodb"
+> schemaname = "public"
+> warehousename = "load_wh"
+>
+> ```
+
+
+
 The `appName` can use to setup a query_tag like `APPNAME=tag;execution_id=guid` which can then be used to track job actions with a query like
 
 You can then use a query like:
@@ -192,7 +233,6 @@ df.group_by("ID").applyInPandas(
     normalize, schema="id long, v double").show()  
 ```
 
-
 ```
 ------------------------------
 |"ID"  |"V"                  |
@@ -204,7 +244,6 @@ df.group_by("ID").applyInPandas(
 |1     |0.7071067811865475   |
 ------------------------------
 ```
-
 
 > NOTE: since snowflake-snowpark-python==1.8.0 applyInPandas is available. This version is kept because:
 >
@@ -285,7 +324,7 @@ That will return:
 | functions.format_number           | formats numbers using the specified number of decimal places                                                                                                                                                                                                                                                             |
 | ~~functions.reverse~~            | ~~returns a reversed string~~ **Available in snowpark-python >= 1.2.0**                                                                                                                                                                                                                                           |
 | ~~functions.explode~~            | ~~returns a new row for each element in the given array~~ **Available in snowpark-python >= 1.4.0**                                                                                                                                                                                                               |
-| functions.explode_outer           | returns a new row for each element in the given array or map. Unlike explode, if the array/map is null or empty then null is producedThis                                                                                                                                                                                |
+| ~~functions.explode_outer~~      | ~~returns a new row for each element in the given array or map. Unlike explode, if the array/map is null or empty then null is producedThis~~<br />**Available in snowpark-python >= 1.4.0**<br />There is a breaking change as the explode_outer does not need the map argument anymore.                         |
 | functions.arrays_zip              | returns a merged array of arrays                                                                                                                                                                                                                                                                                         |
 | functions.array_sort              | sorts the input array in ascending order. The elements of the input array must be orderable. Null elements will be placed at the end of the returned array.                                                                                                                                                              |
 | functions.array_max               | returns the maximon value of the array.                                                                                                                                                                                                                                                                                  |
@@ -352,7 +391,7 @@ sf_df = session.createDataFrame([(1, ["foo", "bar"], {"x": 1.0}), (2, [], {}), (
 ```
 
 ```
-#  +---+----------+----------+                                         
+#  +---+----------+----------+                                       
 # | id|  an_array|     a_map|
 # +---+----------+----------+
 # |  1|[foo, bar]|{x -> 1.0}|

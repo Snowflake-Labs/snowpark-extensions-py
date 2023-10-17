@@ -172,3 +172,8 @@ Version 0.0.32
 Version 0.0.33
 --------------
 - Falling back to builtin applyInPandas implementation
+
+Version 0.0.34
+--------------
+- explode have been removed from this library as it is supported natively by snowpark.
+- updated README providing information on how to use default `connections.toml`
