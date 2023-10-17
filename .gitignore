@@ -4,3 +4,4 @@ __pycache__/
 snowpark_extensions.egg-info/
 extensions-py/
 .ipynb_checkpoints/
+ext-env/

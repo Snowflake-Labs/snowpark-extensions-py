@@ -1,0 +1,28 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Current File",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        {
+            "name": "notebook: publish",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/extras/notebooks/runner/register.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                "--connection","json","~/credentials.json",
+                "--procedure","example1"
+            ]
+        }
+    ]
+}
