@@ -162,3 +162,13 @@ Version 0.0.30
 Version 0.0.31
 --------------
 - Support for explode has been validated updating documentation
+
+Version 0.0.32
+--------------
+- Improving implementation of IPython integration.
+- display support for: Session and DataFrame
+- easier instalation of the %%magic
+
+Version 0.0.33
+--------------
+- Falling back to builtin applyInPandas implementation

@@ -2,61 +2,74 @@ from snowflake.snowpark import DataFrame, Row, DataFrameNaFunctions, Column
 from snowflake.snowpark.functions import col, lit, udtf, regexp_replace
 from snowflake.snowpark import functions as F
 from snowflake.snowpark.dataframe import _generate_prefix
-from snowflake.snowpark.functions import table_function, udf
-from snowflake.snowpark.column import _to_col_if_str, _to_col_if_lit
+from snowflake.snowpark.column import _to_col_if_str
 import pandas as pd
-import numpy as np
-from snowpark_extensions.utils import map_to_python_type, schema_str_to_schema
-from snowflake.snowpark import context
+from snowpark_extensions.utils import schema_str_to_schema
 from snowflake.snowpark.types import StructType,StructField
-from snowflake.snowpark._internal.analyzer.expression import Expression, FunctionExpression, UnresolvedAttribute
+from snowflake.snowpark._internal.analyzer.expression import FunctionExpression, UnresolvedAttribute
 from snowflake.snowpark._internal.analyzer.unary_expression import Alias
 from snowflake.snowpark._internal.analyzer.analyzer_utils import quote_name
-from snowflake.snowpark import Window, Column
+from snowflake.snowpark import Column
 from snowflake.snowpark.types import *
 from snowflake.snowpark.functions import udtf, col
 from snowflake.snowpark.relational_grouped_dataframe import RelationalGroupedDataFrame
 
 from typing import (
-    TYPE_CHECKING,
-    Any,
     Dict,
     Iterable,
-    Iterator,
-    List,
     Optional,
-    Tuple,
     Union,
-    overload,
+    List
 )
 from snowflake.snowpark._internal.type_utils import (
     ColumnOrName,
-    ColumnOrSqlExpr,
     LiteralType,
 )
 
-from snowflake.snowpark._internal.utils import (
-   parse_positional_args_to_list
-)
 
 from snowflake.snowpark.table_function import (
     TableFunctionCall,
-    _create_table_function_expression,
-    _get_cols_after_join_table,
 )
 
-from snowflake.snowpark._internal.analyzer.table_function import (
-    TableFunctionJoin
-)
 
-from snowflake.snowpark._internal.analyzer.select_statement import (
-    SelectStatement,
-    SelectSnowflakePlan
-)
 
 if not hasattr(DataFrame,"___extended"):
     
     DataFrame.___extended = True
+
+    def _repr_html_(self):
+        import IPython
+        rows_limit = getattr(DataFrame,'__rows_limit',50)
+        if 'display' in globals():
+            display = globals()['display']
+        elif 'display' in IPython.get_ipython().user_ns:
+            display = IPython.get_ipython().user_ns['display']
+        else:
+            from IPython.display import display
+        try:
+            count = self.count()
+            if count == 0:
+                return "No rows to display"
+            elif count == 1:
+                df = pd.DataFrame.from_records([x.as_dict() for x in self.collect()])
+            elif count > rows_limit:
+                print(f"There are {count} rows. Showing only {rows_limit}. Change DataFrame.__rows_limit value to display more rows")
+                df = self.limit(rows_limit).to_pandas()
+            else:
+                df = self.to_pandas()
+            display(df)
+            return ""
+        except Exception as ex:
+                return str(ex)
+
+    setattr(DataFrame,'_repr_html_',_repr_html_)
+    setattr(DataFrame,'__rows_limit',50)
+
+    def _ipython_key_completions_(self) -> List[str]:
+        """Returns the names of columns in this :class:`DataFrame`.
+        """
+        return self.columns
+    setattr(DataFrame,'_ipython_key_completions_',_ipython_key_completions_)
 
     # we need to extend the alias function for
     # table function to allow the situation where
@@ -217,48 +230,19 @@ if not hasattr(DataFrame,"___extended"):
         return GroupByPivot(self, pivot_col)
     RelationalGroupedDataFrame.pivot = group_by_pivot
 
-if not hasattr(RelationalGroupedDataFrame, "applyInPandas"):
-  def applyInPandas(self,func,schema,batch_size=16000,imports=[],packages=[]):
-      output_schema = schema
-      if isinstance(output_schema, str):
-        output_schema = schema_str_to_schema(output_schema)
-      from snowflake.snowpark.functions import col
-      input_types = [x.datatype for x in self._df.schema.fields]
-      input_cols  = [x.name for x in self._df.schema.fields]
-      output_cols = [x.name for x in output_schema.fields]
-      grouping_exprs = [Column(x) for x in self._grouping_exprs]
-      clazz=_generate_prefix("applyInPandas")
-      def __init__(self):
-          self.rows = []
-          self.dfs  = []
-      def process(self, *row):
-          self.rows.append(row)
-          # Merge rows into a dataframe
-          if len(self.rows) >= batch_size:
-             df = pd.DataFrame(self.rows, columns=input_cols)
-             self.dfs.append(df)
-             self.rows = []
-          # Merge dataframes into a single dataframe
-          if len(self.dfs) >= 100:
-             merged_df = pd.concat(self.dfs)
-             self.dfs = [merged_df]
-          yield None
-      def end_partition(self):
-        # Merge any remaining rows
-        if len(self.rows) > 0:
-          df = pd.DataFrame(self.rows, columns=input_cols)
-          self.dfs.append(df)
-          self.rows = []
-        pandas_input = pd.concat(self.dfs)
-        pandas_output = func(pandas_input)
-        for row in pandas_output.itertuples(index=False):
-             yield tuple(row)
-      non_ambigous_output_schema = StructType([StructField(f"pd_{i}",output_schema.fields[i].datatype) for i in range(len(output_schema.fields))])
-      renamed_back = [col(f"pd_{i}").alias(output_schema.fields[i].name) for i in range(len(non_ambigous_output_schema.fields))]
-      udtf_class = type(clazz, (object, ), {"__init__":__init__,"process":process,"end_partition":end_partition})
-      packages = list(set(packages + ["snowflake-snowpark-python", "pandas"]))
-      tfunc = udtf(udtf_class,output_schema=non_ambigous_output_schema, input_types=input_types,name=clazz,replace=True,is_permanent=False,imports=imports,packages=packages)
-      return self._df.join_table_function(tfunc(*input_cols).over(partition_by=grouping_exprs, order_by=grouping_exprs)).select(*renamed_back)
+    RelationalGroupedDataFrame._applyInPandas = RelationalGroupedDataFrame.apply_in_pandas
 
-  RelationalGroupedDataFrame.applyInPandas = applyInPandas
+    def applyInPandas(self,func,schema=None,output_schema=None,**kwargs):
+        output_schema = output_schema or schema
+        input_columns = [x.name for x in self._df.schema.fields]
+        def func_wrapper(pdf):
+            pdf.columns = input_columns
+            return func(pdf)
+        if isinstance(output_schema, str):
+            output_schema = schema_str_to_schema(output_schema)
+        return self._applyInPandas(func_wrapper,output_schema=output_schema,**kwargs)
+
+    RelationalGroupedDataFrame.applyInPandas = applyInPandas
   ###### HELPER END
+
+  

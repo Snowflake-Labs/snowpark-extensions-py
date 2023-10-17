@@ -1,6 +1,2 @@
 snowflake-snowpark-python[pandas]
-pandas
-rich
-nest_asyncio
 jinja2
-rich

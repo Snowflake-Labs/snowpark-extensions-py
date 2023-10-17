@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 # pylint: disable=line-too-long
-
+# you might need to `pip install rich` to add the rich module or just remove that import and use standard python print 
 import argparse
 from rich import print
 import os

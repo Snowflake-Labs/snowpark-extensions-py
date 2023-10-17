@@ -2,9 +2,9 @@
 
 Snowpark by itself is a powerful library, but still some utility functions can always help.
 
-**NOTE: we have working to integrate some of the snowpark extensions directly into the snowpark-python library. 
-In most cases the APIs will be exactly the same, so there should no changes needed in your code. 
-However there might be breaking changes, so consider that before updating. 
+**NOTE: we have working to integrate some of the snowpark extensions directly into the snowpark-python library.
+In most cases the APIs will be exactly the same, so there should no changes needed in your code.
+However there might be breaking changes, so consider that before updating.
 If any of these breaking changes are affecting you, please enter an issue so we can address it.**
 
 # Installation
@@ -37,12 +37,13 @@ Session was extened to support IPython display. Using session as a value in a ce
 
 ## SessionBuilder extensions
 
-| Name                        | Description                                                                                                 |
-| --------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| SessionBuilder.from_snowsql | can read the information from the snowsql config file by default at ~/snowsql/config or at a given location |
-| SessionBuilder.env          | reads settings from SNOW_xxx or SNOWSQL_xxx variables                                                       |
-| SessionBuilder.appName      | Sets a query tag with the given appName                                                                     |
-| SessionBuilder.append_tag   | Appends a new tag to the existing query tag                                                                 |
+| Name                            | Description                                                                                                 |
+| ------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| SessionBuilder.from_snowsql     | can read the information from the snowsql config file by default at ~/snowsql/config or at a given location |
+| SessionBuilder.env              | reads settings from SNOW_xxx or SNOWSQL_xxx variables                                                       |
+| SessionBuilder.appName          | Sets a query tag with the given appName                                                                     |
+| SessionBuilder.append_tag       | Appends a new tag to the existing query tag                                                                 |
+| ~~SessionBuilder.getOrCreate~~ | **Available in snowpark-python >= 1.3.0**                                                            |
 
 You can the create your session like:
 
@@ -87,15 +88,15 @@ order by start_time desc;
 
 ## DataFrame Extensions
 
-| Name                            | Description                                                                                                                                                            |
-| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| ~~DataFrame.dtypes~~           | ~~returns the list of datatypes in the DataFrame ~~**Available in snowpark python >= 1.1.0**                                                                    |
-| DataFrame.map                   | provides an equivalent for the map function for example `df.map(func,input_types=[StringType(),StringType()],output_types=[StringType(),IntegerType()],to_row=True)` |
-| DataFrame.simple_map            | if a simple lambda like `lambda x: x.col1 + x.col2` is used this functions can be used like `df.simple_map(lambda x: x.col1 + x.col2)`                             |
-| DataFrame.groupby.applyInPandas | Maps each group of the current DataFrame using a pandas udf and returns the result as a DataFrame.                                                                     |
-| DataFrame.replace               | extends replace to allow using a regex                                                                                                                                 |
-| DataFrame.groupBy.pivot         | extends the snowpark groupby to add a pivot operator                                                                                                                   |
-| DataFrame.stack                 | This is an operator similar to the unpivot operator                                                                                                                    |
+| Name                                 | Description                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ~~DataFrame.dtypes~~                | ~~returns the list of datatypes in the DataFrame ~~**Available in snowpark python >= 1.1.0**                                                                                                                                                                                                                                                                                                                             |
+| DataFrame.map                        | provides an equivalent for the map function for example `df.map(func,input_types=[StringType(),StringType()],output_types=[StringType(),IntegerType()],to_row=True)`                                                                                                                                                                                                                                                          |
+| DataFrame.simple_map                 | if a simple lambda like `lambda x: x.col1 + x.col2` is used this functions can be used like `df.simple_map(lambda x: x.col1 + x.col2)`                                                                                                                                                                                                                                                                                      |
+| ~~DataFrame.groupby.applyInPandas~~ | Maps each group of the current DataFrame using a pandas udf and returns the result as a DataFrame.<br />`applyInPandas` overload is kept to avoid breaking changes. But we recommend using the [native](https://docs.snowflake.com/developer-guide/snowpark/reference/python/latest/api/snowflake.snowpark.RelationalGroupedDataFrame.apply_in_pandas) `apply_in_pandas`<br />**Available in snowpark-python >= 1.8.0** |
+| DataFrame.replace                    | extends replace to allow using a regex                                                                                                                                                                                                                                                                                                                                                                                          |
+| DataFrame.groupBy.pivot              | extends the snowpark groupby to add a pivot operator                                                                                                                                                                                                                                                                                                                                                                            |
+| DataFrame.stack                      | This is an operator similar to the unpivot operator                                                                                                                                                                                                                                                                                                                                                                             |
 
 ### Examples
 
@@ -191,6 +192,7 @@ df.group_by("ID").applyInPandas(
     normalize, schema="id long, v double").show()  
 ```
 
+
 ```
 ------------------------------
 |"ID"  |"V"                  |
@@ -202,6 +204,22 @@ df.group_by("ID").applyInPandas(
 |1     |0.7071067811865475   |
 ------------------------------
 ```
+
+
+> NOTE: since snowflake-snowpark-python==1.8.0 applyInPandas is available. This version is kept because:
+>
+> 1. It supports string schemas
+> 2. It automatically wraps the column names. In snowpark applyInPandas you need to do:
+>
+>    ```
+>    def func(pdf):
+>        pdf.columns = ['columnname1','columnname2']
+>        # rest of the code
+>    ```
+>
+>    Before using your function, to guarantee the proper names are used. This implementation will just use the DF column names. Take in consideration that this still might imply changes as metadata in SF is upper case and lowercase references like df['v'] might fail.
+>
+> In general it is recommended you use the the snowpark built-in. The extensions only overwrite `applyInPandas`, the `apply_in_pandas` refers to the official snowpark implementation
 
 ### stack
 
@@ -334,7 +352,7 @@ sf_df = session.createDataFrame([(1, ["foo", "bar"], {"x": 1.0}), (2, [], {}), (
 ```
 
 ```
-#  +---+----------+----------+                                             
+#  +---+----------+----------+                                         
 # | id|  an_array|     a_map|
 # +---+----------+----------+
 # |  1|[foo, bar]|{x -> 1.0}|
@@ -449,13 +467,13 @@ print(str(res))
 
 A Jupyter extension has been created to allow integration in Jupyter notebooks. This extension implements a SQL magic, enabling users to run SQL commands within the Jupyter environment. This enhances the functionality of Jupyter notebooks and makes it easier for users to access and analyze their data using SQL. With this extension, data analysis becomes more streamlined, as users can execute SQL commands directly in the same environment where they are working on their notebooks.
 
-To enable this extension you can run the following into a cell:
+To enable this extension just import the snowpark extensions module
 
 ```
-%load_ext snowpark_extensions
+import snowpark_extensions
 ```
 
-After running this statement a `%%sql` magic can be used to run queries. For example:
+After import a `%%sql` magic can be used to run queries. For example:
 
 ```
 %%sql
@@ -477,7 +495,7 @@ Then on following cells you can do:
 select * from tables where col={{COL1}}
 ```
 
-You can use give a name to the sql that you can use later for example:
+You can give a name to the sql that you can use later for example:
 
 ```sql
 %%sql tables
@@ -496,8 +514,7 @@ If you dont specify a name you can still access the last result using `__df`.
 > NOTE: By default only 50 rows are displays. You can customize this limit for example to 100 rows with:
 
 ```python
-import snowpark_extensions
-snowpark_extensions.rows_limit = 100
+DataFrame.__rows_count = 1000
 ```
 
 You can configure Jupyter to run some imports and initialization code at the start of a notebook by creating a file called `startup.ipy` in the `~/.ipython/profile_default/startup` directory.
