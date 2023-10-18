@@ -335,8 +335,57 @@ public class MyJavaClass {{
             F._map_values_udf = map_values
         return F._map_values_udf(col)
 
+    timezoneMap = {
+        'EST': '-05:00',
+        'HST': '-10:00',
+        'MST': '-07:00',
+        'ACT': 'Australia/Darwin',
+        'AET': 'Australia/Sydney',
+        'AGT': 'America/Argentina/Buenos_Aires',
+        'ART': 'Africa/Cairo',
+        'AST': 'America/Anchorage',
+        'BET': 'America/Sao_Paulo',
+        'BST': 'Asia/Dhaka',
+        'CAT': 'Africa/Harare',
+        'CNT': 'America/St_Johns',
+        'CST': 'America/Chicago',
+        'CTT': 'Asia/Shanghai',
+        'EAT': 'Africa/Addis_Ababa',
+        'ECT': 'Europe/Paris',
+        'IET': 'America/Indiana/Indianapolis',
+        'IST': 'Asia/Kolkata',
+        'JST': 'Asia/Tokyo',
+        'MIT': 'Pacific/Apia',
+        'NET': 'Asia/Yerevan',
+        'NST': 'Pacific/Auckland',
+        'PLT': 'Asia/Karachi',
+        'PNT': 'America/Phoenix',
+        'PRT': 'America/Puerto_Rico',
+        'PST': 'America/Los_Angeles',
+        'SST': 'Pacific/Guadalcanal',
+        'VST': 'Asia/Ho_Chi_Minh'
+    }
+    def map_timestamp(tz_col):
+         from functools import reduce
+         when_exprs = F
+         for tz, offset in timezoneMap.items():
+             when_exprs = when_exprs.when( tz_col == F.lit(tz), F.lit(offset))
+         return when_exprs.otherwise(tz_col)
+    def to_utc_timestamp(timestamp:ColumnOrName, tz:ColumnOrLiteral):
+        """
+        The function converts a timezone-agnostic timestamp to a timezone-aware timestamp in the provided timezone before rendering that timestamp in UTC.        
 
-
+        Arguments:
+            timestamp: column or Name
+            tz: A String with the time zone ID
+        """
+        if isinstance(tz, str):
+            tz = timezoneMap.get(tz, tz)
+            tz = F.lit(tz)
+        elif isinstance(tz,Column):
+            tz = map_timestamp(tz)
+        timestamp = _to_col_if_str(timestamp,"to_utc_timestamp")
+        return F.convert_timezone(F.lit('UTC'),timestamp,tz) 
 
 
 
@@ -352,3 +401,4 @@ public class MyJavaClass {{
     F.map_values     = _map_values
     F.regexp_split   = _regexp_split
     F.sort_array     = _sort_array
+    F.to_utc_timestamp = to_utc_timestamp

@@ -177,3 +177,8 @@ Version 0.0.34
 --------------
 - explode have been removed from this library as it is supported natively by snowpark.
 - updated README providing information on how to use default `connections.toml`
+
+
+Version 0.0.35
+--------------
+- added functions.to_utc_timestamp extension

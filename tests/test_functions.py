@@ -362,3 +362,11 @@ line 3""",)], ['s',])
     res = df.select(regexp_split(df.s, '".+?"', 4).alias('s')).collect()
     assert res[0].S == '[\n  "<button type=",\n  " class=",\n  ">Send</button>"\n]'
 
+def test_to_utc_timestamp():
+    session = Session.builder.from_snowsql().config("schema","PUBLIC").getOrCreate()
+    from snowflake.snowpark.functions import to_utc_timestamp
+    df = session.createDataFrame([('1997-02-28 10:30:00', 'JST')], ['ts', 'tz'])
+    res = df.select(to_utc_timestamp(df.ts, "PST").alias('utc_time')).collect()
+    assert res[0][0] == datetime.datetime(1997, 2, 28, 18, 30)
+    res = df.select(to_utc_timestamp(df.ts, df.tz).alias('utc_time')).collect()
+    assert res[0][0] == datetime.datetime(1997, 2, 28, 1, 30)
