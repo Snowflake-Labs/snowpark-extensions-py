@@ -1,23 +1,29 @@
+import sys
+import threading
+import fcntl
+import zipfile
+from pathlib import Path
+
+
 class FileLock:
-   def __enter__(self):
-      self._lock = threading.Lock()
-      self._lock.acquire()
-      self._fd = open('/tmp/lockfile.LOCK', 'w+')
-      fcntl.lockf(self._fd, fcntl.LOCK_EX)
+    def __enter__(self):
+        self._lock = threading.Lock()
+        self._lock.acquire()
+        self._fd = open('/tmp/wheel_loader.LOCK', 'w+')
+        fcntl.lockf(self._fd, fcntl.LOCK_EX)
 
    def __exit__(self, type, value, traceback):
-      self._fd.close()
-      self._lock.release()
+        self._fd.close()
+        self._lock.release()
 
-import sys,os,threading,fcntl,zipfile
-IMPORT_DIRECTORY_NAME = "snowflake_import_directory"
-import_dir = sys._xoptions[IMPORT_DIRECTORY_NAME]
 
-def load(file_name):
-    path=import_dir + file_name
-    extracted='/tmp/'+file_name
+def load(whl_name):
+    whl_path = Path(sys._xoptions['snowflake_import_directory']) / whl_name
+    extraction_path = Path('/tmp') / whl_name
+
     with FileLock():
-        if not os.path.isdir(extracted):
-            with zipfile.ZipFile(path, 'r') as myzip:
-                myzip.extractall(extracted)
-    sys.path.append(extracted)
+        if not extraction_path.is_dir():
+            with zipfile.ZipFile(whl_path, 'r') as h_zip:
+                h_zip.extractall(extraction_path)
+
+    sys.path.append(str(extraction_path))
