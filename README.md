@@ -78,13 +78,13 @@ new_session = Session.builder.env().appName("app1").create()
 >
 > ```
 > [default]
-> accountname = "myaccount"
-> username = "user1"
+> account = "myaccount"
+> user = "user1"
 > password = 'xxxxx'
-> rolename = "user_role"
-> dbname = "demodb"
-> schemaname = "public"
-> warehousename = "load_wh"
+> role = "user_role"
+> database = "demodb"
+> schema = "public"
+> warehouse = "load_wh"
 >
 >
 > [snowpark]
