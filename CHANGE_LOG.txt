@@ -182,3 +182,9 @@ Version 0.0.34
 Version 0.0.35
 --------------
 - added functions.to_utc_timestamp extension
+
+Version 0.0.36
+--------------
+- fixing issue with the `%%sql` magics that was causing a double execution
+- update README.md for PMML
+- update for the `extras/wheel_loader` thanks Karol Tarcak

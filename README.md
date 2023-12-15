@@ -2,7 +2,10 @@
 
 Snowpark by itself is a powerful library, but still some utility functions can always help.
 
-**NOTE: we have working to integrate some of the snowpark extensions directly into the snowpark-python library.
+
+BTW what about `Java`/ `Scala`/ `SQL` ? There is an [additional repo](https://github.com/Snowflake-Labs/snowpark-extensions "Snowpark Extensions for Java, Scala and SQL") where you will have also utility functions and extensions for those technologies.
+
+**NOTE: we have been working to integrate some of the snowpark extensions directly into the snowpark-python library.
 In most cases the APIs will be exactly the same, so there should no changes needed in your code.
 However there might be breaking changes, so consider that before updating.
 If any of these breaking changes are affecting you, please enter an issue so we can address it.**
@@ -59,7 +62,6 @@ import snowpark_extensions
 new_session = Session.builder.env().appName("app1").create()
 ```
 
-
 > NOTE: since 1.8.0 the [python connector was updated](https://docs.snowflake.com/en/release-notes/clients-drivers/python-connector-2023#version-3-1-0-july-31-2023) and we provide support for an unified configuration storage for `snowflake-python-connector` and `snowflake-snowpark-python` with this approach.
 >
 > You can use this connections leveraging `Session.builder.getOrCreate()` or `Session.builder.create()`
@@ -97,8 +99,6 @@ new_session = Session.builder.env().appName("app1").create()
 > warehouse = "load_wh"
 >
 > ```
-
-
 
 The `appName` can use to setup a query_tag like `APPNAME=tag;execution_id=guid` which can then be used to track job actions with a query like
 
@@ -392,7 +392,7 @@ sf_df = session.createDataFrame([(1, ["foo", "bar"], {"x": 1.0}), (2, [], {}), (
 ```
 
 ```
-#  +---+----------+----------+                                       
+#  +---+----------+----------+                                     
 # | id|  an_array|     a_map|
 # +---+----------+----------+
 # |  1|[foo, bar]|{x -> 1.0}|

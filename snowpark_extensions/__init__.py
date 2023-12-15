@@ -15,6 +15,7 @@ def register_sql_magic():
         from IPython.core.magic import register_cell_magic
         def sql(line, cell):
             import IPython
+            import re
             user_ns = IPython.get_ipython().user_ns
             if "session" in user_ns:
                 session = user_ns['session']
@@ -24,7 +25,13 @@ def register_sql_magic():
                 name = None
                 if line and line.strip():
                     name = line.strip().split(" ")[0]
-                df = session.sql(res)
+                # If there are several statements only last will be returned
+                # also we will remove all ; at the end to avoid issues with empty statements
+                res = re.sub(r';+$', '', res)
+                for cursor in session.connection.execute_string(res):
+                    df = session.sql(f"SELECT * FROM TABLE(RESULT_SCAN('{cursor.sfqid}'))")
+                    # to avoid needed to do a count on display
+                    setattr(df,"_cached_rowcount",cursor.rowcount)
                 if name:
                     user_ns[name] = df
                 else:

@@ -47,7 +47,8 @@ if not hasattr(DataFrame,"___extended"):
         else:
             from IPython.display import display
         try:
-            count = self.count()
+            count = self._cached_rowcount if hasattr(self,"_cached_rowcount") else self.count()
+            self.count()
             if count == 0:
                 return "No rows to display"
             elif count == 1:
