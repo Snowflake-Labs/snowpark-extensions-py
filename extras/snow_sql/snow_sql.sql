@@ -8,6 +8,7 @@ create or replace procedure run_snowsql_script(file_location STRING, root_locati
         'snowflake-telemetry-python==0.2.0'
     )
     handler = 'run_snowsql_script'
+    execute as caller
     as '
 # This script implements a helper that can be use with snowpark to run scripts using the SnowSQL syntax
 # Runs a script using the SnowSQL syntax
@@ -128,7 +129,8 @@ def create_table(data_dict):
     return table_str
 
 def get_file_contents(session, file_path) -> str:
-   return "\\n".join([(x[0] or "") for x in session.read.schema(StructType([StructField("LINE",StringType())])).csv(file_path).collect()])
+   df = session.read.schema(StructType([StructField("LINE",StringType())])).option("field_delimiter","Ü").csv(file_path)
+   return "\\n".join([(x[0] or "") for x in df.collect()])
 
 def run_command(session,command, statement_txt):
     global variable_substitution
