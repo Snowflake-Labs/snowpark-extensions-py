@@ -188,3 +188,8 @@ Version 0.0.36
 - fixing issue with the `%%sql` magics that was causing a double execution
 - update README.md for PMML
 - update for the `extras/wheel_loader` thanks Karol Tarcak
+
+Version 0.0.37
+--------------
+- updating snowpark dependency to latests 1.11.1
+
