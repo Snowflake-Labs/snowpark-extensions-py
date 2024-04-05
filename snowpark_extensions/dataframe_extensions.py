@@ -231,19 +231,6 @@ if not hasattr(DataFrame,"___extended"):
         return GroupByPivot(self, pivot_col)
     RelationalGroupedDataFrame.pivot = group_by_pivot
 
-    RelationalGroupedDataFrame._applyInPandas = RelationalGroupedDataFrame.apply_in_pandas
-
-    def applyInPandas(self,func,schema=None,output_schema=None,**kwargs):
-        output_schema = output_schema or schema
-        input_columns = [x.name for x in self._df.schema.fields]
-        def func_wrapper(pdf):
-            pdf.columns = input_columns
-            return func(pdf)
-        if isinstance(output_schema, str):
-            output_schema = schema_str_to_schema(output_schema)
-        return self._applyInPandas(func_wrapper,output_schema=output_schema,**kwargs)
-
-    RelationalGroupedDataFrame.applyInPandas = applyInPandas
   ###### HELPER END
 
   

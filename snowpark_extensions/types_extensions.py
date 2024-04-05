@@ -12,3 +12,13 @@ if not hasattr(StructType, "___extended"):
          return self.fields[index]
   StructType.__getitem__ = schema__get_item__
   StructField.dtype = property(lambda self: self.datatype)
+  from snowflake.snowpark._internal.type_utils import convert_sf_to_sp_type
+  def fromJson(cls, json: dict) -> StructField:
+        return StructField(
+            json["name"],
+            convert_sf_to_sp_type(json["type"]),
+            json.get("nullable", True),
+            json.get("metadata"),
+        )
+  StructField.fromJson = fromJson
+  StructType.fromJson =  lambda cls,json: StructType([StructField.fromJson(f) for f in json["fields"]])
