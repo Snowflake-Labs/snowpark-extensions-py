@@ -193,3 +193,8 @@ Version 0.0.37
 --------------
 - updating snowpark dependency to latests 1.11.1
 
+Version 0.0.38
+--------------
+- updating snowpark dependency to latests 1.14.0
+- deprecating to_utc_timestamp as it is now natively supported
+- added fromJson extensions for StructType and StructField
