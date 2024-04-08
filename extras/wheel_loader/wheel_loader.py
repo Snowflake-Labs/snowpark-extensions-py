@@ -6,7 +6,7 @@ from pathlib import Path
 
 
 class FileLock:
-    def __enter__(self):
+   def __enter__(self):
         self._lock = threading.Lock()
         self._lock.acquire()
         self._fd = open('/tmp/wheel_loader.LOCK', 'w+')
