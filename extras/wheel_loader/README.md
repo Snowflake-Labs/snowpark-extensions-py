@@ -40,11 +40,15 @@ handler = 'your_handler'
 as
 $$
 import wheel_loader
+# load wheel and add to path 
+wheel_loader.load('pypiexample1-0.1.0-py3-none-any.whl')
+wheel_loader.load('pypiexample2-0.1.0-py3-none-any.whl')
+
 def your_handler(arg1, arg2):
-    wheel_loader.load('pypiexample1-0.1.0-py3-none-any.whl')
-    wheel_loader.load('pypiexample2-0.1.0-py3-none-any.whl')
-    # ... rest of the code
-    return {}
+    from pypiexample1.some_module import my_function1
+    from pypiexample2.some_other_module import my_function2
+    
+    return my_function2(my_function1(arg1, arg2))
 $$
 ```
 
