@@ -1,7 +1,4 @@
 from snowflake.snowpark import Session
-import os
-import io
-import sys
 
 if not hasattr(Session,"___extended"):
     setattr(Session,"___extended",True)

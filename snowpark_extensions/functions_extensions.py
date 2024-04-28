@@ -60,161 +60,6 @@ if not hasattr(F,"___extended"):
     def _array(*cols):
         return F.array_construct(*cols)
 
-    F._sort_array_udf = None
-    def _sort_array(col:ColumnOrName,asc:ColumnOrLiteral=True):
-        if not F._sort_array_udf:
-            session = context.get_active_session()
-            current_database = session.get_current_database()
-            function_name =_generate_prefix("_sort_array_helper")
-            F._sort_array_udf = f"{current_database}.public.{function_name}"
-            session.sql(f"""
-            create or replace temporary function {F._sort_array_udf}(ARR ARRAY,ASC BOOLEAN) returns ARRAY
-            language javascript as
-            $$
-            ARRLENGTH = ARR.length;
-            // filter nulls
-            ARR = ARR.filter(x => x !== null);
-            if (ARR.length && ARR[0] instanceof Object)
-            {{
-                function sortFn() 
-                {{
-                    var sortByProps = Array.prototype.slice.call(arguments),
-                        cmpFn = function(left, right, sortOrder) {{
-                            var sortMultiplier = sortOrder === "asc" ? 1 : -1;
-                            if (left > right) {{ return +1 * sortMultiplier;}}
-                            if (left < right) {{ return -1 * sortMultiplier;}}
-                            return 0;
-                        }};
-                    return function(sortLeft, sortRight) {{
-                        // get value from object by complex key
-                        var getValueByStr = function(obj, path) {{
-                        var i, len;
-                        //prepare keys
-                        path = path.replace('[', '.');
-                        path = path.replace(']', '');
-                        path = path.split('.');
-                        len = path.length;
-                        for (i = 0; i < len; i++) {{
-                        if (!obj || typeof obj !== 'object') {{ return obj;}}
-                        obj = obj[path[i]];
-                        }}
-                return obj;
-                }};
-                return sortByProps.map(function(property) {{
-                    return cmpFn(getValueByStr(sortLeft, property.prop), getValueByStr(sortRight, property.prop), property.sortOrder);
-                }}).reduceRight(function(left, right) {{
-                    return right || left;
-            }});
-        }};
-        }}
-        var props = Object.getOwnPropertyNames(ARR[0]);
-        var sortKeys = [];
-        for(var p of props)
-        {{
-            sortKeys.push({{prop:p,sortOrder:"asc"}});
-        }}
-        ARR.sort(sortFn(...sortKeys));
-        }}
-        else
-            ARR.sort();
-            var RES = new Array(ARRLENGTH-ARR.length).fill(null).concat(ARR);
-            if (ASC) return RES; else return RES.reverse();
-        $$;""").show()
-        return call_builtin(F._sort_array_udf,col,asc)
-
-
-    F._array_sort_udf = None
-    def _array_sort(col:ColumnOrName):
-        if not F._array_sort_udf:
-            session = context.get_active_session()
-            current_database = session.get_current_database()
-            function_name =_generate_prefix("_array_sort_helper")
-            F._array_sort_udf = f"{current_database}.public.{function_name}"
-            session.sql(f"""
-            create or replace temporary function {F._array_sort_udf}(ARR ARRAY) returns ARRAY
-            language javascript as
-            $$
-            ARRLENGTH = ARR.length;
-            // filter nulls
-            ARR = ARR.filter(x => x !== null);
-            if (ARR.length && ARR[0] instanceof Object)
-            {{
-                function sortFn() 
-                {{
-                    var sortByProps = Array.prototype.slice.call(arguments),
-                        cmpFn = function(left, right, sortOrder) {{
-                            var sortMultiplier = sortOrder === "asc" ? 1 : -1;
-                            if (left > right) {{ return +1 * sortMultiplier;}}
-                            if (left < right) {{ return -1 * sortMultiplier;}}
-                            return 0;
-                        }};
-                    return function(sortLeft, sortRight) {{
-                        // get value from object by complex key
-                        var getValueByStr = function(obj, path) {{
-                        var i, len;
-                        //prepare keys
-                        path = path.replace('[', '.');
-                        path = path.replace(']', '');
-                        path = path.split('.');
-                        len = path.length;
-                        for (i = 0; i < len; i++) {{
-                        if (!obj || typeof obj !== 'object') {{ return obj;}}
-                        obj = obj[path[i]];
-                        }}
-                return obj;
-                }};
-                return sortByProps.map(function(property) {{
-                    return cmpFn(getValueByStr(sortLeft, property.prop), getValueByStr(sortRight, property.prop), property.sortOrder);
-                }}).reduceRight(function(left, right) {{
-                    return right || left;
-            }});
-        }};
-        }}
-        var props = Object.getOwnPropertyNames(ARR[0]);
-        var sortKeys = [];
-        for(var p of props)
-        {{
-            sortKeys.push({{prop:p,sortOrder:"asc"}});
-        }}
-        ARR.sort(sortFn(...sortKeys));
-        }}
-        else
-            ARR.sort();
-        var RES = ARR.concat(new Array(ARRLENGTH-ARR.length).fill(null));
-        return RES;
-        $$;""").show()
-        return call_builtin(F._array_sort_udf,col)        
-    F._array_max_udf = None
-    def _array_max(col:ColumnOrName):
-        if not F._array_max_udf:
-            session = context.get_active_session()
-            current_database = session.get_current_database()
-            function_name =_generate_prefix("_array_max_function")
-            F._array_max_udf = f"{current_database}.public.{function_name}"
-            session.sql(f"""
-            create or replace temporary function {F._array_max_udf}(ARR ARRAY) returns VARIANT
-            language javascript as
-            $$
-            return Math.max(...ARR);
-            $$
-            """).show()
-        return call_builtin(F._array_max_udf,col)
-    F._array_min_udf = None
-    def _array_min(col:ColumnOrName):
-        if not F._array_min_udf:
-            session = context.get_active_session()
-            current_database = session.get_current_database()
-            function_name =_generate_prefix("_array_min_udf")
-            F._array_min_udf = f"{current_database}.public.{function_name}"
-            session.sql(f"""
-            create or replace temporary function {F._array_min_udf}(ARR ARRAY) returns VARIANT
-            language javascript as
-            $$
-            return Math.min(...ARR);
-            $$
-            """).show()
-        return call_builtin(F._array_min_udf,col)
-
     def _struct(*cols):
         new_cols = []
         for c in flatten_col_list(cols):
@@ -371,9 +216,11 @@ public class MyJavaClass {{
          for tz, offset in timezoneMap.items():
              when_exprs = when_exprs.when( tz_col == F.lit(tz), F.lit(offset))
          return when_exprs.otherwise(tz_col)
-    def to_utc_timestamp(timestamp:ColumnOrName, tz:ColumnOrLiteral):
+    def to_utc_timestamp_ext(timestamp:ColumnOrName, tz:ColumnOrLiteral):
         """
-        The function converts a timezone-agnostic timestamp to a timezone-aware timestamp in the provided timezone before rendering that timestamp in UTC.        
+        The function converts a timezone-agnostic timestamp to a timezone-aware 
+        timestamp in the provided timezone before rendering that timestamp in UTC.
+        The function add supports for a majority of timezone abbreviations         
 
         Arguments:
             timestamp: column or Name
@@ -385,20 +232,16 @@ public class MyJavaClass {{
         elif isinstance(tz,Column):
             tz = map_timestamp(tz)
         timestamp = _to_col_if_str(timestamp,"to_utc_timestamp")
-        return F.convert_timezone(F.lit('UTC'),timestamp,tz) 
+        return F.to_utc_timestamp(timestamp,tz) 
 
 
 
     F.array          = _array
-    F.array_max      = _array_max
-    F.array_min      = _array_min
     F.array_flatten  = _array_flatten
-    F.array_sort     = _array_sort
     F.arrays_zip     = _arrays_zip
     F.create_map     = create_map
     F.format_number  = format_number
     F.flatten        = _array_flatten
     F.map_values     = _map_values
     F.regexp_split   = _regexp_split
-    F.sort_array     = _sort_array
-    F.to_utc_timestamp = to_utc_timestamp
+    F.to_utc_timestamp_ext = to_utc_timestamp_ext

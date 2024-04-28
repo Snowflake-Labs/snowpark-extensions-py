@@ -56,7 +56,7 @@ def test_create_map():
         assert res[2].ID == '39192' and res[2].DEPT == "Marketing" and eval(res[2].PROPERTIESMAP)['location'] == 'CAN' and eval(res[2].PROPERTIESMAP)['salary'] == 2500
         assert res[3].ID == '40288' and res[3].DEPT == "Finance"   and eval(res[3].PROPERTIESMAP)['location'] == 'IND' and eval(res[3].PROPERTIESMAP)['salary'] == 5000
         assert res[4].ID == '42114' and res[4].DEPT == "Sales"     and eval(res[4].PROPERTIESMAP)['location'] == 'USA' and eval(res[4].PROPERTIESMAP)['salary'] == 3900
-    session = Session.builder.appName('test').from_snowsql().getOrCreate()
+    session = Session.builder.app_name('test').from_snowsql().getOrCreate()
     data = [ ("36636","Finance",3000,"USA"), 
         ("40288","Finance",5000,"IND"), 
         ("42114","Sales",3900,"USA"), 
@@ -93,100 +93,6 @@ def test_create_map():
             ))).drop("salary","location").sort("ID").collect()
     do_assert(res)
 
-def test_array_sort():
-    session = Session.builder.from_snowsql().getOrCreate()
-    df = session.createDataFrame([([2, 1, None, 3],1),([1],2),([],3)], ['data','pos'])
-    res = df.select(df.pos,array_sort(df.data)).orderBy(col('pos')).collect()
-    assert len(res) == 3
-    array1 = eval(res[0][1].replace("null","None"))
-    array2 = eval(res[1][1].replace("null","None"))
-    array3 = eval(res[2][1].replace("null","None"))
-    assert array1 == [1,2,3,None]
-    assert array2 == [1]
-    assert array3 == []
-
-
-def test_array_sort2():
-    session = Session.builder.from_snowsql().getOrCreate()
-    data_block = [(1,20 ,'treat A','proc A', 10),
-    (2,30,'treat B','proc B', 12),
-    (2,30,'treat B','proc A', 11),
-    (4,50,'treat A','proc A', 14),
-    (1,20,'treat D','proc C', 15)]
-    schema_block = StructType([
-    StructField('person_id', IntegerType(), True),
-    StructField('person_age', IntegerType(), True),
-    StructField('treatment_name', StringType(), True),
-    StructField('procedure_name', StringType(), True),
-    StructField('days_supply', IntegerType(), True)
-    ])
-    df = session.createDataFrame(data_block, schema_block)
-    groupby = ["person_id", "person_age"]
-    df = (
-        df.groupBy(*groupby).agg(array_sort(array_agg(object_construct(F.lit('"days_supply"'),"days_supply", F.lit('"treatment_name"'),"treatment_name"))).alias("DATA"))
-    ).select("*")
-    res = df.collect()
-# --------------------------------------------------------------------
-# |"PERSON_ID"  |"PERSON_AGE"  |"DATA"                               |
-# --------------------------------------------------------------------
-# |2            |30            |[                                    |
-# |             |              |  {                                  |
-# |             |              |    "\"days_supply\"": 11,           |
-# |             |              |    "\"treatment_name\"": "treat B"  |
-# |             |              |  },                                 |
-# |             |              |  {                                  |
-# |             |              |    "\"days_supply\"": 12,           |
-# |             |              |    "\"treatment_name\"": "treat B"  |
-# |             |              |  }                                  |
-# |             |              |]                                    |
-# |4            |50            |[                                    |
-# |             |              |  {                                  |
-# |             |              |    "\"days_supply\"": 14,           |
-# |             |              |    "\"treatment_name\"": "treat A"  |
-# |             |              |  }                                  |
-# |             |              |]                                    |
-# |1            |20            |[                                    |
-# |             |              |  {                                  |
-# |             |              |    "\"days_supply\"": 10,           |
-# |             |              |    "\"treatment_name\"": "treat A"  |
-# |             |              |  },                                 |
-# |             |              |  {                                  |
-# |             |              |    "\"days_supply\"": 15,           |
-# |             |              |    "\"treatment_name\"": "treat D"  |
-# |             |              |  }                                  |
-# |             |              |]                                    |
-# --------------------------------------------------------------------
-    assert len(res)==3
-    assert re.sub(r"\s", "", res[0].DATA) == '[{"\\"days_supply\\"":11,"\\"treatment_name\\"":"treatB"},{"\\"days_supply\\"":12,"\\"treatment_name\\"":"treatB"}]'
-    assert re.sub(r"\s", "", res[1].DATA) == '[{"\\"days_supply\\"":14,"\\"treatment_name\\"":"treatA"}]'
-    assert re.sub(r"\s", "", res[2].DATA) == '[{"\\"days_supply\\"":10,"\\"treatment_name\\"":"treatA"},{"\\"days_supply\\"":15,"\\"treatment_name\\"":"treatD"}]'
-def test_sort_array():
-    session = Session.builder.from_snowsql().getOrCreate()
-    df = session.createDataFrame([([2, 1, None, 3],),([1],),([],)], ['data'])
-    df_sorted = df.select(sort_array(df.data).alias('r'))
-    assert df.schema[0].datatype == ArrayType(StringType())
-    res  = df.select(sort_array(df.data).alias('r')).collect()
-    # [Row(r=[None, 1, 2, 3]), Row(r=[1]), Row(r=[])]
-    assert re.sub(r"\s","",res[0].R) == '[null,1,2,3]' and re.sub(r"\s","",res[1].R) == '[1]' and res[2].R=='[]'
-    res = df.select(sort_array(df.data, asc=False).alias('r')).collect()
-    #[Row(r=[3, 2, 1, None]), Row(r=[1]), Row(r=[])]
-    assert re.sub(r"\s","",res[0].R)=='[3,2,1,null]' and re.sub(r"\s","",res[1].R) == '[1]' and res[2].R=='[]'
-
-def test_array_max():
-    session = Session.builder.from_snowsql().getOrCreate()
-    df = session.createDataFrame([([2, 1, 3],), ([None, 10, -1],)], ['data'])
-    res = df.select(array_max(df.data).alias('max')).collect()
-    #[Row(max=3), Row(max=10)]
-    assert len(res)==2
-    assert res[0].MAX == '3'
-    assert res[1].MAX == '10'
-
-def test_array_min():
-    session = Session.builder.from_snowsql().getOrCreate()
-    df = session.createDataFrame([([2, 1, 3],), ([None, 10, -1],)], ['data'])
-    res=df.select(array_min(df.data).alias('min')).collect()
-    assert res[0].MIN == '1' and res[1].MIN == '-1'
-    #[Row(min=1), Row(min=-1)]
 
 def test_map_values():
     session = Session.builder.from_snowsql().getOrCreate()
@@ -362,11 +268,11 @@ line 3""",)], ['s',])
     res = df.select(regexp_split(df.s, '".+?"', 4).alias('s')).collect()
     assert res[0].S == '[\n  "<button type=",\n  " class=",\n  ">Send</button>"\n]'
 
-def test_to_utc_timestamp():
+def test_to_utc_timestamp_ext():
     session = Session.builder.from_snowsql().config("schema","PUBLIC").getOrCreate()
-    from snowflake.snowpark.functions import to_utc_timestamp
+    from snowflake.snowpark.functions import to_utc_timestamp_ext
     df = session.createDataFrame([('1997-02-28 10:30:00', 'JST')], ['ts', 'tz'])
-    res = df.select(to_utc_timestamp(df.ts, "PST").alias('utc_time')).collect()
+    res = df.select(F.to_utc_timestamp_ext(df.ts, "PST").alias('utc_time')).collect()
     assert res[0][0] == datetime.datetime(1997, 2, 28, 18, 30)
-    res = df.select(to_utc_timestamp(df.ts, df.tz).alias('utc_time')).collect()
+    res = df.select(F.to_utc_timestamp_ext(df.ts, df.tz).alias('utc_time')).collect()
     assert res[0][0] == datetime.datetime(1997, 2, 28, 1, 30)

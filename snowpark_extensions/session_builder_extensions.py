@@ -7,7 +7,6 @@ import io
 import sys
 
 if not hasattr(Session.SessionBuilder,"___extended"):         
-    from snowflake.snowpark._internal.utils import generate_random_alphanumeric
     _logger = logging.getLogger(__name__)
 
     def console_handler(stream='stdout'):
@@ -32,34 +31,6 @@ if not hasattr(Session.SessionBuilder,"___extended"):
         _logger.addHandler(_console_handler)
 
     Session.SessionBuilder.___extended = True
-    Session.SessionBuilder.___create = Session.SessionBuilder.create
-    def SessionBuilder_extendedcreate(self):
-        session = self.___create()
-        if hasattr(self,"__appname__"):
-            setattr(session, "__appname__", self.__appname__)
-            uuid = generate_random_alphanumeric()
-            session.query_tag = f"APPNAME={session.__appname__};execution_id={uuid}"
-        return session
-    Session.SessionBuilder.create = SessionBuilder_extendedcreate
-    def SessionBuilder_appName(self,name):
-        self.__appname__ = name
-        return self
-
-    Session.SessionBuilder.appName = SessionBuilder_appName
-    def append_tag(self,tag:str):
-         session.query_tag = session.query_tag + ";" + tag
-    Session.append_tag = append_tag    
-
-    def SessionBuilder_getOrCreate(self):
-        from snowflake.snowpark import context
-        from snowflake.snowpark.session import _session_management_lock, _active_sessions
-        with _session_management_lock:
-            if len(_active_sessions) == 1:
-                return next(iter(_active_sessions))
-        return self.create()
-
-    Session.SessionBuilder.getOrCreate = SessionBuilder_getOrCreate
-
 
     def SessionBuilder_env(self):
         sf_user      = os.getenv("SNOW_USER")     or os.getenv("SNOWSQL_USER")
