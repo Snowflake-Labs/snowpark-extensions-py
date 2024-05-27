@@ -54,6 +54,35 @@ $$
 
 Notice the `wheel_loader` import at the top and this file, and the calls of `wheel_loader.load`. Those are needed to ensure that your packages are loaded. 
 
+# wheel_loader.add_wheels
+To make the usage of the wheel_loader even easier, you can also try a more simplified approach using `wheel_loader.add_wheels`.
+
+```python
+create or replace function EXAMPLE_UDF(arg1 VARCHAR1, arg2 VARCHAR2)
+returns variant
+language python
+volatile
+runtime_version = '3.8'
+imports=('@MYSTAGE/wheel_loader.py',
+         '@MYSTAGE/pypiexample1-0.1.0-py3-none-any.whl',
+         '@MYSTAGE/pypiexample2-0.1.0-py3-none-any.whl'
+)
+packages = ( ... ) -- just put any packages you need there
+handler = 'your_handler'
+as
+$$
+import wheel_loader
+# add any .whl file added to your imports 
+wheel_loader.add_wheels()
+
+def your_handler(arg1, arg2):
+    from pypiexample1.some_module import my_function1
+    from pypiexample2.some_other_module import my_function2
+    
+    return my_function2(my_function1(arg1, arg2))
+$$
+```
+
 That rest is just python bliss :)
 
 This snippet was developed by [James Weakley](https://medium.com/@jamesweakley) in a [Medium post](https://medium.com/snowflake/running-pip-packages-in-snowflake-d43581a67439), check it out for more details.
