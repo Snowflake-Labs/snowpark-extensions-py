@@ -118,35 +118,6 @@ whery query_tag like '%APPNAME=tag;execution_id=guid%'
 order by start_time desc;
 ```
 
-# Window Frame UDFs
-
-This helpers allows you to execute a function within a window frame.
-
-For example to illustrate this. Let's apply a function over a window:
-
-```
-# Sample data
-data = [
-    (1, 10),
-    (2, 20),
-    (3, 30),
-    (4, 40),
-    (5, 50)
-]
-
-session = Session.builder.getOrCreate()
-
-
-
-# Create DataFrame
-df = session.createDataFrame(data, ["id", "value"])
-window = Window.orderBy("value").rowsBetween(Window.UNBOUNDED_PRECEDING, Window.CURRENT_ROW - 1)
-
-df.select( 
-    FrameUDF(lambda x: sum(x), args=[F.col("value")],input_types=[IntegerType()], output_type=ArrayType(IntegerType())).over(window)
-).show()
-
-```
 
 ## DataFrame Extensions
 
@@ -349,7 +320,7 @@ print(str(res))
 
 ## Notebook support
 
-A Jupyter extension has been created to allow integration in Jupyter notebooks. This extension implements a SQL magic, enabling users to run SQL commands within the Jupyter environment. 
+A Jupyter extension has been created to allow integration in Jupyter notebooks. This extension implements a SQL magic, enabling users to run SQL commands within the Jupyter environment.
 
 This enhances the functionality of Jupyter notebooks and makes it easier for users to access and analyze their data using SQL. With this extension, data analysis becomes more streamlined, as users can execute SQL commands directly in the same environment where they are working on their notebooks.
 
