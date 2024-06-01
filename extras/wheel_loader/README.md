@@ -55,8 +55,8 @@ Notice the `wheel_loader` import at the top and this file, and the calls of `whe
 
 > UPDATE: having to properly type your wheel names was too cumbesome. If you want to control explicitly how your wheels are loaded you can still use the `wheel_load.load` method but now you can also just wheel_loader.
 
-
 # wheel_loader.add_wheels
+
 To make the usage of the wheel_loader even easier, you can also try a more simplified approach using `wheel_loader.add_wheels`.
 
 ```python
@@ -80,10 +80,23 @@ wheel_loader.add_wheels()
 def your_handler(arg1, arg2):
     from pypiexample1.some_module import my_function1
     from pypiexample2.some_other_module import my_function2
-    
+  
     return my_function2(my_function1(arg1, arg2))
 $$
 ```
+
+Sometimes a package doesn't have a `.whl` but instead it has a `.tar.gz` or `.tgz` archive. 
+
+In that case you can use:
+```python
+wheel_loader.load_tgz('packagename.tar.tgz')
+```
+
+You can also do:
+```python
+wheel_loader.add_tars()
+```
+To load all the `.tar.gz` files added to your imports.
 
 That rest is just python bliss :)
 
