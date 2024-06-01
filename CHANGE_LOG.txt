@@ -203,3 +203,8 @@ Version 0.0.39
 --------------
 - updating snowpark dependency to latest 1.15.0
 - removed functions that are already present in snowpark library
+
+Version 0.0.40
+--------------
+- unpinning snowpark dependency
+- removing deprecated functionality already provided in snowpark

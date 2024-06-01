@@ -39,13 +39,10 @@ Session was extened to support IPython display. Using session as a value in a ce
 
 ## SessionBuilder extensions
 
-| Name                            | Description                                                                                                                                         |
-| ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| SessionBuilder.from_snowsql     | can read the information from the snowsql config file by default at ~/snowsql/config or at a given location                                         |
-| SessionBuilder.env              | reads settings from SNOW_xxx or SNOWSQL_xxx variables                                                                                               |
-| ~~SessionBuilder.appName~~     | ~~Sets a query tag with the given appName~~ **Available as SessionBuilder.app_name since 1.13.0**                                           |
-| ~~SessionBuilder.append_tag~~  | ~~Appends a new tag to the existing query tag~~ **Use Session.append_query_tag or Session.update_query_tag instead available since 1.12.0** |
-| ~~SessionBuilder.getOrCreate~~ | **Available in snowpark-python >= 1.3.0**                                                                                                    |
+| Name                        | Description                                                                                                 |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| SessionBuilder.from_snowsql | can read the information from the snowsql config file by default at ~/snowsql/config or at a given location |
+| SessionBuilder.env          | reads settings from SNOW_xxx or SNOWSQL_xxx variables                                                       |
 
 You can the create your session like:
 
@@ -78,7 +75,8 @@ new_session = Session.builder.env().appName("app1").create()
 > Connection file looks like:
 >
 > ```
-> [default]
+> [connections]
+> [connections.default]
 > account = "myaccount"
 > user = "user1"
 > password = 'xxxxx'
@@ -87,8 +85,7 @@ new_session = Session.builder.env().appName("app1").create()
 > schema = "public"
 > warehouse = "load_wh"
 >
->
-> [snowpark]
+> [connections.snowpark]
 > account = "myaccount"
 > user = "user2"
 > password = 'yyyyy'
@@ -96,10 +93,11 @@ new_session = Session.builder.env().appName("app1").create()
 > database = "demodb"
 > schema = "public"
 > warehouse = "load_wh"
+> authenticator = "externalbrowser"
 >
 > ```
 
-The `Session.app_name`  or `Session.append_query_tag` can used to setup a query_tag like `APPNAME=tag;execution_id=guid` which can then be used to track job actions with a query like
+The `Session.app_name`  or `Session.append_query_tag(f"execution_id={some_id}") ` can used to setup a query_tag like `APPNAME=tag;execution_id=guid` which can then be used to track job actions with a query like
 
 You can then use a query like:
 To see all executions from an app or
@@ -120,23 +118,45 @@ whery query_tag like '%APPNAME=tag;execution_id=guid%'
 order by start_time desc;
 ```
 
-## Column Extensions
+# Window Frame UDFs
 
-| Name                | Description                                                                                                                                                         |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| ~~Column.getItem~~ | ~~An expression that gets an item at position ordinal out of a list, or gets an item by key out of a dict.~~  **Available in snowpark-python >= 1.3.0**  |
+This helpers allows you to execute a function within a window frame.
+
+For example to illustrate this. Let's apply a function over a window:
+
+```
+# Sample data
+data = [
+    (1, 10),
+    (2, 20),
+    (3, 30),
+    (4, 40),
+    (5, 50)
+]
+
+session = Session.builder.getOrCreate()
+
+
+
+# Create DataFrame
+df = session.createDataFrame(data, ["id", "value"])
+window = Window.orderBy("value").rowsBetween(Window.UNBOUNDED_PRECEDING, Window.CURRENT_ROW - 1)
+
+df.select( 
+    FrameUDF(lambda x: sum(x), args=[F.col("value")],input_types=[IntegerType()], output_type=ArrayType(IntegerType())).over(window)
+).show()
+
+```
 
 ## DataFrame Extensions
 
-| Name                                 | Description                                                                                                                                                                                                                                                                                                                                                                                                                     |
-| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| ~~DataFrame.dtypes~~                | ~~returns the list of datatypes in the DataFrame ~~**Available in snowpark python >= 1.1.0**                                                                                                                                                                                                                                                                                                                             |
-| DataFrame.map                        | provides an equivalent for the map function for example `df.map(func,input_types=[StringType(),StringType()],output_types=[StringType(),IntegerType()],to_row=True)`                                                                                                                                                                                                                                                          |
-| DataFrame.simple_map                 | if a simple lambda like `lambda x: x.col1 + x.col2` is used this functions can be used like `df.simple_map(lambda x: x.col1 + x.col2)`                                                                                                                                                                                                                                                                                      |
-| ~~DataFrame.groupby.applyInPandas~~ | Maps each group of the current DataFrame using a pandas udf and returns the result as a DataFrame.<br />`applyInPandas` overload is kept to avoid breaking changes. But we recommend using the [native](https://docs.snowflake.com/developer-guide/snowpark/reference/python/latest/api/snowflake.snowpark.RelationalGroupedDataFrame.apply_in_pandas) `apply_in_pandas`<br />**Available in snowpark-python >= 1.8.0** |
-| DataFrame.replace                    | extends replace to allow using a regex                                                                                                                                                                                                                                                                                                                                                                                          |
-| DataFrame.groupBy.pivot              | extends the snowpark groupby to add a pivot operator                                                                                                                                                                                                                                                                                                                                                                            |
-| DataFrame.stack                      | This is an operator similar to the unpivot operator                                                                                                                                                                                                                                                                                                                                                                             |
+| Name                    | Description                                                                                                                                                            |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| DataFrame.map           | provides an equivalent for the map function for example `df.map(func,input_types=[StringType(),StringType()],output_types=[StringType(),IntegerType()],to_row=True)` |
+| DataFrame.simple_map    | if a simple lambda like `lambda x: x.col1 + x.col2` is used this functions can be used like `df.simple_map(lambda x: x.col1 + x.col2)`                             |
+| DataFrame.replace       | extends replace to allow using a regex                                                                                                                                 |
+| DataFrame.groupBy.pivot | extends the snowpark groupby to add a pivot operator                                                                                                                   |
+| DataFrame.stack         | This is an operator similar to the unpivot operator                                                                                                                    |
 
 ### Examples
 
@@ -212,53 +232,6 @@ df.replace(to_replace=1, value=100).show()
 df.replace(to_replace=r'^ba.$', value='new',regex=True).show()
 ```
 
-### applyInPandas
-
-```python
-from snowflake.snowpark import Session
-import snowpark_extensions
-session = Session.builder.from_snowsql().getOrCreate()
-import pandas as pd  
-df = session.createDataFrame(
-    [(1, 1.0), (1, 2.0), (2, 3.0), (2, 5.0), (2, 10.0)],
-    schema=["ID", "V"])
-df1 = df.to_pandas()
-def normalize(pdf):
-    V = pdf.V
-    return pdf.assign(V=(V - V.mean()) / V.std())
-df2 = normalize(df1)
-# schema can be an string or an StructType
-df.group_by("ID").applyInPandas(
-    normalize, schema="id long, v double").show()  
-```
-
-```
-------------------------------
-|"ID"  |"V"                  |
-------------------------------
-|2     |-0.8320502943378437  |
-|2     |-0.2773500981126146  |
-|2     |1.1094003924504583   |
-|1     |-0.7071067811865475  |
-|1     |0.7071067811865475   |
-------------------------------
-```
-
-> NOTE: since snowflake-snowpark-python==1.8.0 applyInPandas is available. This version is kept because:
->
-> 1. It supports string schemas
-> 2. It automatically wraps the column names. In snowpark applyInPandas you need to do:
->
->    ```
->    def func(pdf):
->        pdf.columns = ['columnname1','columnname2']
->        # rest of the code
->    ```
->
->    Before using your function, to guarantee the proper names are used. This implementation will just use the DF column names. Take in consideration that this still might imply changes as metadata in SF is upper case and lowercase references like df['v'] might fail.
->
-> In general it is recommended you use the the snowpark built-in. The extensions only overwrite `applyInPandas`, the `apply_in_pandas` refers to the official snowpark implementation
-
 ### stack
 
 Assuming you have a DataTable like:
@@ -304,45 +277,17 @@ That will return:
 -------------------------------------------
 ```
 
-## DataFrameReader Extensions
-
-| Name                   | Description                                                                   |
-| ---------------------- | ----------------------------------------------------------------------------- |
-| DataFrameReader.format | Specified the format of the file to load                                      |
-| DataFrameReader.load   | Loads a dataframe from a file. It will upload the files to an stage if needed |
-
-### Example
-
 ## Functions Extensions
 
-| Name                              | Description                                                                                                                                                                                                                                                                                                                                                                                                                 |
-| --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| ~~functions.array_sort~~         | ~~sorts the input array in ascending order or descending order.<br />The elements of the input array must be orderable. Null elements will be placed at the end of the returned array.~~<br />**[Available in snowpark-python ]()>= 1.6.1**                                                                                                                                                                             |
-| ~~functions.unix_timestamp~~     | ~~returns the UNIX timestamp of current time.~~ **[Available in snowpark-python](https://docs.snowflake.com/developer-guide/snowpark/reference/python/latest/api/snowflake.snowpark.functions.unix_timestamp) >= 1.1.0**                                                                                                                                                                                                |
-| ~~functions.from_unixtimestamp~~ | ~~can be used to convert UNIX time to Snowflake timestamp~~ **[Available in snowpark-python](https://docs.snowflake.com/developer-guide/snowpark/reference/python/latest/api/snowflake.snowpark.functions.from_unixtime) >= 1.1.0**                                                                                                                                                                                     |
-| ~~functions.to_utc_timestamp~~   | ~~converts a timezone-agnostic timestamp to a timezone-aware timestamp in the provided timezone before rendering that timestamp in UTC~~**[Available in snowpark-python](https://docs.snowflake.com/developer-guide/snowpark/reference/python/latest/api/snowflake.snowpark.functions.to_utc_timestamp) >= 1.11.1**                                                                                                          |
-| functions.to_utc_timestamp_ext    | converts a timezone-agnostic timestamp to a timezone-aware timestamp in the provided timezone before rendering that timestamp in UTC it supports timezone names like                                                                                                                                                                                                                                                        |
-| functions.format_number           | formats numbers using the specified number of decimal places                                                                                                                                                                                                                                                                                                                                                                |
-| ~~functions.reverse~~            | ~~returns a reversed string~~ **Available in snowpark-python >= 1.2.0**                                                                                                                                                                                                                                                                                                                                              |
-| ~~functions.explode~~            | ~~returns a new row for each element in the given array~~ **[Available in snowpark-python](https://docs.snowflake.com/developer-guide/snowpark/reference/python/latest/api/snowflake.snowpark.functions.explode) >= 1.4.0**                                                                                                                                                                                             |
-| ~~functions.explode_outer~~      | ~~returns a new row for each element in the given array or map. Unlike explode, if the array/map is null or empty then null is producedThis~~<br />**[Available in snowpark-python](https://docs.snowflake.com/developer-guide/snowpark/reference/python/latest/api/snowflake.snowpark.functions.explode_outer) >= 1.4.0**<br />There is a breaking change as the explode_outer does not need the map argument anymore. |
-| functions.arrays_zip              | returns a merged array of arrays                                                                                                                                                                                                                                                                                                                                                                                            |
-| ~~functions.array_sort~~         | sorts the input array in ascending order. The elements of the input array must be orderable. Null elements will be placed at the end of the returned array.<br />**[Available in snowpark-python](https://docs.snowflake.com/developer-guide/snowpark/reference/python/latest/api/snowflake.snowpark.functions.array_sort) >= 1.6.1**                                                                                   |
-| ~~functions.array_ma~~x          | ~~returns the maximon value of the array.~~<br />**[Available in snowpark-python](https://docs.snowflake.com/developer-guide/snowpark/reference/python/latest/api/snowflake.snowpark.functions.array_max) >= 1.6.1**                                                                                                                                                                                                    |
-| ~~functions.array_min~~          | ~~returns the minimum value of the array.~~<br />**[Available in snowpark-python](https://docs.snowflake.com/developer-guide/snowpark/reference/python/latest/api/snowflake.snowpark.functions.array_min) >= 1.6.1**                                                                                                                                                                                                    |
-| ~~functions.array_distinct~~     | ~~removes duplicate values from the array.~~ **Available in snowpark-python >= 1.4.0**                                                                                                                                                                                                                                                                                                                              |
-| ~~function.daydiff~~             | ~~this function returns the difference in days between two dates. This function will be direct equivalent of the spark datediff. You can simple replace spark datediff by daydiff~~<br />**Available in snowpark-python >= 1.4.0**                                                                                                                                                                                   |
-| ~~functions.date_add~~           | ~~returns the date that is n days days after~~<br />**Available in snowpark-python >= 1.4.0**                                                                                                                                                                                                                                                                                                                        |
-| ~~functions.date_sub~~           | ~~returns the date that is n days before~~<br />**Available in snowpark-python >= 1.4.0**                                                                                                                                                                                                                                                                                                                            |
-| ~~functions.regexp_extract~~     | ~~extract a specific group matched by a regex, from the specified string column.~~<br />**Available in snowpark-python >= 1.4.0**                                                                                                                                                                                                                                                                                    |
-| functions.regexp_split            | splits a specific group matched by a regex, it is an extension of split wich supports a limit parameter.                                                                                                                                                                                                                                                                                                                    |
-| ~~functions.asc~~                | ~~returns a sort expression based on the ascending order of the given column name.~~ **Available in snowpark-python >=1.1.0**                                                                                                                                                                                                                                                                                        |
-| ~~functions.desc~~               | ~~returns a sort expression based on the descending order of the given column name.~~ **Available in snowpark-python >=1.1.0**                                                                                                                                                                                                                                                                                       |
-| functions.flatten                 | creates a single array from an array of arrays                                                                                                                                                                                                                                                                                                                                                                              |
-| ~~functions.sort_array~~         | ~~sorts the input array in ascending or descending order according to the natural ordering of the array elements. Null elements will be placed at the beginning of the returned array in ascending order or at the end of the returned array in descending order~~**Available in snowpark-python >= 1.6.1**                                                                                                          |
-| functions.map_values              | Returns an unordered array containing the values of the map.                                                                                                                                                                                                                                                                                                                                                                |
-| ~~functions.struct~~             | ~~Returns an object built with the given columns~~<br />**Available in snowpark-python >= 1.4.0**                                                                                                                                                                                                                                                                                                                    |
-| ~~functions.bround~~             | ~~This function receives a column with a number and rounds it to scale decimal places with HALF_EVEN round mode, often called as "Banker's rounding" . This means that if the number is at the same distance from an even or odd number, it will round to the even number.~~<br />Available in snowpark-python >= 1.4.0                                                                                                    |
+| Name                           | Description                                                                                                                                                          |
+| ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|                                |                                                                                                                                                                      |
+| functions.to_utc_timestamp_ext | converts a timezone-agnostic timestamp to a timezone-aware timestamp in the provided timezone before rendering that timestamp in UTC it supports timezone names like |
+| functions.format_number        | formats numbers using the specified number of decimal places                                                                                                         |
+| functions.arrays_zip           | returns a merged array of arrays                                                                                                                                     |
+| functions.regexp_split         | splits a specific group matched by a regex, it is an extension of split wich supports a limit parameter.                                                             |
+| functions.flatten              | creates a single array from an array of arrays                                                                                                                       |
+| functions.map_values           | Returns an unordered array containing the values of the map.                                                                                                         |
 
 ### regexp_extract
 
@@ -402,9 +347,11 @@ print(str(res))
 | utils.map_string_type_to_datatype | maps a type by name to a snowpark `DataType`              |
 | utils.schema_str_to_schema        | maps an schema specified as an string to a `StructType()` |
 
-## Jupyter Notebook support
+## Notebook support
 
-A Jupyter extension has been created to allow integration in Jupyter notebooks. This extension implements a SQL magic, enabling users to run SQL commands within the Jupyter environment. This enhances the functionality of Jupyter notebooks and makes it easier for users to access and analyze their data using SQL. With this extension, data analysis becomes more streamlined, as users can execute SQL commands directly in the same environment where they are working on their notebooks.
+A Jupyter extension has been created to allow integration in Jupyter notebooks. This extension implements a SQL magic, enabling users to run SQL commands within the Jupyter environment. 
+
+This enhances the functionality of Jupyter notebooks and makes it easier for users to access and analyze their data using SQL. With this extension, data analysis becomes more streamlined, as users can execute SQL commands directly in the same environment where they are working on their notebooks.
 
 To enable this extension just import the snowpark extensions module
 

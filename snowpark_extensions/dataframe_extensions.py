@@ -72,28 +72,6 @@ if not hasattr(DataFrame,"___extended"):
         return self.columns
     setattr(DataFrame,'_ipython_key_completions_',_ipython_key_completions_)
 
-    # we need to extend the alias function for
-    # table function to allow the situation where
-    # the function returns several columns
-    def adjusted_table_alias(self,*aliases) -> "TableFunctionCall":
-        canon_aliases = [quote_name(col) for col in aliases]
-        if len(set(canon_aliases)) != len(aliases):
-            raise ValueError("All output column names after aliasing must be unique.")
-        if hasattr(self, "alias_adjust"):
-            """
-            currently tablefunctions are rendered as table(func(....))
-            One option later on could be to render this is (select col1,col2,col3,col4 from table(func(...)))
-            aliases can the be use as (select col1 alias1,col2 alias2 from table(func(...)))
-            """
-            self._aliases = self.alias_adjust(*canon_aliases)
-        else:
-            self._aliases = canon_aliases
-        return self
-
-    TableFunctionCall.alias = adjusted_table_alias
-    TableFunctionCall.as_   = adjusted_table_alias
-
-
     def map(self,func,output_types,input_types=None,input_cols=None,to_row=False):
         clazz= _generate_prefix("map")
         output_schema=[]

@@ -39,6 +39,13 @@ if not hasattr(DataFrameReader,"___extended"):
 
     def _load(self,path: Union[str, List[str], None] = None, format: Optional[str] = None, schema: Union[StructType, str, None] = None,stage=None, **options) -> "DataFrame":
         self.options(dict(options))
+        if "INFER_SCHEMA" in options:
+            if "SKIP_HEADER" in options:
+                if options["SKIP_HEADER"] == 0:
+                    options["PARSE_HEADER"] = True
+                else:
+                    options["PARSE_HEADER"] = False
+                del options["SKIP_HEADER"]
         self.format(format)
         if schema:
             self.schema(schema)
