@@ -47,18 +47,14 @@ if not hasattr(DataFrame,"___extended"):
         else:
             from IPython.display import display
         try:
-            count = self._cached_rowcount if hasattr(self,"_cached_rowcount") else self.count()
-            self.count()
-            if count == 0:
+            data_to_display = self.limit(rows_limit).collect()
+            if len(data_to_display) == 0:
                 return "No rows to display"
-            elif count == 1:
-                df = pd.DataFrame.from_records([x.as_dict() for x in self.collect()])
-            elif count > rows_limit:
-                print(f"There are {count} rows. Showing only {rows_limit}. Change DataFrame.__rows_limit value to display more rows")
-                df = self.limit(rows_limit).to_pandas()
             else:
-                df = self.to_pandas()
-            display(df)
+                df = pd.DataFrame.from_records([x.as_dict() for x in data_to_display])
+                if len(data_to_display) >= rows_limit:
+                    print(f"Showing only {rows_limit}. Change DataFrame.__rows_limit value to display more rows")
+                display(df)
             return ""
         except Exception as ex:
                 return str(ex)

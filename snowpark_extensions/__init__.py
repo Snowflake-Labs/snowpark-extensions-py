@@ -8,7 +8,7 @@ from .session_extensions import *
 from .session_builder_extensions import *
 from .types_extensions import *
 from .logging_utils import logged, Tag
-from .wheel_loader import add_wheels, load
+
 
 
 def register_sql_magic():

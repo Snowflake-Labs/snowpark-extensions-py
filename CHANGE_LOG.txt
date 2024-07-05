@@ -208,3 +208,7 @@ Version 0.0.40
 --------------
 - unpinning snowpark dependency
 - removing deprecated functionality already provided in snowpark
+
+Version 0.0.41
+--------------
+- Fixing issue #40 when using dataframe_extensions to display a DataFrame inside a notebook
