@@ -212,3 +212,4 @@ Version 0.0.40
 Version 0.0.41
 --------------
 - Fixing issue #40 when using dataframe_extensions to display a DataFrame inside a notebook
+- Updating snowpark dependency to latest 1.18.0
