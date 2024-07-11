@@ -10,7 +10,7 @@ mvn clean package
 
 The target file will be at:  `target/snowpark-jdbc-reader-0.0.1.jar`
 
-For convience there is a prebuilt-jar you can use. 
+For convience there is a prebuilt-jar you can use.
 
 **Deployment**
 
@@ -19,6 +19,10 @@ upload the jar to snowflake, you can use the [SnowSight UI to do that easily ](h
 and create an UDF like this:
 
 ```
+
+
+
+
 CREATE OR REPLACE SECRET external_database_cred
     TYPE = password
     USERNAME = 'serveradmin'
@@ -39,3 +43,5 @@ RUNTIME_VERSION='11'
   SECRETS = ('cred' = external_database_cred )
   HANDLER = 'JdbcDataReader';
 ```
+You can see an example for python in snowflake [here](https://github.com/Snowflake-Labs/snowpark-extensions-py/blob/main/extras/jdbc_read/using_jdbc_reader_notebook.ipynb)
+
