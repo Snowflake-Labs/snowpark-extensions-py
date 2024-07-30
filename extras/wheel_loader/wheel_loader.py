@@ -87,7 +87,7 @@ def load(whl_name,append=True, use_lock=True):
     return message
 
 def setup_home():
-    if os.getenv('HOME') is None:
+    if os.getenv('HOME') is None or os.getenv('HOME') == '/home/udf':
         # many wheels need a home directory
         logging.info("HOME dir was not set. Setting up one now")
         os.environ["HOME"] = "/tmp/homedir"
