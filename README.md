@@ -118,7 +118,6 @@ whery query_tag like '%APPNAME=tag;execution_id=guid%'
 order by start_time desc;
 ```
 
-
 ## DataFrame Extensions
 
 | Name                    | Description                                                                                                                                                            |
@@ -128,6 +127,7 @@ order by start_time desc;
 | DataFrame.replace       | extends replace to allow using a regex                                                                                                                                 |
 | DataFrame.groupBy.pivot | extends the snowpark groupby to add a pivot operator                                                                                                                   |
 | DataFrame.stack         | This is an operator similar to the unpivot operator                                                                                                                    |
+| DataFrame.transform     | This method is used mostly the provide a chaining syntax. For example:`df.transform(func1).transform(func2).show()`                                                  |
 
 ### Examples
 
@@ -230,6 +230,7 @@ df.select("NAME",df.stack(4,lit('Analytics'), "ANALYTICS", lit('BI'), "BI", lit(
 That will return:
 
 ```
+
 '-------------------------------------------
 |"NAME"   |"PROJECT"  |"COST_TO_PROJECT"  |
 -------------------------------------------
@@ -246,6 +247,53 @@ That will return:
 |Patrick  |ML         |1000               |
 |Riley    |ML         |9000               |
 -------------------------------------------
+```
+
+### transform
+```
+from snowflake.snowpark import Session
+from snowflake.snowpark.functions import col, udf
+
+# Initialize session
+session = Session.builder.app_name("TransformExample").getOrCreate()
+
+# Sample DataFrame
+data = [(1,), (2,), (3,), (4,)]
+df = session.createDataFrame(data, ["number"])
+
+# Define the first function to add 1
+def add_one(x:int)->int:
+    return x + 1
+
+# Define the second function to multiply by 2
+def multiply_by_two(x:int)->int:
+    return x * 2
+
+# Register UDFs
+add_one_udf = udf(add_one)
+multiply_by_two_udf = udf(multiply_by_two)
+
+# Apply the transformations using transform
+df_transformed = df.withColumn(
+    "transformed_number", 
+    multiply_by_two_udf(add_one_udf(col("number")))
+)
+
+# Show the result
+df_transformed.show()
+
+```
+
+Will show this output:
+```
+-----------------------------------  
+|"NUMBER"  |"TRANSFORMED_NUMBER"  |  
+-----------------------------------  
+|4         |10                    |  
+|1         |4                     |  
+|3         |8                     |  
+|2         |6                     |  
+-----------------------------------
 ```
 
 ## Functions Extensions

@@ -205,6 +205,13 @@ if not hasattr(DataFrame,"___extended"):
         return GroupByPivot(self, pivot_col)
     RelationalGroupedDataFrame.pivot = group_by_pivot
 
+    def transform(self, func, *args, **kwargs):
+            result = func(self, *args, **kwargs)
+            return result
+
+    DataFrame.transform = transform
+
+
   ###### HELPER END
 
   
