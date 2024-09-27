@@ -18,6 +18,17 @@ except:
             return value
     st = StreamlitMock()
 
+import importlib
+import inspect
+
+def run(module_name):
+    """
+    Loads all the module elements into the current scope
+    """
+    caller_globals = inspect.currentframe().f_back.f_globals
+    module = importlib.import_module(module_name)
+    caller_globals.update({k: v for k, v in module.__dict__.items() if not k.startswith('_')})
+
 
 class WidgetUtils:
     def __init__(self):
