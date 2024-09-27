@@ -39,14 +39,14 @@ class WidgetUtils:
         self.args = {}
         if isinstance(args,str):
             args = args.split(' ')
-        if len(args)==1:
+        if len(args)==1 and args[0]:
             try:
                 json_string = base64.b64decode(args[0]).decode('utf-8')
                 self.args = json.loads(json_string)
                 st.session_state["args"] = self.args
                 return
             except Exception as ex:
-                logging.error("Failed to load args from base64 encoded string: {args[0]}", ex)
+                print("Failed to load args from base64 encoded string: {args[0]}", ex)
                 # ignore and continue
         for i,arg in enumerate(args):
             if "=" in arg:
