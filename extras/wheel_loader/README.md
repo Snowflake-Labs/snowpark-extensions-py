@@ -85,19 +85,35 @@ def your_handler(arg1, arg2):
 $$
 ```
 
-Sometimes a package doesn't have a `.whl` but instead it has a `.tar.gz` or `.tgz` archive. 
+Sometimes a package doesn't have a `.whl` but instead it has a `.tar.gz` or `.tgz` archive.
 
 In that case you can use:
+
 ```python
 wheel_loader.load_tgz('packagename.tar.tgz')
 ```
 
 You can also do:
+
 ```python
 wheel_loader.add_tars()
 ```
+
 To load all the `.tar.gz` files added to your imports.
 
 That rest is just python bliss :)
+
+# loading wheels in snowflake notebooks
+
+After the release of the snowflake notebooks, some users have the need to load wheels into their notebooks. 
+
+Notebooks **already provide** a mechanism to [reference stage packages ](https://docs.snowflake.com/en/user-guide/ui-snowsight/notebooks-import-packages#import-packages-from-a-snowflake-stage)but there might be some scenarios where you might like to leverage having a prepopulated stage and be able to load all the wheel files in that stage.
+
+This can be helpful to enforce some RBAC policies, so if an users does not have  permissions on an stage your wont be able to load those wheels
+![error](./wheels_error1.png)
+
+Or you just want to have an easy way to have some custom packages you want to easily load on some notebooks with a couple of lines.
+
+The wheel loader has been very helpful for me, so just in case I hope this functionality becomes useful for notebook users as well.
 
 This snippet was developed by [James Weakley](https://medium.com/@jamesweakley) in a [Medium post](https://medium.com/snowflake/running-pip-packages-in-snowflake-d43581a67439), check it out for more details.

@@ -5,7 +5,6 @@ import zipfile
 from pathlib import Path
 import logging
 from functools import lru_cache
-from snowflake.snowpark._internal.utils import is_in_stored_procedure
 import tarfile
 
 class FileLock:
@@ -56,8 +55,17 @@ def load_tgz(tgz_name,append=True, use_lock=True):
 @lru_cache()
 def load(whl_name,append=True, use_lock=True):
     logging.info(f"loading wheel {whl_name}")
-    whl_path = Path(sys._xoptions['snowflake_import_directory']) / whl_name
-    extraction_path = Path('/tmp') / whl_name
+    if whl_name.startswith("@"):
+        # this is only expected to be used in notebooks
+        import snowflake.snowpark
+        session = snowflake.snowpark.Session.builder.getOrCreate()
+        os.makedirs("/tmp/whl_download/",exist_ok=True)
+        session.file.get(whl_name,"/tmp/whl_download/")
+        whl_path = Path("/tmp/whl_download/") / os.path.basename(whl_name)
+        extraction_path = Path('/tmp') / os.path.basename(whl_name)
+    else:
+        whl_path = Path(sys._xoptions['snowflake_import_directory']) / whl_name
+        extraction_path = Path('/tmp') / whl_name
 
     if use_lock:
         with FileLock():
@@ -83,7 +91,7 @@ def load(whl_name,append=True, use_lock=True):
         # Add a directory to the pkg_resources working set
         pkg_resources.working_set.add_entry(str(extraction_path))
     except Exception as ex:
-        logging.error(f"failed to add {extraction_path} to pkg_resources working set: {ex}")
+        logging.warning(f"failed to add {extraction_path} to pkg_resources working set: {ex}")
     return message
 
 def setup_home():
@@ -96,27 +104,45 @@ def setup_home():
 
 # this decoration will make sure that this does not get loaded more that one
 @lru_cache(maxsize=1)
-def add_wheels():
-    if not is_in_stored_procedure():
-        message = "Wheel loader can only be used in stored procedures"
-        logging.warning(message)
-        return message
+def add_wheels(from_stage=None):
+    try:
+        import snowflake.snowpark._internal.utils
+        if not snowflake.snowpark._internal.utils.is_in_stored_procedure():
+            message = "Wheel loader can only be used in stored procedures"
+            logging.warning(message)
+            return message
+    except:
+        pass
     setup_home()
-    wheels = [x for x in os.listdir(sys._xoptions['snowflake_import_directory']) if x.endswith('.whl')]
+    if from_stage and from_stage.startswith("@"):
+        try:
+            import snowflake.snowpark
+            session = snowflake.snowpark.Session.builder.getOrCreate()
+            wheels = [("@" + r[0]) for r in session.sql(f"ls {from_stage} pattern='.*whl'").collect()]
+        except Exception as exceptionStageFiles:
+            message = "Error while getting wheels from stage: " + str(exceptionStageFiles)
+            logging.warning(message)
+            return message
+    else:
+        wheels = [x for x in os.listdir(sys._xoptions['snowflake_import_directory']) if x.endswith('.whl')]
     with FileLock():
         for whl in wheels:
             load(whl, False) # we use one lock for all
-    message = str(wheels) + " where loaded"
+    message = str(wheels) + " wheels where loaded"
     logging.info(message)
     return message
 
 # this decoration will make sure that this does not get loaded more that one
 @lru_cache(maxsize=1)
 def add_tars():
-    if not is_in_stored_procedure():
-        message = "tgz loader can only be used in stored procedures"
-        logging.warning(message)
-        return message
+    try:
+        import snowflake.snowpark._internal.utils
+        if not snowflake.snowpark._internal.utils.is_in_stored_procedure():
+            message = "tgz loader can only be used in stored procedures"
+            logging.warning(message)
+            return message
+    except:
+        pass
     setup_home()
     tars = [x for x in os.listdir(sys._xoptions['snowflake_import_directory']) if x.endswith('.tgz') or x.endswith('tar.gz')]
     with FileLock():
