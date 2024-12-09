@@ -222,3 +222,7 @@ Version 0.0.42
 Version 0.0.43
 --------------
 - fixing issue with DataFrame pivot extension due to a change in snowpark 1.26.0
+
+Version 0.0.44
+--------------
+- no changes it just republishing the same version with a different hash
