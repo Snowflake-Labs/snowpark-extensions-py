@@ -152,7 +152,11 @@ if not hasattr(DataFrame,"___extended"):
             self.pivot_col=pivot_col
             group_by_exprs = [F.sql_expr(x.sql) for x in old_groupby_col._grouping_exprs]
             group_by_exprs.append(pivot_col)
-            self.df = old_groupby_col._df.groupBy(group_by_exprs)
+            # version of snowpark < 1.26.0 stored the dataframe in _df, while later versions store it in _dataframe
+            old_dataframe_ref = getattr(old_groupby_col,"_df",None) or getattr(old_groupby_col,"_dataframe",None)
+            if old_dataframe_ref is None:
+                raise Exception("Cannot find dataframe reference")
+            self.df = old_dataframe_ref.groupBy(group_by_exprs)
       def clean(self,pivoted):
         def get_valid_id(id):
             return id if re.match("[A-Za-z]\w+", id) else f'"{id}"'

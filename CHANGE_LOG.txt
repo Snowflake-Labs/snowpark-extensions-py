@@ -218,3 +218,7 @@ Version 0.0.42
 --------------
 - Updating snowpark dependency to latest 1.21.1
 - Adding extension for `DataFrame.transform`
+
+Version 0.0.43
+--------------
+- fixing issue with DataFrame pivot extension due to a change in snowpark 1.26.0
