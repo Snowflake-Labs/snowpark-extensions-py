@@ -5,3 +5,5 @@ snowpark_extensions.egg-info/
 extensions-py/
 .ipynb_checkpoints/
 ext-env/
+extras/custom_reader/jdbc_reader/.metals
+extras/custom_reader/jdbc_reader/target
