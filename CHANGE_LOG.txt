@@ -226,3 +226,7 @@ Version 0.0.43
 Version 0.0.44
 --------------
 - no changes it just republishing the same version with a different hash
+
+Version 0.0.45
+--------------
+- adding extension for `DataFrame.union_by_name` with allowMissingColumns (experimental)

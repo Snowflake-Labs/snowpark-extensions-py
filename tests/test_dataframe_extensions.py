@@ -211,3 +211,79 @@ def test_stack():
     assert list(res[10]) == ['Patrick', 'ML', 1000]
     assert list(res[11]) == ['Riley', 'ML', 9000]
         
+def test_unionByName_allowMissing():
+    session = Session.builder.from_snowsql().getOrCreate()
+    # Define schemas with different column sets
+    schema1 = StructType([
+        StructField("id", IntegerType(), False),
+        StructField("name", StringType(), True),
+        StructField("salary", DoubleType(), True)
+    ])
+
+    schema2 = StructType([
+        StructField("id", IntegerType(), False),
+        StructField("department", StringType(), True),
+        StructField("bonus", DoubleType(), True)
+    ])
+
+    # Create first DataFrame
+    data1 = [
+        (1, "Alice", 50000.0),
+        (2, "Bob", 60000.0)
+    ]
+    df1 = session.createDataFrame(data1, schema1)
+
+    # Create second DataFrame with different columns
+    data2 = [
+        (3, "Sales", 5000.0),
+        (4, "Marketing", 6000.0)
+    ]
+    df2 = session.createDataFrame(data2, schema2)
+
+    # Example 1: Union without allowMissingColumns (will fail)
+    print("--- Example 1: Standard Union (Would Raise Error) ---")
+
+    df_standard_union = df1.union(df2)
+    df_standard_union.show()
+
+
+    # Example 2: UnionByName without allowMissingColumns (will fail)
+    print("\n--- Example 2: UnionByName without allowMissingColumns ---")
+    with pytest.raises(Exception):
+        df_union_by_name = df1.unionByName(df2)
+        df_union_by_name.show()
+
+    # Example 3: UnionByName with allowMissingColumns=True
+    print("\n--- Example 3: UnionByName with allowMissingColumns=True ---")
+    df_union_missing_cols = df1.unionByName(df2, allowMissingColumns=True)
+    df_union_missing_cols.show()
+    
+    # Print schema to show how missing columns are handled
+    print("\nSchema after union:")
+
+    schema = df_union_missing_cols.schema
+    assert schema.names == ["ID","NAME","SALARY","DEPARTMENT","BONUS"]
+
+    # Example 4: More complex scenario with multiple missing columns
+    print("\n--- Example 4: More Complex UnionByName ---")
+    # Create additional DataFrame with different columns
+    schema3 = StructType([
+        StructField("id", IntegerType(), False),
+        StructField("email", StringType(), True),
+        StructField("phone", StringType(), True)
+    ])
+
+    data3 = [
+        (5, "alice@example.com", "555-1234"),
+        (6, "bob@example.com", "555-5678")
+    ]
+    df3 = session.createDataFrame(data3, schema3)
+
+    # Union multiple DataFrames with missing columns
+    df_multi_union = df1.unionByName(df2, allowMissingColumns=True) \
+                         .unionByName(df3, allowMissingColumns=True)
+    
+    df_multi_union.show()
+    print("\nSchema after multiple unions:")
+    schema = df_multi_union.schema
+    assert schema.names == ["ID","NAME","SALARY","DEPARTMENT","BONUS","EMAIL","PHONE"]
