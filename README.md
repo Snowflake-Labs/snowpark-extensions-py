@@ -128,6 +128,7 @@ order by start_time desc;
 | DataFrame.groupBy.pivot | extends the snowpark groupby to add a pivot operator                                                                                                                   |
 | DataFrame.stack         | This is an operator similar to the unpivot operator                                                                                                                    |
 | DataFrame.transform     | This method is used mostly the provide a chaining syntax. For example:`df.transform(func1).transform(func2).show()`                                                  |
+| DataFrame.unionByName   | This extensions extends the unionByName to include support for **allowMissingValues**                                                                                 |
 
 ### Examples
 
@@ -250,6 +251,7 @@ That will return:
 ```
 
 ### transform
+
 ```
 from snowflake.snowpark import Session
 from snowflake.snowpark.functions import col, udf
@@ -285,6 +287,7 @@ df_transformed.show()
 ```
 
 Will show this output:
+
 ```
 -----------------------------------  
 |"NUMBER"  |"TRANSFORMED_NUMBER"  |  
