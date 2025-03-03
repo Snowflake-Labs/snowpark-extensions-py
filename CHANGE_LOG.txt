@@ -230,3 +230,7 @@ Version 0.0.44
 Version 0.0.45
 --------------
 - adding extension for `DataFrame.union_by_name` with allowMissingColumns (experimental)
+
+Version 0.0.46
+--------------
+- upgrading to `snowflake-snowpark-python 1.27.0`

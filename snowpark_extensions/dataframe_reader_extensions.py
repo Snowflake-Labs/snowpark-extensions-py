@@ -9,7 +9,7 @@ if not hasattr(DataFrameReader,"___extended"):
     import logging    
     DataFrameReader.___extended = True
     DataFrameReader.__option = DataFrameReader.option
-    def _option(self, key: str, value: Any) -> "DataFrameReader":
+    def _option(self, key: str, value: Any, _emit_ast: bool = True) -> "DataFrameReader":
         key = key.upper()
         if key == "SEP" or key == "DELIMITER":
             key = "FIELD_DELIMITER"
@@ -35,7 +35,7 @@ if not hasattr(DataFrameReader,"___extended"):
         elif key in ["RECURSIVEFILELOOKUP","QUOTEALL","MODIFIEDBEFORE","MODIFIEDAFTER","MULTILINE","MERGESCHEMA"]:
             logging.error(f"DataFrameReader option {key} is not supported")
             return self       
-        return self.__option(key,value)
+        return self.__option(key,value, _emit_ast=_emit_ast)
 
     def _load(self,path: Union[str, List[str], None] = None, format: Optional[str] = None, schema: Union[StructType, str, None] = None,stage=None, **options) -> "DataFrame":
         self.options(dict(options))
