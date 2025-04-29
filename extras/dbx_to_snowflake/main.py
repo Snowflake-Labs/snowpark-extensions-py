@@ -3,7 +3,7 @@ from dbc_to_jupyter import *
 from source_to_jupyter import *
 
 # Parse the arguments
-def parse_args():
+def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description='Script to convert a Python, Sql or Scala notebook to a Jupyter Notebook.')
     parser.add_argument("-i", "--input", metavar="\b", type=str, required=True, help="The notebook file path to convert.")
     parser.add_argument("-o", "--output", metavar="\b", type=str, required=True, help="Path where the .ipynb file will be created.")
