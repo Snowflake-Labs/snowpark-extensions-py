@@ -1,6 +1,6 @@
 from pathlib import Path
 from constants import *
-from common import *
+from common import create_notebook, save_notebook
 
 class SourceToJupyter:
     # Read the Databricks notebook
