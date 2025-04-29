@@ -33,7 +33,7 @@ class SourceToJupyter:
                 magic_comment = Constants.SCALA_MAGIC_COMMENT
 
             case _:
-                return ""
+                return []
             
 
         content = content.replace(header, "")
