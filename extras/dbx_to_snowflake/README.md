@@ -13,12 +13,9 @@ This tool is designed to convert Databricks notebooks into Jupyter notebooks (`.
 - Python 3.8 or higher
 - Required Python libraries:
   - `nbformat`
-  - `argparse`
-  - `zipfile`
-  - `pathlib`
 
 Install the required Python libraries:
-`pip install nbformat argparse zipfile pathlib`
+`pip install -r /path/to/requirements.txt`
 
 ## Usage
 Command-Line Interface
