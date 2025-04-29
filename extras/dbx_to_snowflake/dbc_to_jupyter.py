@@ -15,7 +15,7 @@ class DbcToJupyter:
             temp_path = os.path.join(os.path.dirname(file_absoulute_path), TEMP_FOLDER)
             dbc.extractall(temp_path)
 
-            manifest_path = os.path.join(temp_path, "manifest.mf")
+            manifest_path = os.path.join(temp_path, Constants.MANIFEST)
             os.remove(manifest_path)
             return temp_path
 
@@ -26,36 +26,43 @@ class DbcToJupyter:
             return data
 
     # Get the cells from the Databricks notebook    
-    def __get_cells(self, data: json) -> list:
-        commands = sorted(data["commands"], key=lambda x: x["position"])
+    def __get_cells(self, data: json) -> list[str]:
+        commands = sorted(data[Constants.COMMANDS], key=lambda x: x[Constants.POSITION])
         cells = []
 
         for cell in commands:
-            cells.append(cell["command"])
+            cells.append(cell[Constants.COMMAND])
 
         return cells
     
     # Main function
     def main(self, input_folder: str, dbc_absoulute_path: str, output_folder: str) -> None:
-        print(f"START Converting the Dbc notebooks: '{dbc_absoulute_path}'")
+        print(f"Info: START Converting the Dbc notebooks: '{dbc_absoulute_path}'")
         notebooks_path = self.__extract_dbc(dbc_absoulute_path)
 
         for path, _, files in os.walk(notebooks_path):
             for file in files:
                 json_absolute_path = os.path.join(path, file)
-                json_relative_path = os.path.relpath(json_absolute_path, input_folder).replace(f"{TEMP_FOLDER}{os.sep}", "")
 
-                if file.lower().endswith(tuple(SOURCE_EXTENSIONS)):
-                    print(f"   START Converting the notebook: '{json_absolute_path}'")
-                    json = self.__read_notebook(json_absolute_path)
-                    cells = self.__get_cells(json)
-                    notebook = create_notebook(cells)
-                    save_notebook(output_folder, json_relative_path, notebook)
-                    print(f"   FINISH Converting the notebook: '{json_absolute_path}'")
-                    
-                else:
-                    print(f"File not supported: {json_absolute_path}")
+                try:
+                    json_relative_path = os.path.relpath(json_absolute_path, input_folder).replace(f"{TEMP_FOLDER}{os.sep}", "")
+
+                    if file.lower().endswith(tuple(SOURCE_EXTENSIONS)):
+                        print(f"   Info: START Converting the notebook: '{json_absolute_path}'")
+                        json = self.__read_notebook(json_absolute_path)
+                        cells = self.__get_cells(json)
+                        notebook = create_notebook(cells)
+                        save_notebook(output_folder, json_relative_path, notebook)
+                        print(f"   Info: FINISH Converting the notebook: '{json_absolute_path}'")
+                        
+                    else:
+                        print(f"Warning: File not supported: {json_absolute_path}")
+                        continue
+
+                except Exception as e:
+                    print(f"\033[91mError: converting the notebook: {json_absolute_path}")
+                    print(f"Error: {e}\033[0m")
                     continue
 
         shutil.rmtree(notebooks_path)
-        print(f"FINISH Converting the Dbc notebooks: '{dbc_absoulute_path}'")
+        print(f"Info: FINISH Converting the Dbc notebooks: '{dbc_absoulute_path}'")

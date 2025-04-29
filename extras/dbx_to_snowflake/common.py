@@ -6,7 +6,7 @@ from constants import *
 from pathlib import Path
 
 # Create a Jupyter notebook        
-def create_notebook(cells: list) -> NotebookNode:
+def create_notebook(cells: list[str]) -> NotebookNode:
     notebook = nb.new_notebook()
     
     for cell in cells:
@@ -17,13 +17,13 @@ def create_notebook(cells: list) -> NotebookNode:
         match True:
             case _ if stripped_cell.startswith(Constants.MD_MAGIC):
                 magic = Constants.MD_MAGIC
-                language = "md"
+                language = Constants.MARKDOWN
             case _ if stripped_cell.startswith(Constants.SQL_MAGIC):
                 magic = Constants.SQL_MAGIC
-                language = "sql"
+                language = Constants.SQL
             case _ if stripped_cell.startswith(Constants.PYTHON_MAGIC):
                 magic = Constants.PYTHON_MAGIC
-                language = "python"
+                language = Constants.PYTHON
             case _:
                 magic = ""
                 language = ""

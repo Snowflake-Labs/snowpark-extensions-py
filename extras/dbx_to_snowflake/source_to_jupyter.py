@@ -11,7 +11,7 @@ class SourceToJupyter:
 
 
     # Split the source notebook into cells
-    def __get_cells_by_extension(self, content: str, extension: str) -> list:
+    def __get_cells_by_extension(self, content: str, extension: str) -> list[str]:
         header = None
         comment = None
         magic_comment = None
@@ -42,10 +42,10 @@ class SourceToJupyter:
         return splitted_content
 
     def main(self, file_absolute_path: str, file_relative_path: str, output_folder: str) -> None:
-        print(f"START Converting the source notebook: '{file_absolute_path}'")
+        print(f"Info: START Converting the source notebook: '{file_absolute_path}'")
         content = self.__read_notebook(file_absolute_path)
         extension = Path(file_relative_path).suffix.lower()
         cells = self.__get_cells_by_extension(content, extension)
         notebook = create_notebook(cells)
         save_notebook(output_folder, file_relative_path, notebook)
-        print(f"FINISH Converting the source notebook: '{file_absolute_path}'")
+        print(f"Info: FINISH Converting the source notebook: '{file_absolute_path}'")

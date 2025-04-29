@@ -17,6 +17,11 @@ class Constants:
     SQL_MAGIC = "%sql"
     MD_MAGIC = "%md"
 
+    # Languages
+    PYTHON = "python"
+    MARKDOWN = "md"
+    SQL = "sql"
+
     # Extensions
     PYTHON_EXTENSION = ".python"
     PY_EXTENSION = ".py"
@@ -25,3 +30,9 @@ class Constants:
     R_EXTENSION = ".r"
     DBC_EXTENSION = ".dbc"
     JUPYTER_EXTENSION = ".ipynb"
+
+    # CONSTANTS
+    COMMANDS = "commands"
+    POSITION = "position"
+    COMMAND = "command"
+    MANIFEST = "manifest.mf"
