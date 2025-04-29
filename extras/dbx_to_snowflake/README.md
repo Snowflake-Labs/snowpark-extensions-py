@@ -10,7 +10,7 @@ This tool is designed to convert Databricks notebooks into Jupyter notebooks (`.
 
 ## Requirements
 
-- Python 3.8 or higher
+- Python 3.10 or higher
 - Required Python libraries:
   - `nbformat`
 

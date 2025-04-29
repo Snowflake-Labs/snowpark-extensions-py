@@ -1,5 +1,5 @@
 from pathlib import Path
-from constants import *
+from constants import Constants
 from common import create_notebook, save_notebook
 
 class SourceToJupyter:

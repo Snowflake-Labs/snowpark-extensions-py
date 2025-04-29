@@ -2,7 +2,7 @@ import os, json, shutil
 from zipfile import ZipFile
 from pathlib import Path
 from constants import Constants
-from common import *
+from common import create_notebook, save_notebook
 
 SOURCE_EXTENSIONS = [Constants.PYTHON_EXTENSION, Constants.SQL_EXTENSION, Constants.SCALA_EXTENSION, Constants.R_EXTENSION]
 
@@ -40,29 +40,36 @@ class DbcToJupyter:
         print(f"Info: START Converting the Dbc notebooks: '{dbc_absoulute_path}'")
         notebooks_path = self.__extract_dbc(dbc_absoulute_path)
 
-        for path, _, files in os.walk(notebooks_path):
-            for file in files:
-                json_absolute_path = os.path.join(path, file)
+        try:
+            for path, _, files in os.walk(notebooks_path):
+                for file in files:
+                    json_absolute_path = os.path.join(path, file)
 
-                try:
-                    json_relative_path = os.path.relpath(json_absolute_path, input_folder).replace(f"{TEMP_FOLDER}{os.sep}", "")
+                    try:
+                        json_relative_path = os.path.relpath(json_absolute_path, input_folder).replace(f"{TEMP_FOLDER}{os.sep}", "")
 
-                    if file.lower().endswith(tuple(SOURCE_EXTENSIONS)):
-                        print(f"   Info: START Converting the notebook: '{json_absolute_path}'")
-                        json = self.__read_notebook(json_absolute_path)
-                        cells = self.__get_cells(json)
-                        notebook = create_notebook(cells)
-                        save_notebook(output_folder, json_relative_path, notebook)
-                        print(f"   Info: FINISH Converting the notebook: '{json_absolute_path}'")
-                        
-                    else:
-                        print(f"Warning: File not supported: {json_absolute_path}")
+                        if file.lower().endswith(tuple(SOURCE_EXTENSIONS)):
+                            print(f"   Info: START Converting the notebook: '{json_absolute_path}'")
+                            json = self.__read_notebook(json_absolute_path)
+                            cells = self.__get_cells(json)
+                            notebook = create_notebook(cells)
+                            save_notebook(output_folder, json_relative_path, notebook)
+                            print(f"   Info: FINISH Converting the notebook: '{json_absolute_path}'")
+                            
+                        else:
+                            print(f"Warning: File not supported: {json_absolute_path}")
+                            continue
+
+                    except Exception as e:
+                        print(f"\033[91mError: converting the notebook: {json_absolute_path}")
+                        print(f"Error: {e}\033[0m")
                         continue
 
-                except Exception as e:
-                    print(f"\033[91mError: converting the notebook: {json_absolute_path}")
-                    print(f"Error: {e}\033[0m")
-                    continue
+        except Exception as e:
+            print(f"\033[91mError: Converting the Dbc notebooks: '{dbc_absoulute_path}'")
+            print(f"Error: {e}\033[0m")
+        
+        finally:
+            shutil.rmtree(notebooks_path)
 
-        shutil.rmtree(notebooks_path)
         print(f"Info: FINISH Converting the Dbc notebooks: '{dbc_absoulute_path}'")

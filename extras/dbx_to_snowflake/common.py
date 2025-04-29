@@ -2,7 +2,7 @@ import nbformat, os
 import nbformat
 import nbformat.v4 as nb
 from nbformat.notebooknode import NotebookNode
-from constants import *
+from constants import Constants
 from pathlib import Path
 
 # Create a Jupyter notebook        

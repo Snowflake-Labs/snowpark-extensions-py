@@ -1,6 +1,7 @@
 import argparse, os
-from dbc_to_jupyter import *
-from source_to_jupyter import *
+from dbc_to_jupyter import DbcToJupyter
+from source_to_jupyter import SourceToJupyter
+from constants import Constants
 
 # Parse the arguments
 def parse_args() -> argparse.Namespace:
