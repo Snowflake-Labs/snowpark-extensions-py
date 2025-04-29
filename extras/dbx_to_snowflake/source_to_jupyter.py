@@ -2,6 +2,8 @@ from pathlib import Path
 from constants import Constants
 from common import create_notebook, save_notebook
 
+HEADERS = [Constants.PYTHON_HEADER, Constants.SQL_HEADER, Constants.SCALA_HEADER]
+
 class SourceToJupyter:
     # Read the Databricks notebook
     def __read_notebook(self, file_absolute_path: str) -> str:
@@ -41,9 +43,17 @@ class SourceToJupyter:
         splitted_content = content.split(comment)
         return splitted_content
 
+    def __file_is_notebook(self, content: str) -> bool:
+        return content.startswith(tuple(HEADERS))
+
     def main(self, file_absolute_path: str, file_relative_path: str, output_folder: str) -> None:
         print(f"Info: START Converting the source notebook: '{file_absolute_path}'")
         content = self.__read_notebook(file_absolute_path)
+
+        if (not self.__file_is_notebook(content)):
+            print(f"\033[93mWarning: File is not a notebook: {file_absolute_path}\033[0m")
+            return
+
         extension = Path(file_relative_path).suffix.lower()
         cells = self.__get_cells_by_extension(content, extension)
         notebook = create_notebook(cells)
