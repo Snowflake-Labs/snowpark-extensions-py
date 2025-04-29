@@ -25,10 +25,10 @@ if __name__ == "__main__":
                 file_relative_path = os.path.relpath(file_absolute_path, input_folder)
 
                 if file.lower().endswith(Constants.DBC_EXTENSION):
-                    SourceToJupyter().main(file_absolute_path, file_relative_path, output_folder)
+                    DbcToJupyter().main(input_folder, file_absolute_path, output_folder)
 
                 elif file.lower().endswith(tuple(SOURCE_EXTENSIONS)):
-                    DbcToJupyter().main(input_folder, file_absolute_path, output_folder)
+                    SourceToJupyter().main(file_absolute_path, file_relative_path, output_folder)
 
                 else:
                     print(f"\033[93mWarning: File not supported: {file_absolute_path}\033[0m")
