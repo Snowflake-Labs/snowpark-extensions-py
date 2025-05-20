@@ -120,15 +120,16 @@ order by start_time desc;
 
 ## DataFrame Extensions
 
-| Name                    | Description                                                                                                                                                            |
-| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| DataFrame.map           | provides an equivalent for the map function for example `df.map(func,input_types=[StringType(),StringType()],output_types=[StringType(),IntegerType()],to_row=True)` |
-| DataFrame.simple_map    | if a simple lambda like `lambda x: x.col1 + x.col2` is used this functions can be used like `df.simple_map(lambda x: x.col1 + x.col2)`                             |
-| DataFrame.replace       | extends replace to allow using a regex                                                                                                                                 |
-| DataFrame.groupBy.pivot | extends the snowpark groupby to add a pivot operator                                                                                                                   |
-| DataFrame.stack         | This is an operator similar to the unpivot operator                                                                                                                    |
-| DataFrame.transform     | This method is used mostly the provide a chaining syntax. For example:`df.transform(func1).transform(func2).show()`                                                  |
-| DataFrame.unionByName   | This extensions extends the unionByName to include support for **allowMissingValues**                                                                                 |
+| Name                       | Description                                                                                                                                                            |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| DataFrameReader.ingest_csv | provides an additional reader that performs a data loading for csv which might have data with data inconsistencies |
+| DataFrame.map              | provides an equivalent for the map function for example `df.map(func,input_types=[StringType(),StringType()],output_types=[StringType(),IntegerType()],to_row=True)` |
+| DataFrame.simple_map       | if a simple lambda like `lambda x: x.col1 + x.col2` is used this functions can be used like `df.simple_map(lambda x: x.col1 + x.col2)`                             |
+| DataFrame.replace          | extends replace to allow using a regex                                                                                                                                 |
+| DataFrame.groupBy.pivot    | extends the snowpark groupby to add a pivot operator                                                                                                                   |
+| DataFrame.stack            | This is an operator similar to the unpivot operator                                                                                                                    |
+| DataFrame.transform        | This method is used mostly the provide a chaining syntax. For example:`df.transform(func1).transform(func2).show()`                                                  |
+| ~~DataFrame.unionByName~~ | Deprecated, this is now available in snowpark~~. This extensions extends the unionByName to include support for**allowMissingValues**~~                         |
 
 ### Examples
 

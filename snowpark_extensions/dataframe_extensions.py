@@ -204,55 +204,7 @@ if not hasattr(DataFrame,"___extended"):
                 return self.clean(self.prepare(aggregated_col).function(name)(col("__firstAggregate")))
             else:
                 raise Exception("Alias functions expressions are supported")
-      DataFrame.___original_union_by_name = DataFrame.union_by_name      
-      def union_by_name_ext(self, other: "DataFrame", _emit_ast: bool = True, allowMissingColumns:bool = False) -> "DataFrame":
-        """Returns a new DataFrame that contains all the rows in the current DataFrame
-        and another DataFrame (``other``), excluding any duplicate rows.
 
-        This method matches the columns in the two DataFrames by their names, not by
-        their positions. The columns in the other DataFrame are rearranged to match
-        the order of columns in the current DataFrame.
-
-        Example::
-
-            >>> df1 = session.create_dataframe([[1, 2]], schema=["a", "b"])
-            >>> df2 = session.create_dataframe([[2, 1]], schema=["b", "a"])
-            >>> df1.union_by_name(df2).show()
-            -------------
-            |"A"  |"B"  |
-            -------------
-            |1    |2    |
-            -------------
-            <BLANKLINE>
-
-        Args:
-            other: the other :class:`DataFrame` that contains the rows to include.
-        """
-        if allowMissingColumns:
-            self_columns = self.columns
-            other_columns = other.columns
-            set_self_columns = set(self_columns)
-            set_other_columns = set(other.columns)
-            # this is done to keep the current order of columns
-            common_cols = [x for x in self_columns if x in set_self_columns.intersection(set_other_columns)]
-            only_self_columns = set_self_columns - set(common_cols)
-            only_other_columns = set_other_columns - set(common_cols)
-            TMP_HASH_NAME = "tmp_hash_" + generate_random_alphanumeric()
-            if len(only_self_columns) > 0 or len(only_other_columns) > 0:
-                self_extented  = self.withColumn(TMP_HASH_NAME, sf_hash("*"))
-                other_extended = other.withColumn(TMP_HASH_NAME, sf_hash("*"))
-
-                common_cols.append(TMP_HASH_NAME)
-                
-                df_combined = self_extented.select(*common_cols).___original_union_by_name(other_extended.select(*common_cols))
-                if len(only_self_columns) > 0:
-                    df_combined = df_combined.join(self_extented.select(*[x for x in self_extented.columns if x in only_self_columns],TMP_HASH_NAME ), on=TMP_HASH_NAME, how="outer")
-                if len(only_other_columns) > 0:
-                    df_combined = df_combined.join(other_extended.select(*[x for x in other_extended.columns if x in only_other_columns],TMP_HASH_NAME), on=TMP_HASH_NAME, how="outer")
-                return df_combined.drop(TMP_HASH_NAME)            
-        return self.___original_union_by_name(other,_emit_ast)
-      DataFrame.union_by_name = union_by_name_ext
-      DataFrame.unionByName = union_by_name_ext
     def group_by_pivot(self,pivot_col):
         return GroupByPivot(self, pivot_col)
     RelationalGroupedDataFrame.pivot = group_by_pivot

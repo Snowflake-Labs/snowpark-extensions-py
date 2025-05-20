@@ -234,3 +234,9 @@ Version 0.0.45
 Version 0.0.46
 --------------
 - upgrading to `snowflake-snowpark-python 1.27.0`
+
+Version 0.0.47
+--------------
+- upgrading to `snowflake-snowpark-python 1.31.1`
+- deprecating unionByName because snowpark now supports allowMissingColumns
+- adding`ingest_csv` method for loading csv with an approach more similar to spark
