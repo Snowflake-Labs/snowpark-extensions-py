@@ -58,8 +58,8 @@ if not hasattr(DataFrameReader,"___extended_csv"):
             CREATE OR REPLACE FILE FORMAT {infer_format} 
             TYPE = CSV 
             PARSE_HEADER=TRUE 
-            FIELD_DELIMITER = ','
-            FIELD_OPTIONALLY_ENCLOSED_BY = '"'
+            FIELD_DELIMITER = '{sep}'
+            FIELD_OPTIONALLY_ENCLOSED_BY = '{quote}'
             COMPRESSION = GZIP
             """).collect()
         # file format for reading
@@ -67,14 +67,14 @@ if not hasattr(DataFrameReader,"___extended_csv"):
             CREATE OR REPLACE FILE FORMAT {read_format}
             TYPE = CSV
             SKIP_HEADER=1
-            FIELD_DELIMITER = ','
-            FIELD_OPTIONALLY_ENCLOSED_BY = '"'
+            FIELD_DELIMITER = '{seq}'
+            FIELD_OPTIONALLY_ENCLOSED_BY = '{quote}'
             COMPRESSION = GZIP;
         """).collect()
         logging.info("File formats created successfully.")
         # List csv files in the stage
         # we will use the first 5 files to infer the schema
-        files = [os.path.basename(x[0]) for x in session.sql(f"""list @{stage_name} pattern='.*csv.gz'""").collect()]
+        files = [os.path.basename(x[0]) for x in session.sql(f"""list @{stage_name} pattern='{pattern}'""").collect()]
         subset = files[:5]
         files_str = ",".join([f"'{x}'" for x in subset ])
         # Create a temporary table to hold the inferred schema
