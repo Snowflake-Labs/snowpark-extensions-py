@@ -18,7 +18,7 @@ if not hasattr(DataFrameReader,"___extended_csv"):
     def _ingest_csv(self, stage_name: str, warehouse: str = None, min_warehouse_size:str = "XSMALL", max_warehouse_size:str = "XXXLARGE" ) -> str:
         if warehouse is None:
             warehouse = get_active_session().get_current_warehouse()
-        pattern = self._cur_options.get("PATTERN","*.csv.*")
+        pattern = self._cur_options.get("PATTERN",r".*\.csv\.gz")
         quote   =   self._cur_options.get("FIELD_OPTIONALLY_ENCLOSED_BY",'"')
         sep     =   self._cur_options.get("FIELD_DELIMITER",",")
         # validate stage name
@@ -67,7 +67,7 @@ if not hasattr(DataFrameReader,"___extended_csv"):
             CREATE OR REPLACE FILE FORMAT {read_format}
             TYPE = CSV
             SKIP_HEADER=1
-            FIELD_DELIMITER = '{seq}'
+            FIELD_DELIMITER = '{sep}'
             FIELD_OPTIONALLY_ENCLOSED_BY = '{quote}'
             COMPRESSION = GZIP;
         """).collect()
