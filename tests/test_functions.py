@@ -214,7 +214,7 @@ def test_regexp_split():
     res = df.select(regexp_split(df.s, "test(A|BB)", 1).alias('s')).collect()
     assert res[0].S == '[\n  "testAandtestBareTwoBBtests"\n]'
 
-    df = session.createDataFrame([('From: mauricio@mobilize.net',)], ['s',])
+    df = session.createDataFrame([('From: mauricio.rojas@snowflake.com',)], ['s',])
 
     res = df.select(regexp_split(df.s, "((From|To)|Subject): (\w+@\w+\.[a-z]+)").alias('s')).collect()
     assert res[0].S == '[\n  "",\n  ""\n]'
