@@ -430,7 +430,7 @@ You can configure Jupyter to run some imports and initialization code at the sta
 
 Any code written in this file will be executed when you start a new Jupyter notebook.
 
-An [example startup.ipy](https://github.com/MobilizeNet/snowpark-extensions-py/blob/main/startup.ipy) is provided
+An [example startup.ipy](https://github.com/Snowflake-Labs/snowpark-extensions-py/blob/main/startup.ipy) is provided
 
 # Logging Extras
 
