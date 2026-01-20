@@ -16,7 +16,7 @@ if not hasattr(DataFrame, "___extended"):
         """
         Custom HTML representation for PySpark DataFrames with a rich table UI.
         """
-        rows_limit = getattr(DataFrame, '__rows_limit', 20)
+        rows_limit = getattr(DataFrame, '__rows_limit', 1000)
         
         try:
             limited_df = self.limit(rows_limit + 1)
