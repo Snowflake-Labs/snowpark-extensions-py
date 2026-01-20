@@ -1,6 +1,9 @@
 from pyspark.sql.connect.dataframe import DataFrame
+from pyspark.sql import functions as F
+from pyspark.sql.types import TimestampType, DateType
 import pandas as pd
 import html
+import traceback
 
 # Ensure we don't double-patch if run multiple times
 if not hasattr(DataFrame, "___extended"):
@@ -16,9 +19,16 @@ if not hasattr(DataFrame, "___extended"):
         rows_limit = getattr(DataFrame, '__rows_limit', 20)
         
         try:
-            # 1. Fetch Data efficiently
-            # We fetch rows_limit + 1 to check if there are more rows
-            pdf = self.limit(rows_limit + 1).toPandas()
+            limited_df = self.limit(rows_limit + 1)
+            
+            timestamp_cols = [
+                field.name for field in limited_df.schema.fields
+                if isinstance(field.dataType, (TimestampType, DateType))
+            ]
+            for col_name in timestamp_cols:
+                limited_df = limited_df.withColumn(col_name, F.col(col_name).cast("string"))
+            
+            pdf = limited_df.toPandas()
             
             # Check if dataset is empty
             if pdf.empty:
@@ -65,7 +75,8 @@ if not hasattr(DataFrame, "___extended"):
             return table_html + toolbar_html
 
         except Exception as ex:
-            return f"<pre style='color:red'>Error displaying DataFrame: {html.escape(str(ex))}</pre>"
+            full_error = traceback.format_exc()
+            return f"<pre style='color:red'>Error displaying DataFrame: {html.escape(full_error)}</pre>"
 
     # Apply the patches
     setattr(DataFrame, '_repr_html_', _repr_html_)
